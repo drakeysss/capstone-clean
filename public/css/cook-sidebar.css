@@ -1,0 +1,22 @@
+/* Cook Sidebar Specific Styles */
+.cook-portal {
+    background-color: #fff;
+}
+
+.cook-portal .sidebar-header {
+    background-color: #f0fff4;
+}
+
+.cook-portal .sidebar-title {
+    color: #28a745;
+}
+
+.cook-portal .nav-link:hover,
+.cook-portal .nav-link.active {
+    background-color: #28a745;
+    color: white;
+}
+
+.cook-portal .sidebar-category {
+    color: #28a745;
+}

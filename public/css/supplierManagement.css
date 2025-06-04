@@ -1,0 +1,46 @@
+/* Ensure both tables have consistent widths */
+#purchaseOrderTable{
+    width: 100%;
+    table-layout: fixed;
+    padding: 0;
+    margin-left: -100px; /* Adjust margin to align with the card */
+}
+
+#purchaseOrderTable th,
+#savedOrdersTable th {
+    text-align: center;
+    vertical-align: middle;
+    width: 100px; /* Fixed width for header cells */
+}
+
+#purchaseOrderTable td,
+#savedOrdersTable td {
+    vertical-align: middle;
+}
+
+/* Add padding and spacing for better alignment */
+#purchaseOrderTable input,
+#purchaseOrderTable select {
+    width: 100%; /* Ensure inputs and selects take full width of the cell */
+    box-sizing: border-box; /* Prevent overflow */
+}
+
+#purchaseOrderTable .remove-row {
+    display: block;
+    margin: 0 auto;
+}
+
+/* Fix floating issue and align the form properly */
+.card {
+    margin: 0 auto; /* Center the card horizontally */
+    padding: 0; /* Remove extra padding */
+}
+
+.container {
+    padding: 0 15px; /* Ensure consistent padding inside the container */
+}
+
+#purchaseOrderForm {
+    margin: 0 auto; /* Center the form horizontally */
+    width: 100%; /* Ensure the form takes the full width of the card */
+}
