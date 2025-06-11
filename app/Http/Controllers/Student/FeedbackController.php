@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Student;
 use App\Http\Controllers\Controller;
 use App\Models\Feedback;
 use App\Models\Menu;
+use App\Models\Meal;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,29 +22,17 @@ class FeedbackController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        
-        // Get past week's menu items for feedback
-        $pastWeekMenus = Menu::where('date', '>=', Carbon::now()->subDays(7))
-            ->where('date', '<=', Carbon::now())
-            ->orderBy('date', 'desc')
-            ->orderBy('meal_type')
-            ->get();
-        
+
         // Get student's previous feedback
-        $studentFeedback = Feedback::where('user_id', $user->id)
-            ->with('menu')
+        $studentFeedback = Feedback::where('student_id', $user->id)
             ->orderBy('created_at', 'desc')
-            ->take(5)
+            ->take(10)
             ->get();
-        
-        // If menu_id is provided, get the selected menu item
-        $selectedMenu = null;
-        if ($request->has('menu_id')) {
-            $selectedMenu = Menu::find($request->menu_id);
-        }
-        
-        return view('student.feedback.index', compact('pastWeekMenus', 'studentFeedback', 'selectedMenu'));
+
+        return view('student.feedback.index', compact('studentFeedback'));
     }
+
+
 
     /**
      * Store a newly created feedback in storage.
@@ -53,39 +43,43 @@ class FeedbackController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'menu_id' => 'required|exists:menus,id',
+            'meal_name' => 'required|string|max:255',
+            'meal_type' => 'required|in:breakfast,lunch,dinner',
+            'meal_date' => 'required|date|before_or_equal:today',
             'rating' => 'required|integer|min:1|max:5',
             'comment' => 'nullable|string|max:500',
             'suggestions' => 'nullable|string|max:500',
+            'is_anonymous' => 'nullable|boolean',
         ]);
-        
+
         $user = Auth::user();
-        
-        // Check if user has already provided feedback for this menu item
-        $existingFeedback = Feedback::where('user_id', $user->id)
-            ->where('menu_id', $request->menu_id)
-            ->first();
-        
-        if ($existingFeedback) {
-            // Update existing feedback
-            $existingFeedback->update([
-                'rating' => $request->rating,
-                'comment' => $request->comment,
-                'suggestions' => $request->suggestions,
-            ]);
-            
-            return redirect()->route('student.feedback')->with('success', 'Your feedback has been updated successfully!');
-        }
-        
-        // Create new feedback
-        Feedback::create([
-            'user_id' => $user->id,
-            'menu_id' => $request->menu_id,
+
+        // Allow multiple feedback submissions - students can provide feedback as many times as they want
+        // Create new feedback entry each time
+        $feedback = Feedback::create([
+            'student_id' => $user->id,
+            'meal_id' => null, // No longer required since we're allowing manual input
+            'meal_date' => $request->meal_date,
+            'meal_type' => $request->meal_type,
+            'meal_name' => $request->meal_name,
             'rating' => $request->rating,
-            'comment' => $request->comment,
+            'comments' => $request->comment,
             'suggestions' => $request->suggestions,
+            'food_quality' => [],
+            'dietary_concerns' => [],
+            'is_anonymous' => $request->has('is_anonymous') && $request->is_anonymous,
         ]);
-        
+
+        // Send notifications to cook and kitchen staff
+        $notificationService = new NotificationService();
+        $notificationService->feedbackSubmitted([
+            'meal_name' => $request->meal_name,
+            'meal_type' => $request->meal_type,
+            'rating' => $request->rating,
+            'student_name' => $request->has('is_anonymous') && $request->is_anonymous ? 'Anonymous' : $user->name,
+            'feedback_id' => $feedback->id
+        ]);
+
         return redirect()->route('student.feedback')->with('success', 'Thank you for your feedback!');
     }
 }

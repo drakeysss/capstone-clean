@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Cook;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\WeeklyMenu;
+use App\Models\Menu;
 use App\Services\LoggingService;
 use Illuminate\Support\Facades\Auth;
 
@@ -30,14 +30,14 @@ class WeeklyMenuController extends Controller
     public function update(Request $request)
     {
         $validated = $request->validate([
-            'id' => 'required|exists:weekly_menus,id',
+            'id' => 'required|exists:menus,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'is_available' => 'boolean'
         ]);
         
-        $menu = WeeklyMenu::findOrFail($validated['id']);
+        $menu = Menu::findOrFail($validated['id']);
         
         // Store old values for logging
         $oldValues = [
@@ -142,8 +142,8 @@ class WeeklyMenuController extends Controller
             $menus[$day] = [];
             
             foreach ($mealTypes as $mealType) {
-                $menu = WeeklyMenu::where('week_cycle', $weekCycle)
-                    ->where('day_of_week', $day)
+                $menu = Menu::where('week_cycle', $weekCycle)
+                    ->where('day', ucfirst($day))
                     ->where('meal_type', $mealType)
                     ->first();
                 
@@ -163,8 +163,8 @@ class WeeklyMenuController extends Controller
         $menuItems = [];
         
         foreach ($mealTypes as $mealType) {
-            $menu = WeeklyMenu::where('week_cycle', $weekCycle)
-                ->where('day_of_week', $dayOfWeek)
+            $menu = Menu::where('week_cycle', $weekCycle)
+                ->where('day', ucfirst($dayOfWeek))
                 ->where('meal_type', $mealType)
                 ->first();
             
@@ -189,8 +189,8 @@ class WeeklyMenuController extends Controller
      */
     private function updateMealForDay($weekCycle, $dayOfWeek, $mealType, $mealData)
     {
-        $menu = WeeklyMenu::where('week_cycle', $weekCycle)
-            ->where('day_of_week', $dayOfWeek)
+        $menu = Menu::where('week_cycle', $weekCycle)
+            ->where('day', ucfirst($dayOfWeek))
             ->where('meal_type', $mealType)
             ->first();
         
@@ -203,10 +203,10 @@ class WeeklyMenuController extends Controller
             ]);
         } else {
             // Create new menu item
-            WeeklyMenu::create([
+            Menu::create([
                 'name' => $mealData['name'],
                 'description' => $mealData['description'] ?? null,
-                'day_of_week' => $dayOfWeek,
+                'day' => ucfirst($dayOfWeek),
                 'meal_type' => $mealType,
                 'week_cycle' => $weekCycle,
                 'price' => $mealData['price'],

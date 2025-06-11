@@ -103,54 +103,49 @@
 <!-- Sidebar -->
 <nav class="sidebar student-portal">
     <!-- Sidebar Header -->
-    <div class="sidebar-header">
-        <i class="bi bi-mortarboard icon" style="color: #ff9933;"></i>
-        <h6 class="sidebar-title">Student Portal</h6>
-    </div>
+   
+
+    @include('Component.notification-dropdown')
 
     <!-- Navigation -->
     <div class="sidebar-body">
-        <div class="sidebar-category">TODAY'S MEALS</div>
+
+
+        <div class="sidebar-category">OVERVIEW</div>
         <ul class="sidebar-nav">
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('student.dashboard') ? 'active' : '' }}" href="{{ route('student.dashboard') }}">
                     <i class="bi bi-speedometer2 icon"></i>
-                    <span class="small">Today's Menu</span>
+                    <span class="small">Dashboard</span>
                 </a>
             </li>
         </ul>
 
-        <div class="sidebar-category">MEAL PLANNING</div>
+        <div class="sidebar-category">MEAL</div>
         <ul class="sidebar-nav">
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('student.menu') ? 'active' : '' }}" href="{{ route('student.menu') }}">
+                <a class="nav-link {{ request()->routeIs('student.menu') ? 'active' : '' }}" href="{{ route('student.menu') }}" data-feature="student.menu">
                     <i class="bi bi-journal-text icon"></i>
-                    <span class="small">Weekly Menu</span>
+                    <span class="small">Menu</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('student.pre-order') ? 'active' : '' }}" href="{{ route('student.pre-order') }}">
+                <a class="nav-link {{ request()->routeIs('student.pre-order') ? 'active' : '' }}" href="{{ route('student.pre-order') }}" data-feature="student.pre-order">
                     <i class="bi bi-calendar-check icon"></i>
-                    <span class="small">Meal Attendance Poll</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('student.pre-order.history') ? 'active' : '' }}" href="{{ route('student.pre-order.history') }}">
-                    <i class="bi bi-clock-history icon"></i>
-                    <span class="small">My Responses</span>
+                    <span class="small">Menu Polls</span>
+                    <span class="notification-dot" id="dot-student.pre-order" style="display: none;"></span>
                 </a>
             </li>
         </ul>
 
-        <div class="sidebar-category">FEEDBACK</div>
+        <div class="sidebar-category">COMMUNICATION</div>
         <ul class="sidebar-nav">
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('student.feedback') ? 'active' : '' }}" href="{{ route('student.feedback') }}">
+                <a class="nav-link {{ request()->routeIs('student.feedback') ? 'active' : '' }}" href="{{ route('student.feedback') }}" data-feature="student.feedback">
                     <i class="bi bi-chat-square-text icon"></i>
-                    <span class="small">Rate Meals</span>
+                    <span class="small">Your Feedback</span>
                 </a>
             </li>
-            
         </ul>
 
 

@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Kitchen;
 
 use App\Http\Controllers\Dashboard\BaseDashboardController;
 use Illuminate\Http\Request;
+use App\Models\Menu;
+use App\Models\PreOrder;
+use App\Services\WeekCycleService;
+use Carbon\Carbon;
 
 class KitchenDashboardController extends BaseDashboardController
 {
@@ -19,23 +23,26 @@ class KitchenDashboardController extends BaseDashboardController
         // Get data from Cook's menu planning to execute in kitchen
         $today = now()->format('Y-m-d');
         $currentDay = strtolower(now()->format('l'));
-        $weekNumber = now()->weekOfYear;
-        $weekCycle = $weekNumber % 2 === 1 ? 1 : 2; // Odd weeks are cycle 1, even weeks are cycle 2
+
+        // FIXED: Use consistent week cycle calculation via service
+        $weekInfo = WeekCycleService::getWeekInfo();
+        $weekOfMonth = $weekInfo['week_of_month'];
+        $weekCycle = $weekInfo['week_cycle'];
         
         // Get today's menu items from cook's planning
-        $todayMenus = \App\Models\Menu::where('day', ucfirst($currentDay))
+        $todayMenus = Menu::where('day', ucfirst($currentDay))
             ->where('week_cycle', $weekCycle)
             ->get()
             ->groupBy('meal_type');
         
         // Get inventory items that need preparation
-        $inventoryItems = \App\Models\Inventory::where('quantity', '<=', \DB::raw('reorder_point * 1.5'))
+        $inventoryItems = \App\Models\Inventory::whereRaw('quantity <= reorder_point * 1.5')
             ->orderBy('quantity')
             ->take(5)
             ->get();
         
         // Get pre-orders for today to prepare correct quantities
-        $preOrders = \App\Models\PreOrder::where('date', $today)
+        $preOrders = PreOrder::where('date', $today)
             ->where('is_attending', true)
             ->get()
             ->groupBy('meal_type');
@@ -51,8 +58,13 @@ class KitchenDashboardController extends BaseDashboardController
         $data['todayMenus'] = $todayMenus;
         $data['inventoryItems'] = $inventoryItems;
         $data['mealAttendance'] = $mealAttendance;
-        $data['recentOrders'] = $data['recentOrders']->take(5);
-        
+
+        // Get recent pre-orders instead of orders
+        $data['recentOrders'] = PreOrder::with(['user', 'menu'])
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
         return $data;
     }
 
@@ -60,7 +72,7 @@ class KitchenDashboardController extends BaseDashboardController
     public function recipes()
     {
         // Get recipes created by cooks to be executed by kitchen staff
-        $recipes = \App\Models\Menu::where('is_available', true)
+        $recipes = Menu::where('is_available', true)
             ->orderBy('name')
             ->get()
             ->unique('name');
@@ -71,8 +83,8 @@ class KitchenDashboardController extends BaseDashboardController
     public function mealPlanning()
     {
         // Get meal planning from cooks to prepare for execution
-        $weekNumber = now()->weekOfYear;
-        $weekCycle = $weekNumber % 2 === 1 ? 1 : 2;
+        // FIXED: Use consistent week cycle calculation via service
+        $weekCycle = WeekCycleService::getCurrentWeekCycle();
         
         // Get the current week's menu created by cooks
         $menus = [
@@ -81,7 +93,7 @@ class KitchenDashboardController extends BaseDashboardController
         ];
         
         // Get menus for current cycle to execute
-        $cycleMenus = \App\Models\Menu::where('week_cycle', $weekCycle)->get();
+        $cycleMenus = Menu::where('week_cycle', $weekCycle)->get();
         
         foreach ($cycleMenus as $menu) {
             if (isset($menu->day) && isset($menu->meal_type)) {
@@ -104,24 +116,26 @@ class KitchenDashboardController extends BaseDashboardController
 
     public function preparation()
     {
-        // Get today's meals that need preparation
+        // Get today's date and current week cycle
         $today = now()->format('Y-m-d');
         $currentDay = now()->format('l');
-        $weekNumber = now()->weekOfYear;
-        $weekCycle = $weekNumber % 2 === 1 ? 1 : 2;
+        // FIXED: Use consistent week cycle calculation via service
+        $weekInfo = WeekCycleService::getWeekInfo();
+        $weekOfMonth = $weekInfo['week_of_month'];
+        $weekCycle = $weekInfo['week_cycle'];
         
         // Get today's menu items from cook's planning
-        $todayMenuItems = \App\Models\Menu::where('day', $currentDay)
+        $todayMenuItems = Menu::where('day', $currentDay)
             ->where('week_cycle', $weekCycle)
             ->get()
             ->groupBy('meal_type');
-        
-        // Get pre-orders to know quantities
-        $preOrders = \App\Models\PreOrder::where('date', $today)
+            
+        // Get pre-orders for today to prepare correct quantities
+        $preOrders = PreOrder::where('date', $today)
             ->where('is_attending', true)
             ->get()
             ->groupBy('meal_type');
-            
+        
         // Count expected attendance for each meal type
         $mealAttendance = [
             'breakfast' => $preOrders->get('breakfast') ? $preOrders->get('breakfast')->count() : 0,
@@ -129,28 +143,31 @@ class KitchenDashboardController extends BaseDashboardController
             'dinner' => $preOrders->get('dinner') ? $preOrders->get('dinner')->count() : 0,
         ];
         
-        return view('kitchen.preparation', [
-            'todayMenuItems' => $todayMenuItems,
-            'mealAttendance' => $mealAttendance,
-            'currentDay' => $currentDay
-        ]);
+        // Get inventory items needed for today's meals
+        $requiredIngredients = [];
+        
+        return view('kitchen.preparation', compact(
+            'todayMenuItems',
+            'mealAttendance',
+            'requiredIngredients'
+        ));
     }
 
     public function orders()
     {
-        // Get orders that need to be prepared by kitchen staff
-        $pendingOrders = \App\Models\Order::whereIn('status', ['pending', 'preparing'])
+        // Get pre-orders that need to be prepared by kitchen staff
+        $pendingOrders = PreOrder::where('is_prepared', false)
             ->orderBy('created_at')
-            ->with(['items.menu'])
+            ->with(['user', 'menu'])
             ->get();
-            
-        // Get completed orders for reference
-        $completedOrders = \App\Models\Order::where('status', 'completed')
+
+        // Get completed pre-orders for reference
+        $completedOrders = PreOrder::where('is_prepared', true)
             ->orderBy('created_at', 'desc')
             ->take(10)
-            ->with(['items.menu'])
+            ->with(['user', 'menu'])
             ->get();
-            
+
         return view('kitchen.orders', [
             'pendingOrders' => $pendingOrders,
             'completedOrders' => $completedOrders
@@ -221,57 +238,127 @@ class KitchenDashboardController extends BaseDashboardController
      */
     public function dailyMenu()
     {
-        // Get today's date and current week cycle
-        $today = now()->format('Y-m-d');
-        $currentDay = now()->format('l');
-        $weekNumber = now()->weekOfYear;
-        $weekCycle = $weekNumber % 2 === 1 ? 1 : 2; // Odd weeks are cycle 1, even weeks are cycle 2
-        
-        // Get today's menu items from cook's planning
-        $todayMenuItems = \App\Models\Menu::where('day', $currentDay)
-            ->where('week_cycle', $weekCycle)
-            ->get()
-            ->groupBy('meal_type');
-            
-        // Get pre-orders for today to prepare correct quantities
-        $preOrders = \App\Models\PreOrder::where('date', $today)
-            ->where('is_attending', true)
-            ->get()
-            ->groupBy('meal_type');
-        
-        // Count expected attendance for each meal type
-        $mealAttendance = [
-            'breakfast' => $preOrders->get('breakfast') ? $preOrders->get('breakfast')->count() : 0,
-            'lunch' => $preOrders->get('lunch') ? $preOrders->get('lunch')->count() : 0,
-            'dinner' => $preOrders->get('dinner') ? $preOrders->get('dinner')->count() : 0,
-        ];
-        
-        // Get inventory items needed for today's meals
-        $requiredIngredients = [];
-        foreach ($todayMenuItems as $mealType => $meals) {
-            foreach ($meals as $meal) {
-                // Parse ingredients from description
-                $ingredientText = $meal->description;
-                if (strpos($ingredientText, 'Ingredients:') !== false) {
-                    $ingredientList = explode(':', $ingredientText)[1];
-                    $ingredients = array_map('trim', explode(',', $ingredientList));
-                    foreach ($ingredients as $ingredient) {
-                        if (!isset($requiredIngredients[$ingredient])) {
-                            $requiredIngredients[$ingredient] = 0;
-                        }
-                        $requiredIngredients[$ingredient] += $mealAttendance[$mealType] ?? 1;
-                    }
-                }
-            }
+        $today = now()->format('l'); // Get current day name
+
+        // FIXED: Use consistent week cycle calculation via service
+        $weekInfo = WeekCycleService::getWeekInfo();
+        $weekOfMonth = $weekInfo['week_of_month'];
+        $weekCycle = $weekInfo['week_cycle'];
+
+        // Check if cook has created any meals using the Meal model
+        $hasMeals = \App\Models\Meal::exists();
+
+        if (!$hasMeals) {
+            // No meals created by cook yet
+            return view('kitchen.daily-menu', [
+                'todayMenu' => null,
+                'weeklyMenu' => collect(),
+                'today' => $today,
+                'weekCycle' => $weekCycle,
+                'weekOfMonth' => $weekOfMonth,
+                'hasMeals' => false,
+                'waitingForCook' => true
+            ]);
         }
-        
+
+        // Sync today's menu to daily updates for real-time tracking
+        $this->syncTodaysMenuToDailyUpdates();
+
         return view('kitchen.daily-menu', [
-            'todayMenuItems' => $todayMenuItems,
-            'mealAttendance' => $mealAttendance,
-            'requiredIngredients' => $requiredIngredients,
+            'todayMenu' => null, // Will be loaded dynamically via AJAX
+            'weeklyMenu' => collect(), // Will be loaded dynamically via AJAX
             'today' => $today,
             'weekCycle' => $weekCycle,
-            'currentDay' => $currentDay
+            'weekOfMonth' => $weekOfMonth,
+            'hasMeals' => true,
+            'waitingForCook' => false
         ]);
+    }
+
+
+
+    /**
+     * Sync today's menu from cook's meals to daily menu updates
+     *
+     * @return void
+     */
+    private function syncTodaysMenuToDailyUpdates()
+    {
+        try {
+            $today = now()->toDateString();
+            $currentDayOfWeek = strtolower(now()->format('l'));
+            // FIXED: Use consistent week cycle calculation via service
+            $currentWeekCycle = WeekCycleService::getCurrentWeekCycle();
+
+            // Get today's meals from cook's menu
+            $todaysMeals = \App\Models\Meal::where('day_of_week', $currentDayOfWeek)
+                ->where('week_cycle', $currentWeekCycle)
+                ->get();
+
+            foreach ($todaysMeals as $meal) {
+                // Check if daily update already exists
+                $existingUpdate = \App\Models\DailyMenuUpdate::where('menu_date', $today)
+                    ->where('meal_type', $meal->meal_type)
+                    ->first();
+
+                if (!$existingUpdate) {
+                    // Create new daily menu update
+                    \App\Models\DailyMenuUpdate::create([
+                        'menu_date' => $today,
+                        'meal_type' => $meal->meal_type,
+                        'meal_name' => $meal->name,
+                        'ingredients' => $this->formatIngredients($meal->ingredients),
+                        'status' => 'planned',
+                        'estimated_portions' => $meal->serving_size ?? 50,
+                        'actual_portions' => 0,
+                        'updated_by' => auth()->id() ?? 1 // Default to admin if no auth
+                    ]);
+                }
+            }
+
+            \Log::info('Today\'s menu synced to daily updates', [
+                'date' => $today,
+                'meals_synced' => $todaysMeals->count()
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to sync today\'s menu to daily updates', [
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Format ingredients for display - convert arrays to strings
+     *
+     * @param mixed $ingredients
+     * @return string
+     */
+    private function formatIngredients($ingredients)
+    {
+        // Handle null or undefined
+        if ($ingredients === null || $ingredients === '') {
+            return 'No ingredients listed';
+        }
+
+        // Handle arrays
+        if (is_array($ingredients)) {
+            return implode(', ', $ingredients);
+        }
+
+        // Handle strings
+        if (is_string($ingredients)) {
+            return $ingredients;
+        }
+
+        // Handle objects (like stdClass) - try to convert to string
+        if (is_object($ingredients)) {
+            if (method_exists($ingredients, '__toString')) {
+                return (string) $ingredients;
+            }
+            return 'No ingredients listed';
+        }
+
+        // Fallback for any other type
+        return 'No ingredients listed';
     }
 }

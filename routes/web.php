@@ -9,16 +9,17 @@ use App\Http\Controllers\Cook\IngredientController;
 use App\Http\Controllers\Cook\InventoryController;
 use App\Http\Controllers\Cook\MenuController;
 use App\Http\Controllers\Cook\OrderController;
-use App\Http\Controllers\Cook\PreOrderController as CookPreOrderController;
+
 use App\Http\Controllers\Cook\PostAssessmentController;
 use App\Http\Controllers\Cook\PurchaseOrderController;
 use App\Http\Controllers\Cook\StudentFeedbackController as CookStudentFeedbackController;
+use App\Http\Controllers\Cook\FeedbackController as CookFeedbackController;
 use App\Http\Controllers\Cook\SupplierController;
 use App\Http\Controllers\Kitchen\KitchenDashboardController;
 use App\Http\Controllers\Kitchen\InventoryCheckController;
 use App\Http\Controllers\Kitchen\PreOrderController as KitchenPreOrderController;
 use App\Http\Controllers\Kitchen\PostAssessmentController as KitchenPostAssessmentController;
-use App\Http\Controllers\Kitchen\StudentFeedbackController;
+use App\Http\Controllers\Kitchen\FeedbackController as KitchenFeedbackController;
 use App\Http\Controllers\Kitchen\AnnouncementController;
 use App\Http\Controllers\Kitchen\PollController;
 use App\Http\Controllers\Student\StudentDashboardController;
@@ -26,6 +27,7 @@ use App\Http\Controllers\Student\StudentHistoryController;
 use App\Http\Controllers\Student\StudentMenuController;
 use App\Http\Controllers\Student\PreOrderController as StudentPreOrderController;
 use App\Http\Controllers\Student\FeedbackController;
+use App\Http\Controllers\Kitchen\PollController as KitchenPollController;
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +55,10 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     Route::post('/pre-order', [StudentPreOrderController::class, 'store'])->name('pre-order.store');
     Route::put('/pre-order/{id}', [StudentPreOrderController::class, 'update'])->name('pre-order.update');
     Route::get('/pre-order/history', [StudentPreOrderController::class, 'history'])->name('pre-order.history');
+
+    // Kitchen Poll Integration
+    Route::get('/polls/kitchen', [StudentPreOrderController::class, 'getKitchenPolls'])->name('polls.kitchen');
+    Route::post('/polls/{pollId}/respond', [StudentPreOrderController::class, 'respondToKitchenPoll'])->name('polls.respond');
     
     // Meal History - Disabled
     // Route::get('/history', [StudentHistoryController::class, 'index'])->name('history');
@@ -71,22 +77,22 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     Route::get('/settings', [StudentDashboardController::class, 'settings'])->name('settings');
 });
 
-Route::middleware(['auth'])->group(function () {
-    Route::post('/cook/menu/update', [\App\Http\Controllers\Cook\MenuController::class, 'update'])->name('cook.menu.update');
-});
-
 // Cook/Admin Routes
 Route::middleware(['auth', 'role:cook'])->prefix('cook')->name('cook.')->group(function () {
     // Dashboard & Overview
     Route::get('/dashboard', [CookDashboardController::class, 'dashboard'])->name('dashboard');
     Route::get('/settings', [CookDashboardController::class, 'settings'])->name('settings');
-    Route::get('/meal-attendance', [CookDashboardController::class, 'mealAttendance'])->name('meal-attendance');
+
 
     // Menu Management
-    Route::get('/menu', [MenuController::class, 'index'])->name('menu');
+    Route::get('/menu', [MenuController::class, 'index'])->name('menu.index');
     Route::post('/menu', [MenuController::class, 'store'])->name('menu.store');
-    Route::put('/menu/{menu}', [MenuController::class, 'update'])->name('menu.update');
+    Route::post('/menu/update', [MenuController::class, 'update'])->name('menu.update');
+    Route::post('/menu/clear-week', [MenuController::class, 'clearWeek'])->name('menu.clear-week');
     Route::delete('/menu/{menu}', [MenuController::class, 'destroy'])->name('menu.delete');
+    Route::get('/menu/{weekCycle}', [MenuController::class, 'getMenu'])->name('menu.get');
+    Route::get('/menu/{weekCycle}/{day}/{mealType}', [MenuController::class, 'getMeal'])->name('menu.meal');
+    Route::get('/menu/kitchen/status', [MenuController::class, 'getKitchenStatus'])->name('menu.kitchen-status');
     
     // Weekly Menu Management
     Route::get('/weekly-menu', [\App\Http\Controllers\Cook\WeeklyMenuController::class, 'index'])->name('weekly-menu');
@@ -113,37 +119,44 @@ Route::middleware(['auth', 'role:cook'])->prefix('cook')->name('cook.')->group(f
     Route::put('/suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
     Route::delete('/suppliers/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
     
-    // Menu Management
-    Route::get('/menu', [MenuController::class, 'index'])->name('menu');
-    Route::post('/api/menu/update', [MenuController::class, 'update'])->name('menu.update');
-    Route::get('/menu/create', [MenuController::class, 'create'])->name('menu.create');
-    Route::post('/menu', [MenuController::class, 'store'])->name('menu.store');
-    Route::get('/menu/{menu}/edit', [MenuController::class, 'edit'])->name('menu.edit');
-    Route::delete('/menu/{menu}', [MenuController::class, 'destroy'])->name('menu.destroy');
-    Route::post('/menu/{menu}/toggle', [MenuController::class, 'toggleAvailability'])->name('menu.toggle');
 
-    // Purchase Orders
-    Route::get('/purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchase-orders');
-    Route::post('/purchase-orders', [PurchaseOrderController::class, 'store'])->name('purchase-orders.store');
-    Route::put('/purchase-orders/{id}', [PurchaseOrderController::class, 'update'])->name('purchase-orders.update');
-    Route::delete('/purchase-orders/{id}', [PurchaseOrderController::class, 'destroy'])->name('purchase-orders.delete');
-    
-    // Pre-Orders Management
-    Route::get('/pre-orders', [CookPreOrderController::class, 'index'])->name('pre-orders');
-    Route::get('/pre-orders/export', [CookPreOrderController::class, 'export'])->name('pre-orders.export');
     
     // Post Assessment
     Route::get('/post-assessment', [PostAssessmentController::class, 'index'])->name('post-assessment');
     Route::post('/post-assessment', [PostAssessmentController::class, 'store'])->name('post-assessment.store');
     Route::put('/post-assessment/{id}', [PostAssessmentController::class, 'update'])->name('post-assessment.update');
+    Route::delete('/post-assessment/{id}', [PostAssessmentController::class, 'destroy'])->name('post-assessment.destroy');
     
     // Student Feedback & Communication
     Route::get('/student-feedback', [CookStudentFeedbackController::class, 'index'])->name('student-feedback');
+    Route::get('/feedback', [CookFeedbackController::class, 'index'])->name('feedback');
+    Route::get('/feedback/{id}', [CookFeedbackController::class, 'show'])->name('feedback.show');
+    Route::delete('/feedback/{id}', [CookFeedbackController::class, 'destroy'])->name('feedback.destroy');
+    Route::delete('/feedback', [CookFeedbackController::class, 'destroyAll'])->name('feedback.destroy-all');
     
     // Access to Announcements
     Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements');
     Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
     Route::put('/announcements/{id}', [AnnouncementController::class, 'update'])->name('announcements.update');
+
+    // Stock Management (Cook reviews kitchen reports and approves restocking)
+    Route::get('/stock-management', [InventoryController::class, 'index'])->name('inventory');
+    Route::get('/stock-management/reports', [InventoryController::class, 'reports'])->name('inventory.reports');
+    Route::delete('/stock-management/clear-all', [InventoryController::class, 'clearAllReports'])->name('inventory.clear-all-reports');
+    Route::get('/stock-management/reports/{id}', [InventoryController::class, 'showReport'])->name('inventory.show-report');
+    Route::post('/stock-management/reports/{id}/approve', [InventoryController::class, 'approveReport'])->name('inventory.approve-report');
+    Route::delete('/stock-management/reports/{id}', [InventoryController::class, 'deleteReport'])->name('inventory.delete-report');
+    Route::post('/stock-management/restock', [InventoryController::class, 'recordRestock'])->name('inventory.record-restock');
+    Route::get('/stock-management/alerts', [InventoryController::class, 'alerts'])->name('inventory.alerts');
+    Route::post('/menu/inventory-requirements', [MenuController::class, 'calculateInventoryRequirements'])->name('menu.inventory-requirements');
+
+
+
+    // Cross-System Integration
+    Route::get('/cross-system-data', [MenuController::class, 'getCrossSystemData'])->name('cross-system-data');
+    Route::get('/system-integration', [CookDashboardController::class, 'systemIntegration'])->name('system-integration');
+
+
 });
 
 // Kitchen Team Routes
@@ -153,16 +166,33 @@ Route::middleware(['auth', 'role:kitchen'])->prefix('kitchen')->name('kitchen.')
     Route::get('/settings', [KitchenDashboardController::class, 'settings'])->name('settings');
 
     // Pre-Orders
-    Route::get('/pre-orders', [KitchenPreOrderController::class, 'index'])->name('pre-orders');
-    Route::post('/pre-orders/mark-prepared', [KitchenPreOrderController::class, 'markPrepared'])->name('pre-orders.mark-prepared');
+    Route::get('/pre-orders', [App\Http\Controllers\Kitchen\PreOrderController::class, 'index'])->name('pre-orders');
+    Route::post('/pre-orders/mark-prepared', [App\Http\Controllers\Kitchen\PreOrderController::class, 'markMenuItemsPrepared'])->name('pre-orders.mark-prepared');
+    Route::post('/pre-orders/mark-preorder-status', [App\Http\Controllers\Kitchen\PreOrderController::class, 'markPreOrderStatus'])->name('pre-orders.mark-preorder-status');
     
     // Post Assessment (Leftovers)
     Route::get('/post-assessment', [KitchenPostAssessmentController::class, 'index'])->name('post-assessment');
     Route::post('/post-assessment', [KitchenPostAssessmentController::class, 'store'])->name('post-assessment.store');
+
+
+
+    // Debug route for post-assessment
+    Route::get('/debug-post-assessment', function() {
+        return response()->json([
+            'success' => true,
+            'message' => 'Post-assessment debug endpoint working',
+            'user' => auth()->user(),
+            'csrf_token' => csrf_token(),
+            'route_exists' => route('kitchen.post-assessment.store'),
+            'timestamp' => now()
+        ]);
+    });
     
     // Inventory Check
     Route::get('/inventory', [InventoryCheckController::class, 'index'])->name('inventory');
-    Route::post('/inventory/check', [InventoryCheckController::class, 'submitCheck'])->name('inventory.check');
+    Route::post('/inventory/check', [InventoryCheckController::class, 'store'])->name('inventory.check');
+    Route::get('/inventory/history', [InventoryCheckController::class, 'history'])->name('inventory.history');
+    Route::get('/inventory/{id}', [InventoryCheckController::class, 'show'])->name('inventory.show');
     
     // Recipe & Meal Execution
     Route::get('/recipes', [KitchenDashboardController::class, 'recipes'])->name('recipes');
@@ -170,14 +200,13 @@ Route::middleware(['auth', 'role:kitchen'])->prefix('kitchen')->name('kitchen.')
     Route::get('/preparation', [KitchenDashboardController::class, 'preparation'])->name('preparation');
     Route::get('/orders', [KitchenDashboardController::class, 'orders'])->name('orders');
     
-    // Student Feedback
-    Route::get('/student-feedback', [StudentFeedbackController::class, 'index'])->name('student-feedback');
+
     
-    // Meal Polling System
-    Route::get('/polls', [PollController::class, 'index'])->name('polls.index');
-    Route::post('/polls', [PollController::class, 'store'])->name('polls.store');
-    Route::get('/polls/{poll}', [PollController::class, 'show'])->name('polls.show');
-    Route::delete('/polls/{poll}', [PollController::class, 'destroy'])->name('polls.destroy');
+    // Meal Polling System (using Kitchen PollController)
+    Route::get('/polls', [App\Http\Controllers\Kitchen\PollController::class, 'index'])->name('polls.index');
+    Route::post('/polls', [App\Http\Controllers\Kitchen\PollController::class, 'store'])->name('polls.store');
+    Route::get('/polls/{poll}', [App\Http\Controllers\Kitchen\PollController::class, 'show'])->name('polls.show');
+    Route::delete('/polls/{poll}', [App\Http\Controllers\Kitchen\PollController::class, 'destroy'])->name('polls.destroy');
     
     // Daily Menu
     Route::get('/daily-menu', [KitchenDashboardController::class, 'dailyMenu'])->name('daily-menu');
@@ -187,13 +216,155 @@ Route::middleware(['auth', 'role:kitchen'])->prefix('kitchen')->name('kitchen.')
     Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
     Route::put('/announcements/{id}', [AnnouncementController::class, 'update'])->name('announcements.update');
     Route::delete('/announcements/{id}', [AnnouncementController::class, 'destroy'])->name('announcements.delete');
+
+    // Menu Poll Management
+    Route::get('/pre-orders/polls', [App\Http\Controllers\Kitchen\PreOrderController::class, 'getPolls'])->name('pre-orders.polls');
+    Route::post('/pre-orders/create-poll', [App\Http\Controllers\Kitchen\PreOrderController::class, 'createPoll'])->name('pre-orders.create-poll');
+    Route::post('/pre-orders/send-poll', [App\Http\Controllers\Kitchen\PreOrderController::class, 'sendPoll'])->name('pre-orders.send-poll');
+    Route::post('/pre-orders/send-all-polls', [App\Http\Controllers\Kitchen\PreOrderController::class, 'sendAllPolls'])->name('pre-orders.send-all-polls');
+    Route::post('/pre-orders/update-poll-deadline', [App\Http\Controllers\Kitchen\PreOrderController::class, 'updatePollDeadline'])->name('pre-orders.update-poll-deadline');
+    Route::delete('/pre-orders/delete-poll/{pollId}', [App\Http\Controllers\Kitchen\PreOrderController::class, 'deletePoll'])->name('pre-orders.delete-poll');
+    Route::get('/pre-orders/poll-results/{pollId}', [App\Http\Controllers\Kitchen\PreOrderController::class, 'getPollResults'])->name('pre-orders.poll-results');
+
+    // Test route for debugging
+    Route::get('/pre-orders/test', function() {
+        return response()->json([
+            'success' => true,
+            'message' => 'Test route working',
+            'timestamp' => now(),
+            'user' => auth()->user() ? auth()->user()->name : 'Not authenticated',
+            'role' => auth()->user() ? auth()->user()->role : 'No role'
+        ]);
+    })->name('pre-orders.test');
+
+    // Debug route to test all endpoints
+    Route::get('/pre-orders/debug-endpoints', function() {
+        $endpoints = [
+            'polls' => '/kitchen/pre-orders/polls',
+            'available-meals' => '/kitchen/pre-orders/available-meals?meal_type=breakfast',
+            'debug-meals' => '/kitchen/pre-orders/debug-meals',
+            'daily-menu-updates' => '/kitchen/daily-menu/updates',
+        ];
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Debug endpoints list',
+            'endpoints' => $endpoints,
+            'current_user' => auth()->user(),
+            'timestamp' => now()
+        ]);
+    });
+
+    // Daily Menu Real-time Updates
+    Route::get('/daily-menu/updates', [App\Http\Controllers\Kitchen\PreOrderController::class, 'getDailyMenuUpdates'])->name('daily-menu.updates');
+    Route::post('/daily-menu/update-status', [App\Http\Controllers\Kitchen\PreOrderController::class, 'updateDailyMenuStatus'])->name('daily-menu.update-status');
+    Route::post('/daily-menu/update-portions', [App\Http\Controllers\Kitchen\PreOrderController::class, 'updateDailyMenuPortions'])->name('daily-menu.update-portions');
+
+    // Legacy routes (keeping for compatibility)
+    Route::get('/pre-orders/{weekCycle}', [App\Http\Controllers\Kitchen\PreOrderController::class, 'getPreOrders'])->name('pre-orders.get');
+    Route::get('/pre-orders/check-menu', [App\Http\Controllers\Kitchen\PreOrderController::class, 'checkMenu'])->name('pre-orders.check-menu');
+    Route::get('/pre-orders/available-meals', [App\Http\Controllers\Kitchen\PreOrderController::class, 'getAvailableMeals'])->name('pre-orders.available-meals');
+    Route::get('/pre-orders/debug-meals', [App\Http\Controllers\Kitchen\PreOrderController::class, 'debugMeals'])->name('pre-orders.debug-meals');
+    Route::post('/pre-orders/notify-deadline', [App\Http\Controllers\Kitchen\PreOrderController::class, 'notifyDeadline'])->name('pre-orders.notify-deadline');
+    Route::post('/pre-orders/update-deadline', [App\Http\Controllers\Kitchen\PreOrderController::class, 'updateDeadline'])->name('pre-orders.update-deadline');
+    Route::post('/pre-orders/mark-prepared', [App\Http\Controllers\Kitchen\PreOrderController::class, 'markPrepared'])->name('pre-orders.mark-prepared');
+
+    // Feedback
+    Route::get('/feedback', [KitchenFeedbackController::class, 'index'])->name('feedback');
+    Route::get('/feedback/{id}', [KitchenFeedbackController::class, 'show'])->name('feedback.show');
 });
 
+// Additional Kitchen Routes (for menu management)
+Route::middleware(['auth', 'role:kitchen'])->prefix('kitchen')->group(function () {
+    Route::get('/menu', [App\Http\Controllers\Kitchen\MenuController::class, 'index'])->name('kitchen.menu');
+    Route::get('/menu/{weekCycle}', [App\Http\Controllers\Kitchen\MenuController::class, 'getMenu']);
+    Route::post('/menu/update-status', [App\Http\Controllers\Kitchen\MenuController::class, 'updateStatus']);
 
 
 
+    // Debug route for testing API
+    Route::get('/debug/menu/{weekCycle}', function($weekCycle) {
+        return response()->json([
+            'success' => true,
+            'message' => 'API is working',
+            'weekCycle' => $weekCycle,
+            'user' => auth()->user()->name ?? 'Unknown',
+            'role' => auth()->user()->role ?? 'Unknown',
+            'timestamp' => now()->toDateTimeString()
+        ]);
+    });
+});
 
+// Additional Student Routes (for menu viewing)
+Route::middleware(['auth', 'role:student'])->prefix('student')->group(function () {
+    Route::get('/menu', [App\Http\Controllers\Student\MenuController::class, 'index'])->name('student.menu');
+    Route::get('/menu/{weekCycle}', [App\Http\Controllers\Student\MenuController::class, 'getMenu']);
+});
 
+// Notification Routes (for all authenticated users)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/recent', [App\Http\Controllers\NotificationController::class, 'getRecent'])->name('notifications.recent');
+    Route::get('/notifications/feature-status', [App\Http\Controllers\NotificationController::class, 'getFeatureStatus'])->name('notifications.feature-status');
+    Route::post('/notifications/mark-feature-read', [App\Http\Controllers\NotificationController::class, 'markFeatureAsRead'])->name('notifications.mark-feature-read');
+    Route::get('/notifications/stats', [App\Http\Controllers\NotificationController::class, 'getStats'])->name('notifications.stats');
+    Route::post('/notifications/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::delete('/notifications/{id}', [App\Http\Controllers\NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::post('/notifications/test', [App\Http\Controllers\NotificationController::class, 'test'])->name('notifications.test');
 
+    // Debug route (only in local environment)
+    if (app()->environment('local')) {
+        Route::get('/debug/notifications', function() {
+            return view('debug.notification-test');
+        })->name('debug.notifications');
 
+        // Debug route for week cycle calculation
+        Route::get('/debug/week-cycle', function() {
+            $weekInfo = \App\Services\WeekCycleService::getWeekInfo();
+            $debug = \App\Services\WeekCycleService::debug();
 
+            return response()->json([
+                'success' => true,
+                'current_week_info' => $weekInfo,
+                'debug_info' => $debug,
+                'comparison' => [
+                    'laravel_week_of_month' => now()->weekOfMonth,
+                    'helper_week_of_month' => $weekInfo['week_of_month'],
+                    'helper_week_cycle' => $weekInfo['week_cycle'],
+                    'cycle_description' => $weekInfo['cycle_description']
+                ],
+                'message' => 'Week cycle calculation is now consistent across all components!'
+            ]);
+        })->name('debug.week-cycle');
+    }
+});
+
+// Error logging endpoint for JavaScript errors (available to all authenticated users)
+Route::middleware(['auth'])->post('/api/log-error', function (Request $request) {
+    \Log::error('Frontend Error', [
+        'type' => $request->input('type', 'unknown'),
+        'message' => $request->input('message'),
+        'filename' => $request->input('filename'),
+        'line' => $request->input('line'),
+        'column' => $request->input('column'),
+        'stack' => $request->input('stack'),
+        'url' => $request->input('url'),
+        'user_agent' => $request->input('user_agent'),
+        'user_id' => auth()->id(),
+        'user_role' => auth()->user()->role ?? 'unknown',
+        'timestamp' => now()
+    ]);
+
+    return response()->json(['success' => true]);
+});
+
+// System health check endpoint
+Route::middleware(['auth'])->get('/api/system-health', function () {
+    $health = \App\Services\ErrorPreventionService::systemHealthCheck();
+    return response()->json([
+        'success' => true,
+        'health' => $health,
+        'timestamp' => now()
+    ]);
+});

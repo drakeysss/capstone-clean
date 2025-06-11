@@ -2,14 +2,20 @@
 
 @section('content')
 <div class="container-fluid p-4">
+    <!-- Alert Container -->
+    <div id="alertContainer"></div>
+
     <!-- Header Section -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="welcome-card">
                 <div class="welcome-content">
-                    <h2>Weekly Meal Pre-Order</h2>
-                    <p class="text-muted" style="color: white;">Select which meals you will eat this week to help reduce food waste</p>
-                     
+                    <h2>Student Menu Polling</h2>
+                    <p class="text-muted" style="color: white;">Send polls to students so they can pre-select their meal choices from today's menu</p>
+                    <small style="color: rgba(255,255,255,0.8);" id="todayInfo">
+                        <i class="bi bi-calendar-week me-1"></i>
+                        <span id="todayDayAndWeek">Loading...</span>
+                    </small>
                 </div>
                 <div class="current-time">
                     <i class="bi bi-clock"></i>
@@ -19,51 +25,113 @@
         </div>
     </div>
 
+    <!-- Deadline Notifications -->
+    <div id="deadlineNotifications" class="mb-4"></div>
+
     <!-- No meal details modal needed -->
     
-    <!-- Edit Menu Modal -->
-    <div class="modal fade" id="editMenuModal" tabindex="-1" aria-labelledby="editMenuModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+    <!-- Edit Poll Deadline Modal -->
+    <div class="modal fade" id="editPollDeadlineModal" tabindex="-1" aria-labelledby="editPollDeadlineModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="editMenuModalLabel">Edit Menu Item</h5>
+                    <h5 class="modal-title" id="editPollDeadlineModalLabel">
+                        <i class="bi bi-clock-history me-2"></i>Edit Poll Deadline
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="editMenuForm">
-                        <input type="hidden" id="editDay" name="day">
-                        <input type="hidden" id="editMealType" name="meal_type">
-                        <input type="hidden" id="editWeekCycle" name="week_cycle" value="1">
-                        
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Kitchen Team:</strong> You can only modify poll deadlines. Menu content is managed by the cook.
+                    </div>
+
+                    <form id="editPollDeadlineForm">
+                        <input type="hidden" id="editPollId" name="poll_id">
+
                         <div class="mb-3">
-                            <label for="editMealName" class="form-label">Meal Name</label>
-                            <input type="text" class="form-control" id="editMealName" name="meal_name" required>
+                            <label class="form-label">Poll Information (Read-only)</label>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 id="editPollMealName" class="card-title mb-1">-</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <small class="text-muted">
+                                                <i class="bi bi-calendar"></i> <span id="editPollDate">-</span>
+                                            </small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <small class="text-muted text-capitalize">
+                                                <i class="bi bi-clock"></i> <span id="editPollMealType">-</span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <small id="editPollIngredients" class="text-muted d-block mt-1">-</small>
+                                </div>
+                            </div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="editIngredients" class="form-label">Ingredients</label>
-                            <input type="text" class="form-control" id="editIngredients" name="ingredients" placeholder="Ingredient 1, Ingredient 2, etc." required>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="editDeadlineDate" class="form-label">Deadline Date</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="editDeadlineDate" name="deadline_date">
+                                        <option value="{{ date('Y-m-d') }}">Today ({{ date('M j') }})</option>
+                                        <option value="{{ date('Y-m-d', strtotime('+1 day')) }}">Tomorrow ({{ date('M j', strtotime('+1 day')) }})</option>
+                                        <option value="{{ date('Y-m-d', strtotime('+2 days')) }}">{{ date('M j', strtotime('+2 days')) }}</option>
+                                        <option value="{{ date('Y-m-d', strtotime('+3 days')) }}">{{ date('M j', strtotime('+3 days')) }})</option>
+                                        <option value="custom">Custom Date...</option>
+                                    </select>
+                                    <button class="btn btn-outline-secondary" type="button" id="editCustomDateBtn">
+                                        <i class="bi bi-calendar"></i> Custom
+                                    </button>
+                                </div>
+                                <input type="date" class="form-control mt-2" id="editCustomDate" name="custom_date" style="display: none;">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editDeadlineTime" class="form-label">Deadline Time</label>
+                                <select class="form-select" id="editDeadlineTime" name="deadline_time">
+                                    <option value="9:00 AM">9:00 AM</option>
+                                    <option value="10:00 AM">10:00 AM</option>
+                                    <option value="11:00 AM">11:00 AM</option>
+                                    <option value="12:00 PM">12:00 PM (Noon)</option>
+                                    <option value="1:00 PM">1:00 PM</option>
+                                    <option value="2:00 PM">2:00 PM</option>
+                                    <option value="3:00 PM">3:00 PM</option>
+                                    <option value="4:00 PM">4:00 PM</option>
+                                    <option value="5:00 PM">5:00 PM</option>
+                                    <option value="6:00 PM">6:00 PM</option>
+                                    <option value="7:00 PM">7:00 PM</option>
+                                    <option value="8:00 PM">8:00 PM</option>
+                                    <option value="9:00 PM">9:00 PM</option>
+                                    <option value="10:00 PM">10:00 PM</option>
+                                    <option value="11:00 PM">11:00 PM</option>
+                                    <option value="custom">Custom Time</option>
+                                </select>
+                            </div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="editCutoffTime" class="form-label">Cutoff Time</label>
-                            <select class="form-select" id="editCutoffTime" name="cutoff_time">
-                                <option value="6:00 AM">10:00 PM (Breakfast)</option>
-                                <option value="10:00 AM">10:00 PM (Lunch)</option>
-                                <option value="3:00 PM">3:00 PM (Dinner)</option>
-                                <option value="custom">Custom Time</option>
-                            </select>
+
+                        <div class="mb-3" id="editCustomTimeContainer" style="display: none;">
+                            <label for="editCustomDeadlineTime" class="form-label">Custom Deadline Time</label>
+                            <input type="time" class="form-control" id="editCustomDeadlineTime" name="custom_deadline">
                         </div>
-                        
-                        <div class="mb-3" id="customTimeContainer" style="display: none;">
-                            <label for="customCutoffTime" class="form-label">Custom Cutoff Time</label>
-                            <input type="time" class="form-control" id="customCutoffTime" name="custom_cutoff_time">
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Example:</strong> If you select "Today 3:00 PM" for a Tuesday meal, students must respond by Tuesday 3:00 PM.
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Note:</strong> Changing the deadline will affect when students can respond to this poll.
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="saveMenuChangesBtn">Save Changes</button>
+                    <button type="button" class="btn btn-primary" id="savePollDeadlineBtn">
+                        <i class="bi bi-check-circle"></i> Update Deadline
+                    </button>
                 </div>
             </div>
         </div>
@@ -74,1229 +142,645 @@
         <div class="col-12">
             <div class="card main-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title">Weekly Meal Pre-Order</h5>
-                    <div>
-                        <select id="weekCycleSelect" class="form-select form-select-sm d-inline-block w-auto">
-                            <option value="1">Week 1 & 3</option>
-                            <option value="2">Week 2 & 4</option>
-                        </select>
-                    </div>
+                    <h5 class="card-title">Menu Polling for Students</h5>
+                    @if(!isset($waitingForCook) || !$waitingForCook)
+                   
+                    @endif
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle me-2"></i> Please select which meals you will eat this week. This helps us reduce food waste by preparing the right amount of food.
-                    </div>
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle me-2"></i> Note that the deadline may vary on students class schedule.
-                    </div>
-                    
-                    <form id="mealPreOrderForm" action="{{ route('student.meals.submit') }}" method="POST">
-                        @csrf
-                        <input type="hidden" id="week_cycle" name="week_cycle" value="1">
-                        
-                        <!-- Week 1 & 3 Menu -->
-                        <div id="week1Menu" class="week-menu">
-                            <div class="table-responsive">
-                                <table class="table table-bordered">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th width="15%">Day</th>
-                                            <th width="25%">Breakfast <span class="badge bg-danger">Deadline: 10:00 PM</span></th>
-                                            <th width="25%">Lunch <span class="badge bg-danger">Deadline: 10:00 PM</span></th>
-                                            <th width="25%">Dinner <span class="badge bg-danger">Deadline: 3:00 PM</span></th>
-                                            <th width="10%">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- Monday -->                                        
-                                        <tr>
-                                            <td class="fw-bold">Monday</td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Chicken Loaf with Energen</div>
-                                                    <small class="text-muted">Chicken Loaf, Energen, Water</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="monday_breakfast" id="monday_breakfast_yes" value="yes">
-                                                            <label class="form-check-label text-success" for="monday_breakfast_yes"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="monday_breakfast" id="monday_breakfast_no" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="monday_breakfast_no"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Fried Fish</div>
-                                                    <small class="text-muted">Fish, Oil, Salt</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="monday_lunch" id="monday_lunch_yes" value="yes">
-                                                            <label class="form-check-label text-success" for="monday_lunch_yes"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="monday_lunch" id="monday_lunch_no" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="monday_lunch_no"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Ginisang Cabbage</div>
-                                                    <small class="text-muted">Cabbage, Garlic, Onion, Oil, Salt</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="monday_dinner" id="monday_dinner_yes" value="yes">
-                                                            <label class="form-check-label text-success" for="monday_dinner_yes"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="monday_dinner" id="monday_dinner_no" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="monday_dinner_no"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="align-middle text-center">
-                                                <button type="button" class="btn btn-sm btn-outline-success edit-menu-btn" data-bs-toggle="modal" data-bs-target="#editMenuModal" data-day="monday" data-week="1">
-                                                    <i class="bi bi-pencil"></i> Edit
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        
-                                        <!-- Tuesday -->                                        
-                                        <tr>
-                                            <td class="fw-bold">Tuesday</td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Odong with Sardines</div>
-                                                    <small class="text-muted">Odong Noodles, Sardines, Water</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="tuesday_breakfast" id="tuesday_breakfast_yes" value="yes">
-                                                            <label class="form-check-label text-success" for="tuesday_breakfast_yes"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="tuesday_breakfast" id="tuesday_breakfast_no" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="tuesday_breakfast_no"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Fried Chicken</div>
-                                                    <small class="text-muted">Chicken, Oil, Salt, Pepper</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="tuesday_lunch" id="tuesday_lunch_yes" value="yes">
-                                                            <label class="form-check-label text-success" for="tuesday_lunch_yes"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="tuesday_lunch" id="tuesday_lunch_no" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="tuesday_lunch_no"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Baguio Beans</div>
-                                                    <small class="text-muted">Baguio Beans, Garlic, Onion, Oil, Salt</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="tuesday_dinner" id="tuesday_dinner_yes" value="yes">
-                                                            <label class="form-check-label text-success" for="tuesday_dinner_yes"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="tuesday_dinner" id="tuesday_dinner_no" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="tuesday_dinner_no"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="align-middle text-center">
-                                                <button type="button" class="btn btn-sm btn-outline-success edit-menu-btn" data-bs-toggle="modal" data-bs-target="#editMenuModal" data-day="tuesday" data-week="1">
-                                                    <i class="bi bi-pencil"></i> Edit
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        
-                                        <!-- Wednesday -->                                        
-                                        <tr>
-                                            <td class="fw-bold">Wednesday</td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Hotdogs</div>
-                                                    <small class="text-muted">Hotdogs, Oil</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="wednesday_breakfast" id="wednesday_breakfast_yes" value="yes">
-                                                            <label class="form-check-label text-success" for="wednesday_breakfast_yes"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="wednesday_breakfast" id="wednesday_breakfast_no" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="wednesday_breakfast_no"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Porkchop Guisado</div>
-                                                    <small class="text-muted">Porkchop, Garlic, Onion, Oil, Salt</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="wednesday_lunch" id="wednesday_lunch_yes" value="yes">
-                                                            <label class="form-check-label text-success" for="wednesday_lunch_yes"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="wednesday_lunch" id="wednesday_lunch_no" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="wednesday_lunch_no"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Pinakbet</div>
-                                                    <small class="text-muted">Squash, Eggplant, Okra, String Beans, Bitter Gourd</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="wednesday_dinner" id="wednesday_dinner_yes" value="yes">
-                                                            <label class="form-check-label text-success" for="wednesday_dinner_yes"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="wednesday_dinner" id="wednesday_dinner_no" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="wednesday_dinner_no"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="align-middle text-center">
-                                                <button type="button" class="btn btn-sm btn-outline-success edit-menu-btn" data-bs-toggle="modal" data-bs-target="#editMenuModal" data-day="wednesday" data-week="1">
-                                                    <i class="bi bi-pencil"></i> Edit
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        
-                                        <!-- Thursday -->                                        
-                                        <tr>
-                                            <td class="fw-bold">Thursday</td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Boiled Eggs with Energen</div>
-                                                    <small class="text-muted">Eggs, Energen, Water</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="thursday_breakfast" id="thursday_breakfast_yes" value="yes">
-                                                            <label class="form-check-label text-success" for="thursday_breakfast_yes"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="thursday_breakfast" id="thursday_breakfast_no" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="thursday_breakfast_no"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Groundpork</div>
-                                                    <small class="text-muted">Ground Pork, Garlic, Onion, Oil, Salt</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="thursday_lunch" id="thursday_lunch_yes" value="yes">
-                                                            <label class="form-check-label text-success" for="thursday_lunch_yes"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="thursday_lunch" id="thursday_lunch_no" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="thursday_lunch_no"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Chopsuey</div>
-                                                    <small class="text-muted">Mixed Vegetables, Garlic, Onion, Oil, Salt</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="thursday_dinner" id="thursday_dinner_yes" value="yes">
-                                                            <label class="form-check-label text-success" for="thursday_dinner_yes"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="thursday_dinner" id="thursday_dinner_no" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="thursday_dinner_no"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="align-middle text-center">
-                                                <button type="button" class="btn btn-sm btn-outline-success edit-menu-btn" data-bs-toggle="modal" data-bs-target="#editMenuModal" data-day="thursday" data-week="1">
-                                                    <i class="bi bi-pencil"></i> Edit
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        
-                                        <!-- Friday -->                                        
-                                        <tr>
-                                            <td class="fw-bold">Friday</td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Ham</div>
-                                                    <small class="text-muted">Ham, Oil</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="friday_breakfast" id="friday_breakfast_yes" value="yes">
-                                                            <label class="form-check-label text-success" for="friday_breakfast_yes"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="friday_breakfast" id="friday_breakfast_no" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="friday_breakfast_no"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Fried Chicken</div>
-                                                    <small class="text-muted">Chicken, Oil, Salt, Pepper</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="friday_lunch" id="friday_lunch_yes" value="yes">
-                                                            <label class="form-check-label text-success" for="friday_lunch_yes"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="friday_lunch" id="friday_lunch_no" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="friday_lunch_no"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Monggo Beans</div>
-                                                    <small class="text-muted">Monggo Beans, Garlic, Onion, Oil, Salt</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="friday_dinner" id="friday_dinner_yes" value="yes">
-                                                            <label class="form-check-label text-success" for="friday_dinner_yes"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="friday_dinner" id="friday_dinner_no" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="friday_dinner_no"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="align-middle text-center">
-                                                <button type="button" class="btn btn-sm btn-outline-success edit-menu-btn" data-bs-toggle="modal" data-bs-target="#editMenuModal" data-day="friday" data-week="1">
-                                                    <i class="bi bi-pencil"></i> Edit
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                    @if(isset($waitingForCook) && $waitingForCook)
+                        <!-- No Meals Created Yet -->
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="bi bi-chef-hat display-1 text-muted"></i>
                             </div>
-                            
-                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-check-circle me-1"></i> Send to Students
+                            <h4 class="text-muted">No Meals Created Yet</h4>
+                            <p class="text-muted">
+                                No meals have been created in the system yet.<br>
+                                The system starts completely empty - no pre-populated data.
+                            </p>
+                            <div class="alert alert-info mt-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Getting Started:</strong> The cook needs to create meals for different days and week cycles first. Once meals are created, you can create polls for students.
+                            </div>
+                            <div class="alert alert-warning mt-3">
+                                <i class="bi bi-lightbulb me-2"></i>
+                                <strong>How it works:</strong>
+                                <ol class="text-start mt-2 mb-0">
+                                    <li><strong>Cook creates meals</strong> for each day and week cycle</li>
+                                    <li><strong>Kitchen creates polls</strong> from those meals</li>
+                                    <li><strong>Students respond</strong> to polls</li>
+                                    <li><strong>Kitchen prepares</strong> based on responses</li>
+                                </ol>
+                            </div>
+                            <div class="mt-3">
+                                <button class="btn btn-outline-primary" onclick="window.location.reload()">
+                                    <i class="bi bi-arrow-clockwise"></i> Check Again
                                 </button>
+                                <a href="{{ route('cook.menu.index') }}" class="btn btn-outline-success ms-2">
+                                    <i class="bi bi-plus-circle"></i> Create Meals (Cook Interface)
+                                </a>
                             </div>
                         </div>
-                        
-                        <!-- Week 2 & 4 Menu -->
-                        <div id="week2Menu" class="week-menu" style="display: none;">
-                            <div class="table-responsive">
-                                <table class="table table-bordered">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th width="15%">Day</th>
-                                            <th width="25%">Breakfast <span class="badge bg-danger">Deadline: 10:00 PM</span></th>
-                                            <th width="25%">Lunch <span class="badge bg-danger">Deadline: 10:00 PM</span></th>
-                                            <th width="25%">Dinner <span class="badge bg-danger">Deadline: 3:00 PM</span></th>
-                                            <th width="10%">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- Monday Week 2 -->                                        
-                                        <tr>
-                                            <td class="fw-bold">Monday</td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Chorizo</div>
-                                                    <small class="text-muted">Chorizo, Oil</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="monday_breakfast_w2" id="monday_breakfast_yes_w2" value="yes">
-                                                            <label class="form-check-label text-success" for="monday_breakfast_yes_w2"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="monday_breakfast_w2" id="monday_breakfast_no_w2" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="monday_breakfast_no_w2"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Chicken Adobo</div>
-                                                    <small class="text-muted">Chicken, Soy Sauce, Vinegar, Garlic, Onion</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="monday_lunch_w2" id="monday_lunch_yes_w2" value="yes">
-                                                            <label class="form-check-label text-success" for="monday_lunch_yes_w2"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="monday_lunch_w2" id="monday_lunch_no_w2" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="monday_lunch_no_w2"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">String Beans Guisado</div>
-                                                    <small class="text-muted">String Beans, Garlic, Onion, Oil, Salt</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="monday_dinner_w2" id="monday_dinner_yes_w2" value="yes">
-                                                            <label class="form-check-label text-success" for="monday_dinner_yes_w2"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="monday_dinner_w2" id="monday_dinner_no_w2" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="monday_dinner_no_w2"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="align-middle text-center">
-                                                <button type="button" class="btn btn-sm btn-outline-success edit-menu-btn" data-bs-toggle="modal" data-bs-target="#editMenuModal" data-day="monday" data-week="2">
-                                                    <i class="bi bi-pencil"></i> Edit
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        
-                                        <!-- Tuesday Week 2 -->                                        
-                                        <tr>
-                                            <td class="fw-bold">Tuesday</td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Scrambled Eggs with Energen</div>
-                                                    <small class="text-muted">Eggs, Energen, Water</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="tuesday_breakfast_w2" id="tuesday_breakfast_yes_w2" value="yes">
-                                                            <label class="form-check-label text-success" for="tuesday_breakfast_yes_w2"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="tuesday_breakfast_w2" id="tuesday_breakfast_no_w2" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="tuesday_breakfast_no_w2"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Fried Fish</div>
-                                                    <small class="text-muted">Fish, Oil, Salt</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="tuesday_lunch_w2" id="tuesday_lunch_yes_w2" value="yes">
-                                                            <label class="form-check-label text-success" for="tuesday_lunch_yes_w2"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="tuesday_lunch_w2" id="tuesday_lunch_no_w2" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="tuesday_lunch_no_w2"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Talong with Eggs</div>
-                                                    <small class="text-muted">Eggplant, Eggs, Garlic, Onion, Oil, Salt</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="tuesday_dinner_w2" id="tuesday_dinner_yes_w2" value="yes">
-                                                            <label class="form-check-label text-success" for="tuesday_dinner_yes_w2"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="tuesday_dinner_w2" id="tuesday_dinner_no_w2" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="tuesday_dinner_no_w2"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="align-middle text-center">
-                                                <button type="button" class="btn btn-sm btn-outline-success edit-menu-btn" data-bs-toggle="modal" data-bs-target="#editMenuModal" data-day="tuesday" data-week="2">
-                                                    <i class="bi bi-pencil"></i> Edit
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        
-                                        <!-- Wednesday Week 2 -->                                        
-                                        <tr>
-                                            <td class="fw-bold">Wednesday</td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Sardines with Eggs</div>
-                                                    <small class="text-muted">Sardines, Eggs, Oil</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="wednesday_breakfast_w2" id="wednesday_breakfast_yes_w2" value="yes">
-                                                            <label class="form-check-label text-success" for="wednesday_breakfast_yes_w2"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="wednesday_breakfast_w2" id="wednesday_breakfast_no_w2" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="wednesday_breakfast_no_w2"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Groundpork</div>
-                                                    <small class="text-muted">Ground Pork, Garlic, Onion, Oil, Salt</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="wednesday_lunch_w2" id="wednesday_lunch_yes_w2" value="yes">
-                                                            <label class="form-check-label text-success" for="wednesday_lunch_yes_w2"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="wednesday_lunch_w2" id="wednesday_lunch_no_w2" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="wednesday_lunch_no_w2"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Tinun-ang Kalabasa with Buwad</div>
-                                                    <small class="text-muted">Kalabasa, Buwad, Garlic, Onion, Oil, Salt</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="wednesday_dinner_w2" id="wednesday_dinner_yes_w2" value="yes">
-                                                            <label class="form-check-label text-success" for="wednesday_dinner_yes_w2"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="wednesday_dinner_w2" id="wednesday_dinner_no_w2" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="wednesday_dinner_no_w2"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="align-middle text-center">
-                                                <button type="button" class="btn btn-sm btn-outline-success edit-menu-btn" data-bs-toggle="modal" data-bs-target="#editMenuModal" data-day="wednesday" data-week="2">
-                                                    <i class="bi bi-pencil"></i> Edit
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        
-                                        <!-- Thursday Week 2 -->                                        
-                                        <tr>
-                                            <td class="fw-bold">Thursday</td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Luncheon Meat</div>
-                                                    <small class="text-muted">Luncheon Meat, Oil</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="thursday_breakfast_w2" id="thursday_breakfast_yes_w2" value="yes">
-                                                            <label class="form-check-label text-success" for="thursday_breakfast_yes_w2"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="thursday_breakfast_w2" id="thursday_breakfast_no_w2" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="thursday_breakfast_no_w2"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Fried Chicken</div>
-                                                    <small class="text-muted">Chicken, Oil, Salt, Pepper</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="thursday_lunch_w2" id="thursday_lunch_yes_w2" value="yes">
-                                                            <label class="form-check-label text-success" for="thursday_lunch_yes_w2"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="thursday_lunch_w2" id="thursday_lunch_no_w2" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="thursday_lunch_no_w2"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Chopsuey</div>
-                                                    <small class="text-muted">Mixed Vegetables, Garlic, Onion, Oil, Salt</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="thursday_dinner_w2" id="thursday_dinner_yes_w2" value="yes">
-                                                            <label class="form-check-label text-success" for="thursday_dinner_yes_w2"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="thursday_dinner_w2" id="thursday_dinner_no_w2" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="thursday_dinner_no_w2"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="align-middle text-center">
-                                                <button type="button" class="btn btn-sm btn-outline-success edit-menu-btn" data-bs-toggle="modal" data-bs-target="#editMenuModal" data-day="thursday" data-week="2">
-                                                    <i class="bi bi-pencil"></i> Edit
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        
-                                        <!-- Friday Week 2 -->                                        
-                                        <tr>
-                                            <td class="fw-bold">Friday</td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Sotanghon Guisado</div>
-                                                    <small class="text-muted">Sotanghon, Garlic, Onion, Oil, Salt</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="friday_breakfast_w2" id="friday_breakfast_yes_w2" value="yes">
-                                                            <label class="form-check-label text-success" for="friday_breakfast_yes_w2"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="friday_breakfast_w2" id="friday_breakfast_no_w2" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="friday_breakfast_no_w2"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Pork Menudo</div>
-                                                    <small class="text-muted">Pork, Carrots, Potatoes, Garlic, Onion, Oil, Salt</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="friday_lunch_w2" id="friday_lunch_yes_w2" value="yes">
-                                                            <label class="form-check-label text-success" for="friday_lunch_yes_w2"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="friday_lunch_w2" id="friday_lunch_no_w2" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="friday_lunch_no_w2"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="meal-item">
-                                                    <div class="fw-bold">Monggo Beans</div>
-                                                    <small class="text-muted">Monggo Beans, Garlic, Onion, Oil, Salt</small>
-                                                    <div class="mt-2">
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="friday_dinner_w2" id="friday_dinner_yes_w2" value="yes">
-                                                            <label class="form-check-label text-success" for="friday_dinner_yes_w2"><i class="bi bi-check-circle-fill"></i> Yes</label>
-                                                        </div>
-                                                        <div class="form-check form-check-inline">
-                                                            <input class="form-check-input" type="radio" name="friday_dinner_w2" id="friday_dinner_no_w2" value="no" checked>
-                                                            <label class="form-check-label text-danger" for="friday_dinner_no_w2"><i class="bi bi-x-circle-fill"></i> No</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="align-middle text-center">
-                                                <button type="button" class="btn btn-sm btn-outline-success edit-menu-btn" data-bs-toggle="modal" data-bs-target="#editMenuModal" data-day="friday" data-week="2">
-                                                    <i class="bi bi-pencil"></i> Edit
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                    @elseif(isset($noMenuForToday) && $noMenuForToday)
+                        <!-- No Menu for Today's Cycle -->
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="bi bi-chef-hat display-1 text-muted"></i>
                             </div>
-                            
-                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-check-circle me-1"></i> Send to Students
+                            <h4 class="text-muted">No Menu for Today's Cycle</h4>
+                            <p class="text-muted">
+                                No meals have been created for <strong>{{ ucfirst($currentDay ?? 'today') }}</strong> in <strong>Week {{ $currentWeekCycle ?? 'current' }}</strong> yet.
+                            </p>
+                            <div class="alert alert-info mt-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Next Steps:</strong> The cook needs to create meals for today's menu cycle first. Once meals are created, you can create polls for students.
+                            </div>
+                            <div class="alert alert-warning mt-3">
+                                <i class="bi bi-lightbulb me-2"></i>
+                                <strong>How it works:</strong>
+                                <ol class="text-start mt-2 mb-0">
+                                    <li><strong>Cook creates meals</strong> for each day and week cycle</li>
+                                    <li><strong>Kitchen creates polls</strong> from those meals</li>
+                                    <li><strong>Students respond</strong> to polls</li>
+                                    <li><strong>Kitchen prepares</strong> based on responses</li>
+                                </ol>
+                            </div>
+                            <div class="mt-3">
+                                <button class="btn btn-outline-primary" onclick="window.location.reload()">
+                                    <i class="bi bi-arrow-clockwise"></i> Refresh
                                 </button>
+                                <a href="{{ route('cook.menu.index') }}" class="btn btn-outline-success ms-2">
+                                    <i class="bi bi-plus-circle"></i> Go to Cook Menu (if you're also a cook)
+                                </a>
                             </div>
                         </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Current Meal Tally -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card main-card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title">Current Meal Tally <span class="badge bg-primary">Week 4</span></h5>
-                    <div class="d-flex align-items-center">
-                        <div class="me-2">
-                            <input type="date" id="customDate" class="form-control form-control-sm" value="2025-05-30">
+                    @else
+                       
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i> Note: Create polls early so students have time to respond before meal preparation.
                         </div>
-                      
+
+
+
+                    <!-- Create Poll from Cook's Menu -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-calendar-plus me-2"></i>Create Poll from Cook's Menu
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Kitchen Team:</strong> Select meals from the cook's menu and set polling deadlines. You cannot modify the menu content.
+                            </div>
+
+                            <form id="createPollForm">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Cycle-Based Polling:</strong> Create polls for today's menu based on the current week cycle. No need to select dates - polls are automatically created for today's meals.
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label for="pollMealType" class="form-label">Meal Type</label>
+                                        <select class="form-select" id="pollMealType" name="meal_type" required>
+                                            <option value="">Select Meal Type</option>
+                                            <option value="breakfast">Breakfast</option>
+                                            <option value="lunch">Lunch</option>
+                                            <option value="dinner">Dinner</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="pollDate" class="form-label">Poll Date</label>
+                                        <select class="form-select" id="pollDate" name="poll_date" required>
+                                            <option value="today">Today</option>
+                                            <option value="tomorrow">Tomorrow</option>
+                                            <option value="custom">Custom Date...</option>
+                                        </select>
+                                        <input type="date" class="form-control mt-2" id="customPollDate" name="custom_poll_date" style="display: none;">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <!-- Manual Meal Input (Always visible) -->
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label for="manualMealName" class="form-label">Meal Name *</label>
+                                                <input type="text" class="form-control" id="manualMealName" placeholder="e.g., Chicken Adobo" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="manualMealIngredients" class="form-label">Ingredients</label>
+                                                <input type="text" class="form-control" id="manualMealIngredients" placeholder="e.g., Chicken, soy sauce, vinegar">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <label for="pollDeadlineTime" class="form-label">Response Deadline</label>
+                                        <select class="form-select" id="pollDeadlineTime" name="deadline_time">
+                                            <option value="9:00 AM">9:00 AM</option>
+                                            <option value="10:00 AM">10:00 AM</option>
+                                            <option value="11:00 AM">11:00 AM</option>
+                                            <option value="12:00 PM">12:00 PM (Noon)</option>
+                                            <option value="1:00 PM">1:00 PM</option>
+                                            <option value="2:00 PM">2:00 PM</option>
+                                            <option value="3:00 PM">3:00 PM</option>
+                                            <option value="4:00 PM">4:00 PM</option>
+                                            <option value="5:00 PM">5:00 PM</option>
+                                            <option value="6:00 PM">6:00 PM</option>
+                                            <option value="7:00 PM">7:00 PM</option>
+                                            <option value="8:00 PM">8:00 PM</option>
+                                            <option value="9:00 PM" selected>9:00 PM</option>
+                                            <option value="10:00 PM">10:00 PM</option>
+                                            <option value="11:00 PM">11:00 PM</option>
+                                            <option value="custom">Custom Time</option>
+                                        </select>
+                                        <div class="mt-2" id="customDeadlineContainer" style="display: none;">
+                                            <input type="time" class="form-control" id="customDeadline" name="custom_deadline" placeholder="Custom deadline time">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">&nbsp;</label>
+                                        <button type="submit" class="btn btn-primary d-block w-100" id="createPollBtn">
+                                            <i class="bi bi-plus"></i> Create Poll
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle me-2"></i> <strong>Selected Date: <span id="selectedDateDisplay">Thursday, May 30, 2025</span></strong> - Showing meal counts for the selected date. Numbers indicate how many students selected each meal.
-                    
-                    <div id="week1Tally" class="week-tally">
-                        <div class="table-responsive">
-                            <table class="table table-bordered">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Day</th>
-                                        <th>Breakfast</th>
-                                        <th>Lunch</th>
-                                        <th>Dinner</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="fw-bold">Monday</td>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                
-                                                <span class="badge bg-success">64 students</span>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                
-                                                <span class="badge bg-success">62 students</span>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                
-                                                <span class="badge bg-success">68 students</span>
-                                            </div>
-                                        </td>
-                                        <td class="align-middle text-center">
-                                            <span class="badge bg-success">done</span>
-                                        </td>
-                                    </tr>
+
+                    <!-- Active Polls Management -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="dateFilter" class="form-label">Filter by Date</label>
+                            <select class="form-select" id="dateFilter">
+                                <option value="">All Dates</option>
+                                <option value="{{ date('Y-m-d') }}">Today ({{ date('M j') }})</option>
+                                <option value="{{ date('Y-m-d', strtotime('+1 day')) }}">Tomorrow ({{ date('M j', strtotime('+1 day')) }})</option>
+                                <option value="custom">Custom Date...</option>
+                            </select>
+                            <input type="date" class="form-control mt-2" id="customDateFilter" style="display: none;">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="mealTypeFilter" class="form-label">Filter by Meal Type</label>
+                            <select class="form-select" id="mealTypeFilter">
+                                <option value="">All Meal Types</option>
+                                <option value="breakfast">Breakfast</option>
+                                <option value="lunch">Lunch</option>
+                                <option value="dinner">Dinner</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="urgencyFilter" class="form-label">Filter by Urgency</label>
+                            <select class="form-select" id="urgencyFilter">
+                                <option value="">All Polls</option>
+                                <option value="urgent">🔴 Urgent (Deadline < 2 hours)</option>
+                                <option value="soon">🟡 Soon (Deadline < 6 hours)</option>
+                                <option value="normal">🟢 Normal (Deadline > 6 hours)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Menu Polls Table -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
                                 <tr>
-                                    <td class="fw-bold">Tuesday</td>
-                                    <td>
-                                        <div class="d-flex flex-column">
-                                           
-                                            <span class="badge bg-success">60 students</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex flex-column">
-                                          
-                                            <span class="badge bg-success">68 students</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex flex-column">
-                                           
-                                            <span class="badge bg-success">65 students</span>
-                                        </div>
-                                    </td>
-                                     <td class="align-middle text-center">
-                                            <span class="badge bg-success">done</span>
-                                        </td>
+                                    <th width="35%">Meal Details</th>
+                                    <th width="15%">Date & Type</th>
+                                    <th width="15%">Poll Status</th>
+                                    <th width="15%">Responses</th>
+                                    <th width="20%">Actions</th>
                                 </tr>
-                                <tr>
-                                    <td class="fw-bold">Wednesday</td>
-                                    <td>
-                                        <div class="d-flex flex-column">
-                                           
-                                            <span class="badge bg-success">68 students</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex flex-column">
-                                           
-                                            <span class="badge bg-success">65 students</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex flex-column">
-                                           
-                                            <span class="badge bg-success">62 students</span>
-                                        </div>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                            <span class="badge bg-success">done</span>
-                                        </td>
-                                </tr>
-                                <tr>
-                                    <td class="fw-bold">Thursday</td>
-                                    <td>
-                                        <div class="d-flex flex-column">
-                                         
-                                            <span class="badge bg-success">62 students</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex flex-column">
-                                            
-                                            <span class="badge bg-success">66 students</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex flex-column">
-                                           
-                                            <span class="badge bg-success">59 students</span>
-                                        </div>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="badge bg-success">done</span>
-                                    </td>
-                                </tr>
-                                <trclass="table-primary">
-                                    <td class="fw-bold">Friday<span class="badge bg-warning">Today</span></td>
-                                    <td>
-                                        <div class="d-flex flex-column">
-                                            
-                                            <span class="badge bg-success">59 students</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex flex-column">
-                                            
-                                            <span class="badge bg-success">63 students</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex flex-column">
-                                           
-                                            <span class="badge bg-success">61 students</span>
-                                        </div>
-                                    </td>
-                                     <td class="align-middle text-center">
-                                            <span class="badge bg-warning">Ready to Cook</span>
-                                        </td>
-                                </tr>
+                            </thead>
+                            <tbody id="preOrdersTableBody">
+                                <!-- Dynamic content will be loaded here -->
                             </tbody>
                         </table>
                     </div>
-                    
-                    <div id="week2Tally" class="week-tally" style="display: none;">
-                        <div class="table-responsive">
-                            <table class="table table-bordered">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Day</th>
-                                        <th>Breakfast</th>
-                                        <th>Lunch</th>
-                                        <th>Dinner</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="fw-bold">Monday</td>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <span>Fried Rice with Egg</span>
-                                                    <span class="badge bg-success">26 students</span>
-                                                </div>
-                                                <small class="text-muted mt-1"><i class="bi bi-info-circle"></i> Prepare for 26 students</small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <span>Pork Menudo</span>
-                                                    <span class="badge bg-success">30 students</span>
-                                                </div>
-                                                <small class="text-muted mt-1"><i class="bi bi-info-circle"></i> Prepare for 30 students</small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <span>Chop Suey</span>
-                                                    <span class="badge bg-success">22 students</span>
-                                                </div>
-                                                <small class="text-muted mt-1"><i class="bi bi-info-circle"></i> Prepare for 22 students</small>
-                                            </div>
-                                        </td>
-                                      
-                                    </tr>
-                                    <tr>
-                                        <td class="fw-bold">Tuesday</td>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <span>Oatmeal</span>
-                                                    <span class="badge bg-success">18 students</span>
-                                                </div>
-                                                <small class="text-muted mt-1"><i class="bi bi-info-circle"></i> Prepare for 18 students</small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <span>Beef Caldereta</span>
-                                                    <span class="badge bg-success">34 students</span>
-                                                </div>
-                                                <small class="text-muted mt-1"><i class="bi bi-info-circle"></i> Prepare for 34 students</small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                           
-                                    </tr>
-                                    <tr>
-                                        <td class="fw-bold">Wednesday</td>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <span>Hotdogs</span>
-                                                    <span class="badge bg-success">28 students</span>
-                                                </div>
-                                                <small class="text-muted mt-1"><i class="bi bi-info-circle"></i> Prepare for 28 students</small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <span>Porkchop Guisado</span>
-                                                    <span class="badge bg-success">30 students</span>
-                                                </div>
-                                                <small class="text-muted mt-1"><i class="bi bi-info-circle"></i> Prepare for 30 students</small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <span>Pinakbet</span>
-                                                    <span class="badge bg-success">12 students</span>
-                                                </div>
-                                                <small class="text-muted mt-1"><i class="bi bi-info-circle"></i> Prepare for 12 students</small>
-                                            </div>
-                                        </td>
-                                      
-                                    </tr>
-                                    <tr>
-                                        <td class="fw-bold">Thursday</td>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <span>French Toast</span>
-                                                    <span class="badge bg-success">20 students</span>
-                                                </div>
-                                                <small class="text-muted mt-1"><i class="bi bi-info-circle"></i> Prepare for 20 students</small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <span>Chicken Afritada</span>
-                                                    <span class="badge bg-success">32 students</span>
-                                                </div>
-                                                <small class="text-muted mt-1"><i class="bi bi-info-circle"></i> Prepare for 32 students</small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <span>Beef Salpicao</span>
-                                                    <span class="badge bg-success">27 students</span>
-                                                </div>
-                                                <small class="text-muted mt-1"><i class="bi bi-info-circle"></i> Prepare for 27 students</small>
-                                            </div>
-                                        </td>
-                                        <td class="align-middle text-center">
-                                            <span class="badge bg-warning">Ready to Cook</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="fw-bold">Friday</td>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <span>Lugaw</span>
-                                                    <span class="badge bg-success">16 students</span>
-                                                </div>
-                                                <small class="text-muted mt-1"><i class="bi bi-info-circle"></i> Prepare for 16 students</small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <span>Beef Nilaga</span>
-                                                    <span class="badge bg-success">29 students</span>
-                                                </div>
-                                                <small class="text-muted mt-1"><i class="bi bi-info-circle"></i> Prepare for 29 students</small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <span>Monggo</span>
-                                                    <span class="badge bg-success">24 students</span>
-                                                </div>
-                                                <small class="text-muted mt-1"><i class="bi bi-info-circle"></i> Prepare for 24 students</small>
-                                            </div>
-                                        </td>
-                                       
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+                        <button type="button" class="btn btn-outline-secondary me-2" onclick="loadPolls()">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="sendAllActivePolls()">
+                            <i class="bi bi-send me-1"></i> Send All Polls (Same Time)
+                        </button>
                     </div>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Deadline Edit Modal -->
-<div class="modal fade" id="editDeadlineModal" tabindex="-1" aria-labelledby="editDeadlineModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editDeadlineModalLabel">Edit Deadline Time</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editDeadlineForm">
-                    <input type="hidden" id="editDeadlineMealType" name="editDeadlineMealType">
-                    
-                    <div class="mb-3">
-                        <label for="editDeadlineTime" class="form-label">Deadline Time</label>
-                        <input type="time" class="form-control" id="editDeadlineTime" name="editDeadlineTime" required>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveDeadlineBtn">Save Changes</button>
-            </div>
-        </div>
-    </div>
-</div>
 @endsection
 
 @push('scripts')
 <script>
-    // Toggle between Week 1 & 3 and Week 2 & 4 menus
-    document.addEventListener('DOMContentLoaded', function() {
-        const weekCycleSelect = document.getElementById('weekCycleSelect');
-        const week1Menu = document.getElementById('week1Menu');
-        const week2Menu = document.getElementById('week2Menu');
-        const weekCycleInput = document.getElementById('week_cycle');
-        const editCutoffTime = document.getElementById('editCutoffTime');
-        const customTimeContainer = document.getElementById('customTimeContainer');
-        const customCutoffTime = document.getElementById('customCutoffTime');
-        
-        // Handle the date selector and update display
-        const customDateInput = document.getElementById('customDate');
-        const selectedDateDisplay = document.getElementById('selectedDateDisplay');
-        const timeElement = document.getElementById('realTimeTime');
-        
-        // Initialize with current date
-        function initializeDate() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            
-            // Set the date input value
-            if (customDateInput) {
-                customDateInput.value = `${year}-${month}-${day}`;
-                updateSelectedDateDisplay(now);
-            }
-        }
-        
-        // Update the selected date display
-        function updateSelectedDateDisplay(date) {
-            if (selectedDateDisplay) {
-                const options = { 
-                    weekday: 'long',
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric'
-                };
-                selectedDateDisplay.textContent = date.toLocaleDateString('en-US', options);
-            }
-        }
-        
-        // Update real-time time display
-        function updateTimeDisplay() {
-            const now = new Date();
-            const timeOptions = {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            };
-            const timeString = now.toLocaleTimeString('en-US', timeOptions);
-            
-            if (timeElement) {
-                timeElement.textContent = timeString;
-            }
-            
-            // Update date/time in edit modal
-            const modalDateTimeElement = document.getElementById('currentDateTime');
-            if (modalDateTimeElement) {
-                modalDateTimeElement.textContent = 'Current Date: ' + selectedDateDisplay.textContent + ' ' + timeString;
-            }
-        }
-        
-        // Initialize date and set up event listener
-        initializeDate();
-        
-        if (customDateInput) {
-            customDateInput.addEventListener('change', function() {
-                const selectedDate = new Date(this.value);
-                updateSelectedDateDisplay(selectedDate);
-            });
-        }
-        
-        // Update time display immediately and then every second
-        updateTimeDisplay();
-        setInterval(updateTimeDisplay, 1000);
-        
-        // Add edit deadline buttons to meal headers
-        function addDeadlineEditButtons() {
-            // Find all table headers in the week menus
-            const weekMenus = document.querySelectorAll('.week-menu');
-            
-            weekMenus.forEach(menu => {
-                const headers = menu.querySelectorAll('th');
-                
-                // Add edit buttons to meal type headers (breakfast, lunch, dinner)
-                for (let i = 1; i <= 3; i++) {
-                    if (headers[i]) {
-                        const mealType = i === 1 ? 'breakfast' : i === 2 ? 'lunch' : 'dinner';
-                        const deadlineBadge = headers[i].querySelector('.badge');
-                        
-                        if (deadlineBadge) {
-                            // Create a container for the badge and edit button
-                            const container = document.createElement('div');
-                            container.className = 'd-flex align-items-center mt-1';
-                            
-                            // Create the edit button
-                            const editButton = document.createElement('button');
-                            editButton.className = 'btn btn-sm btn-outline-secondary ms-1 edit-deadline-btn';
-                            editButton.setAttribute('data-bs-toggle', 'modal');
-                            editButton.setAttribute('data-bs-target', '#editDeadlineModal');
-                            editButton.setAttribute('data-meal-type', mealType);
-                            editButton.innerHTML = '<i class="bi bi-pencil-square"></i>';
-                            
-                            // Add click event to the edit button
-                            editButton.addEventListener('click', function() {
-                                openDeadlineEditModal(mealType, deadlineBadge.textContent);
-                            });
-                            
-                            // Replace the badge with the container
-                            const badgeParent = deadlineBadge.parentNode;
-                            badgeParent.replaceChild(container, deadlineBadge);
-                            
-                            // Add the badge and edit button to the container
-                            container.appendChild(deadlineBadge);
-                            container.appendChild(editButton);
-                        }
-                    }
-                }
-            });
-        }
-        
-        // Function to open the deadline edit modal
-        function openDeadlineEditModal(mealType, currentDeadline) {
-            const mealTypeInput = document.getElementById('editDeadlineMealType');
-            const timeInput = document.getElementById('editDeadlineTime');
-            
-            // Set the meal type
-            mealTypeInput.value = mealType;
-            
-            // Extract the time from the deadline text (e.g., "Deadline: 6:00 AM" -> "6:00 AM")
-            let timeStr = currentDeadline.replace('Deadline: ', '').trim();
-            
-            // Convert to 24-hour format for the time input
-            const timeParts = timeStr.match(/([0-9]+):([0-9]+)\s*(AM|PM)/i);
-            if (timeParts) {
-                let hours = parseInt(timeParts[1]);
-                const minutes = timeParts[2];
-                const period = timeParts[3].toUpperCase();
-                
-                if (period === 'PM' && hours < 12) hours += 12;
-                if (period === 'AM' && hours === 12) hours = 0;
-                
-                timeInput.value = `${hours.toString().padStart(2, '0')}:${minutes}`;
-            }
-        }
-        
-        // Handle saving the deadline changes
-        const saveDeadlineBtn = document.getElementById('saveDeadlineBtn');
-        if (saveDeadlineBtn) {
-            saveDeadlineBtn.addEventListener('click', function() {
-                const mealType = document.getElementById('editDeadlineMealType').value;
-                const timeInput = document.getElementById('editDeadlineTime').value;
-                
-                // Convert time to 12-hour format with AM/PM
-                const timeParts = timeInput.split(':');
-                let hours = parseInt(timeParts[0]);
-                const minutes = timeParts[1];
-                let period = 'AM';
-                
-                if (hours >= 12) {
-                    period = 'PM';
-                    if (hours > 12) hours -= 12;
-                }
-                if (hours === 0) hours = 12;
-                
-                const formattedTime = `${hours}:${minutes} ${period}`;
-                
-                // Update all deadline badges for this meal type
-                const deadlineBadges = document.querySelectorAll(`th:nth-child(${mealType === 'breakfast' ? 2 : mealType === 'lunch' ? 3 : 4}) .badge`);
-                deadlineBadges.forEach(badge => {
-                    badge.textContent = `Deadline: ${formattedTime}`;
-                });
-                
-                // Close the modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('editDeadlineModal'));
-                modal.hide();
-                
-                // Show success message
-                alert(`Deadline for ${mealType.charAt(0).toUpperCase() + mealType.slice(1)} updated to ${formattedTime}`);
-            });
-        }
-        
-        // Call the function to add edit buttons
-        addDeadlineEditButtons();
-        
-        // Only show Week 1 tally (current week)
-        const week1Tally = document.getElementById('week1Tally');
-        const week2Tally = document.getElementById('week2Tally');
-        
-        if (week1Tally && week2Tally) {
-            week1Tally.style.display = 'block';
-            week2Tally.style.display = 'none';
-        }
-        const editMenuForm = document.getElementById('editMenuForm');
-        const saveMenuChangesBtn = document.getElementById('saveMenuChangesBtn');
-        
-        // Week cycle toggle functionality
-        weekCycleSelect.addEventListener('change', function() {
-            const selectedCycle = this.value;
-            
-            if (selectedCycle === '1') {
-                week1Menu.style.display = 'block';
-                week2Menu.style.display = 'none';
-                weekCycleInput.value = '1';
+{!! \App\Services\WeekCycleService::getJavaScriptFunction() !!}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize date/time display
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+
+    // Initialize poll creation form
+    initializePollForm();
+
+    // Initialize filters and load polls
+    const dateFilter = document.getElementById('dateFilter');
+    const customDateFilter = document.getElementById('customDateFilter');
+    const mealTypeFilter = document.getElementById('mealTypeFilter');
+    const urgencyFilter = document.getElementById('urgencyFilter');
+
+    if (dateFilter && mealTypeFilter && urgencyFilter) {
+        // Handle custom date filter
+        dateFilter.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customDateFilter.style.display = 'block';
+                customDateFilter.required = true;
             } else {
-                week1Menu.style.display = 'none';
-                week2Menu.style.display = 'block';
-                weekCycleInput.value = '2';
+                customDateFilter.style.display = 'none';
+                customDateFilter.required = false;
             }
+            loadPolls();
         });
-        
-        // Custom cutoff time toggle
-        if (editCutoffTime) {
-            editCutoffTime.addEventListener('change', function() {
+
+        // Handle custom date input
+        if (customDateFilter) {
+            customDateFilter.addEventListener('change', loadPolls);
+        }
+
+        // Load polls on page load
+        console.log('🔄 Page loaded, starting to load polls...');
+
+        // Test basic connectivity first
+        fetch('/kitchen/pre-orders/test')
+            .then(response => {
+                console.log('🧪 Test endpoint status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('🧪 Test endpoint response:', data);
+                // If test passes, load polls
+                loadPolls();
+            })
+            .catch(error => {
+                console.error('🚨 Test endpoint failed:', error);
+                // Try to load polls anyway
+                loadPolls();
+            });
+
+        // Event listeners for filters
+        mealTypeFilter.addEventListener('change', loadPolls);
+        urgencyFilter.addEventListener('change', loadPolls);
+
+        // Efficient polling: Auto-refresh every 2 minutes for polls
+        setInterval(loadPolls, 120000);
+    }
+
+
+
+    // Initialize deadline modal functionality
+    initializeDeadlineModal();
+
+    // Initialize poll deadline modal functionality
+    initializePollDeadlineModal();
+
+    // Initialize real-time notifications
+    initializeRealTimeNotifications();
+
+    // REMOVED: Date population - system is now cycle-based (today only)
+    // populateDateOptions() calls removed since we don't use dates anymore
+
+    // Debug: Check if modal elements exist
+    console.log('=== MODAL DEBUG ===');
+    console.log('editPollDeadlineModal exists:', !!document.getElementById('editPollDeadlineModal'));
+    console.log('Bootstrap available:', typeof bootstrap !== 'undefined');
+    console.log('=== END MODAL DEBUG ===');
+});
+
+function updateDateTime() {
+    const now = new Date();
+    const dateOptions = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    };
+    const timeOptions = {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    };
+
+    const dateString = now.toLocaleDateString('en-US', dateOptions);
+    const timeString = now.toLocaleTimeString('en-US', timeOptions);
+
+    // Update main date/time display
+    const element = document.getElementById('currentDateTime');
+    if (element) {
+        element.innerHTML = `${dateString}<br><small>${timeString}</small>`;
+    }
+
+    // UNIFIED: Update today info in header
+    const todayDayAndWeek = document.getElementById('todayDayAndWeek');
+    if (todayDayAndWeek) {
+        // Include the WeekCycleService function if not already included
+        if (typeof getCurrentWeekCycle === 'function') {
+            const weekInfo = getCurrentWeekCycle();
+            const dayName = weekInfo.displayDate.split(',')[0]; // Get just the day name
+            todayDayAndWeek.textContent = `Today: ${dayName} - Week ${weekInfo.weekCycle} Cycle`;
+        } else {
+            // Fallback if function not available
+            const dayName = now.toLocaleDateString('en-US', { weekday: 'long' });
+            const weekOfMonth = Math.ceil(now.getDate() / 7);
+            const weekCycle = (weekOfMonth % 2 === 1) ? 1 : 2;
+            todayDayAndWeek.textContent = `Today: ${dayName} - Week ${weekCycle} Cycle`;
+        }
+    }
+}
+
+function formatDeadlineTime(deadline, pollDate) {
+    if (!deadline || deadline === 'Not set') {
+        return 'Not set';
+    }
+
+    console.log('� SIMPLE 12H FORMAT - Deadline:', deadline);
+
+    try {
+        let timeString, dateString;
+
+        // Handle different deadline formats
+        if (deadline.includes('|')) {
+            // New format: "2025-01-16|9:00 PM" or "2025-01-16|21:00"
+            const [datePart, timePart] = deadline.split('|');
+            console.log('📅 Date:', datePart, 'Time:', timePart);
+
+            dateString = datePart;
+
+            // Check if time is already in 12-hour format
+            if (timePart.includes('AM') || timePart.includes('PM')) {
+                timeString = timePart; // Already in 12-hour format
+                console.log('✅ Time already in 12-hour format:', timeString);
+            } else {
+                // Convert from 24-hour to 12-hour
+                timeString = format24HourTo12Hour(timePart);
+                console.log('🔄 Converted to 12-hour format:', timeString);
+            }
+
+        } else if (deadline.includes(' ')) {
+            // Full datetime format: "2025-01-16 21:00:00" (MySQL format)
+            const parts = deadline.split(' ');
+            dateString = parts[0];
+            const timePart = parts[1]; // Should be "21:00:00"
+
+            console.log('📅 MySQL format - Date:', dateString, 'Time:', timePart);
+
+            if (timePart.includes('AM') || timePart.includes('PM')) {
+                timeString = timePart; // Already in 12-hour format (shouldn't happen with MySQL)
+                console.log('✅ Time already in 12-hour format:', timeString);
+            } else {
+                // Convert from 24-hour MySQL format to 12-hour
+                // Extract just HH:MM from "21:00:00"
+                const timeOnly = timePart.substring(0, 5); // "21:00"
+                timeString = format24HourTo12Hour(timeOnly);
+                console.log('🔄 Converted MySQL time to 12-hour format:', timeString);
+            }
+
+        } else if (deadline.includes('T')) {
+            // ISO format: "2025-06-06T13:00:00.000000Z" - SHOULD NOT HAPPEN ANYMORE!
+            console.log('⚠️ ISO format detected - this should not happen with fixed backend!');
+            console.log('Raw deadline:', deadline);
+
+            // Parse without timezone conversion to avoid 5 PM issue
+            const isoMatch = deadline.match(/(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/);
+            if (isoMatch) {
+                dateString = isoMatch[1]; // "2025-06-06"
+                const hour = parseInt(isoMatch[2]);
+                const minute = parseInt(isoMatch[3]);
+                timeString = format24HourTo12Hour(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
+                console.log('✅ Parsed ISO without timezone conversion:', { dateString, timeString });
+            } else {
+                console.error('❌ Failed to parse ISO format');
+                return deadline;
+            }
+
+        } else if (deadline.includes('AM') || deadline.includes('PM')) {
+            // Time only in 12-hour format: "9:00 PM"
+            console.log('🕐 12-hour time only format');
+            timeString = deadline;
+
+            // Use today's date
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            dateString = `${year}-${month}-${day}`;
+
+        } else if (deadline.includes(':')) {
+            // Time only in 24-hour format: "21:00"
+            console.log('🕐 24-hour time only format');
+            timeString = format24HourTo12Hour(deadline);
+
+            // Use today's date
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            dateString = `${year}-${month}-${day}`;
+
+        } else {
+            console.log('❌ Unknown format, returning as-is');
+            return deadline;
+        }
+
+        // Determine date relationship
+        const today = new Date();
+        const todayYear = today.getFullYear();
+        const todayMonth = String(today.getMonth() + 1).padStart(2, '0');
+        const todayDay = String(today.getDate()).padStart(2, '0');
+        const todayString = `${todayYear}-${todayMonth}-${todayDay}`;
+
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowYear = tomorrow.getFullYear();
+        const tomorrowMonth = String(tomorrow.getMonth() + 1).padStart(2, '0');
+        const tomorrowDay = String(tomorrow.getDate()).padStart(2, '0');
+        const tomorrowString = `${tomorrowYear}-${tomorrowMonth}-${tomorrowDay}`;
+
+        console.log('📅 Date comparison:', { deadline: dateString, today: todayString, tomorrow: tomorrowString });
+
+        let dateInfo;
+        if (dateString === todayString) {
+            dateInfo = ' (today)';
+        } else if (dateString === tomorrowString) {
+            dateInfo = ' (tomorrow)';
+        } else {
+            const [year, month, day] = dateString.split('-');
+            const displayDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            const dateStr = displayDate.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric'
+            });
+            dateInfo = ` (${dateStr})`;
+        }
+
+        const result = `${timeString}${dateInfo}`;
+        console.log('🎯 FINAL RESULT:', result);
+        return result;
+
+    } catch (error) {
+        console.error('💥 Error formatting deadline:', error);
+        return deadline;
+    }
+}
+
+// Helper function to parse 12-hour time to 24-hour format
+function parse12HourTo24Hour(time12h) {
+    console.log('🕐 Parsing 12-hour time:', time12h);
+
+    if (!time12h || typeof time12h !== 'string') {
+        console.error('❌ Invalid time input:', time12h);
+        return null;
+    }
+
+    // Match format like "9:00 PM" or "12:00 AM"
+    const match = time12h.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!match) {
+        console.error('❌ Time format not recognized:', time12h);
+        return null;
+    }
+
+    let hour = parseInt(match[1]);
+    const minute = parseInt(match[2]);
+    const period = match[3].toUpperCase();
+
+    console.log('📊 Parsed components:', { hour, minute, period });
+
+    // Convert to 24-hour format
+    if (period === 'AM') {
+        if (hour === 12) hour = 0; // 12:00 AM = 00:00
+    } else { // PM
+        if (hour !== 12) hour += 12; // 1:00 PM = 13:00, but 12:00 PM stays 12:00
+    }
+
+    const result = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    console.log('✅ Converted to 24-hour:', result);
+    return result;
+}
+
+// Helper function to format 24-hour time to 12-hour format
+function format24HourTo12Hour(time24h) {
+    console.log('🕐 Formatting 24-hour time:', time24h);
+
+    if (!time24h) return 'Not set';
+
+    // Extract hour and minute from various formats
+    let hour, minute;
+
+    if (time24h.includes(':')) {
+        const parts = time24h.split(':');
+        hour = parseInt(parts[0]);
+        minute = parseInt(parts[1]) || 0;
+    } else {
+        console.error('❌ Invalid 24-hour format:', time24h);
+        return time24h;
+    }
+
+    console.log('📊 Extracted:', { hour, minute });
+
+    // Convert to 12-hour format
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour === 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+    const displayMinute = minute.toString().padStart(2, '0');
+
+    const result = `${displayHour}:${displayMinute} ${period}`;
+    console.log('✅ Formatted to 12-hour:', result);
+    return result;
+}
+
+// Helper function to populate date options
+function populateDateOptions(selectElement, includeMoreDays = false) {
+    if (!selectElement) return;
+
+    const today = new Date();
+    const formatDate = (date) => {
+        return date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
+
+    let options = '';
+
+    // Add today and tomorrow
+    for (let i = 0; i < 2; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
+        const dateStr = date.toISOString().split('T')[0];
+        const label = i === 0 ? 'Today' : 'Tomorrow';
+        options += `<option value="${dateStr}">${label} (${formatDate(date)})</option>`;
+    }
+
+    // Add more days if requested (for edit modal)
+    if (includeMoreDays) {
+        for (let i = 2; i < 7; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() + i);
+            const dateStr = date.toISOString().split('T')[0];
+            options += `<option value="${dateStr}">${formatDate(date)}</option>`;
+        }
+
+        // Add custom option
+        options += `<option value="custom">Custom Date...</option>`;
+    }
+
+    selectElement.innerHTML = options;
+}
+
+function formatPollDate(dateString) {
+    if (!dateString || dateString === 'Unknown') {
+        return 'Unknown';
+    }
+
+    try {
+        const date = new Date(dateString);
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+
+        // Check if it's today, tomorrow, or another date
+        if (date.toDateString() === today.toDateString()) {
+            return 'Today';
+        } else if (date.toDateString() === tomorrow.toDateString()) {
+            return 'Tomorrow';
+        } else {
+            // Format as "Jun 6" or "Jun 11"
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+    } catch (error) {
+        console.error('Error formatting poll date:', error);
+        return dateString; // Return original if formatting fails
+    }
+}
+
+function initializeDeadlineModal() {
+    // Handle deadline edit modal
+    const editDeadlineModal = document.getElementById('editDeadlineModal');
+    if (editDeadlineModal) {
+        // Handle custom time selection
+        const cutoffTimeSelect = document.getElementById('editCutoffTime');
+        const customTimeContainer = document.getElementById('customTimeContainer');
+
+        if (cutoffTimeSelect && customTimeContainer) {
+            cutoffTimeSelect.addEventListener('change', function() {
                 if (this.value === 'custom') {
                     customTimeContainer.style.display = 'block';
                 } else {
@@ -1304,264 +788,1507 @@
                 }
             });
         }
-        
-        // Edit menu button click handlers
-        const editMenuButtons = document.querySelectorAll('.edit-menu-btn');
-        editMenuButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const day = this.getAttribute('data-day');
-                const weekCycle = this.getAttribute('data-week');
-                const mealType = this.getAttribute('data-meal-type') || getMealTypeFromButton(this);
-                
-                // Set dropdown values for day, week, and meal type
-                const daySelect = document.getElementById('editDay');
-                const weekSelect = document.getElementById('editWeekCycle');
-                const mealTypeSelect = document.getElementById('editMealType');
-                
-                // Set the selected values
-                daySelect.value = day;
-                weekSelect.value = weekCycle;
-                mealTypeSelect.value = mealType;
-                
-                // Get current meal data
-                const mealItem = getMealItemFromButton(this, mealType);
-                
-                // Make sure we have a meal item before trying to access its properties
-                if (mealItem) {
-                    // Get the meal name (could be in different formats based on the UI structure)
-                    let mealName = '';
-                    const mealNameElement = mealItem.querySelector('.fw-bold');
-                    if (mealNameElement) {
-                        mealName = mealNameElement.textContent.trim();
-                    }
-                    
-                    // Get the ingredients (could be in different formats)
-                    let ingredients = '';
-                    const ingredientsElement = mealItem.querySelector('small.text-muted');
-                    if (ingredientsElement) {
-                        ingredients = ingredientsElement.textContent.trim();
-                    }
-                    
-                    // Set form fields with existing values
-                    document.getElementById('editMealName').value = mealName;
-                    document.getElementById('editIngredients').value = ingredients;
-                }
-                
-                // Set cutoff time based on meal type
-                let cutoffTime = '10:00 PM';
-                if (mealType === 'lunch') {
-                    cutoffTime = '10:00 PM';
-                } else if (mealType === 'dinner') {
-                    cutoffTime = '3:00 PM';
-                }
-                document.getElementById('editCutoffTime').value = cutoffTime;
-                
-                // Update modal title
-                const dayFormatted = day.charAt(0).toUpperCase() + day.slice(1);
-                const mealTypeFormatted = mealType.charAt(0).toUpperCase() + mealType.slice(1);
-                document.getElementById('editMenuModalLabel').textContent = 
-                    `Edit ${dayFormatted} ${mealTypeFormatted} (Week ${weekCycle})`;
-            });
+
+        // Handle save deadline button
+        const saveDeadlineBtn = document.getElementById('saveDeadlineChangesBtn');
+        if (saveDeadlineBtn) {
+            saveDeadlineBtn.addEventListener('click', saveDeadlineChanges);
+        }
+    }
+}
+
+function saveDeadlineChanges() {
+    const form = document.getElementById('editDeadlineForm');
+    const formData = new FormData(form);
+
+    const data = {
+        day: formData.get('day'),
+        meal_type: formData.get('meal_type'),
+        week_cycle: formData.get('week_cycle'),
+        cutoff_time: formData.get('cutoff_time'),
+        custom_cutoff_time: formData.get('custom_cutoff_time')
+    };
+
+    fetch('/kitchen/pre-orders/update-deadline', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Deadline updated successfully', 'success');
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editDeadlineModal'));
+            modal.hide();
+            // Reload data
+            loadPreOrders();
+        } else {
+            showToast(data.message || 'Failed to update deadline', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error updating deadline', 'error');
+    });
+}
+
+function initializePollForm() {
+    const createPollForm = document.getElementById('createPollForm');
+    const pollDeadlineTime = document.getElementById('pollDeadlineTime');
+    const customDeadlineContainer = document.getElementById('customDeadlineContainer');
+    const pollMealType = document.getElementById('pollMealType');
+    const pollDate = document.getElementById('pollDate');
+    const customPollDateInput = document.getElementById('customPollDate');
+    const mealNameInput = document.getElementById('manualMealName');
+    const createPollBtn = document.getElementById('createPollBtn');
+
+    console.log('🔧 Initializing simplified manual poll form...');
+
+    // Handle custom deadline time selection
+    if (pollDeadlineTime && customDeadlineContainer) {
+        pollDeadlineTime.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customDeadlineContainer.style.display = 'block';
+            } else {
+                customDeadlineContainer.style.display = 'none';
+            }
         });
-        
-        // Save menu changes
-        if (saveMenuChangesBtn) {
-            saveMenuChangesBtn.addEventListener('click', function() {
-                const day = document.getElementById('editDay').value;
-                const mealType = document.getElementById('editMealType').value;
-                const weekCycle = document.getElementById('editWeekCycle').value;
-                const mealName = document.getElementById('editMealName').value;
-                const ingredients = document.getElementById('editIngredients').value;
-                
-                // Get cutoff time
-                let cutoffTime = document.getElementById('editCutoffTime').value;
-                if (cutoffTime === 'custom') {
-                    cutoffTime = document.getElementById('customCutoffTime').value;
+    }
+
+    // Handle poll date selection
+    if (pollDate && customPollDateInput) {
+        pollDate.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customPollDateInput.style.display = 'block';
+                customPollDateInput.required = true;
+            } else {
+                customPollDateInput.style.display = 'none';
+                customPollDateInput.required = false;
+            }
+        });
+    }
+
+    // Handle meal name input
+    if (mealNameInput) {
+        mealNameInput.addEventListener('input', function() {
+            checkFormValidity();
+        });
+    }
+
+    // Handle meal type selection
+    if (pollMealType) {
+        pollMealType.addEventListener('change', function() {
+            checkFormValidity();
+        });
+    }
+
+    // Function to check if form is valid and enable/disable create button
+    function checkFormValidity() {
+        const mealName = mealNameInput ? mealNameInput.value.trim() : '';
+        const mealType = pollMealType ? pollMealType.value : '';
+
+        if (mealName && mealType && createPollBtn) {
+            createPollBtn.disabled = false;
+        } else if (createPollBtn) {
+            createPollBtn.disabled = true;
+        }
+    }
+
+    // Handle form submission
+    if (createPollForm) {
+        createPollForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            createNewPoll();
+        });
+    }
+
+    // Initial form validation check
+    checkFormValidity();
+}
+
+// Cycle-based meal loading for today's menu
+function loadMealsFromCookForToday(mealType) {
+    console.log('🔄 Loading today\'s meals from cook for meal type:', mealType);
+
+    // Show current week cycle info
+    if (typeof getCurrentWeekCycle === 'function') {
+        const weekInfo = getCurrentWeekCycle();
+        console.log('📅 Current week cycle info:', weekInfo);
+    }
+
+    fetch(`/kitchen/pre-orders/available-meals?meal_type=${mealType}`)
+        .then(response => {
+            console.log('📡 Response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('📦 Today\'s available meals data received:', data);
+
+            const availableMeals = document.getElementById('availableMeals');
+
+            if (data.success && data.meals && data.meals.length > 0) {
+                console.log('✅ Found today\'s meals:', data.meals);
+
+                // Create options for all available meals
+                let options = '<option value="">Select a meal</option>';
+                data.meals.forEach(meal => {
+                    options += `<option value="${meal.id}" data-ingredients="${meal.ingredients}">${meal.name}</option>`;
+                });
+
+                availableMeals.innerHTML = options;
+                availableMeals.disabled = false;
+
+                // Enable the create poll button
+                document.getElementById('createPollBtn').disabled = false;
+            } else {
+                console.log('❌ No meals found for today\'s cycle');
+                console.log('🔍 Debug info:', data.debug || 'No debug info available');
+
+                let message = 'No meal available for today\'s menu cycle';
+                if (data.debug && data.debug.searched_for) {
+                    const search = data.debug.searched_for;
+                    message += ` (searched for: ${search.day_of_week} ${search.meal_type} week ${search.week_cycle})`;
                 }
-                
-                // Find the meal item to update
-                const suffix = weekCycle === '1' ? '' : '_w2';
-                const mealSelector = `[name="${day}_${mealType}${suffix}"]`;
-                const radioInput = document.querySelector(mealSelector);
-                
-                if (radioInput) {
-                    const mealItem = radioInput.closest('.meal-item');
-                    
-                    // Only update if we have valid data
-                    if (mealName && mealItem) {
-                        // Find the elements to update
-                        const mealNameElement = mealItem.querySelector('.fw-bold');
-                        const ingredientsElement = mealItem.querySelector('small.text-muted');
-                        
-                        // Update meal name and ingredients if elements exist
-                        if (mealNameElement) {
-                            mealNameElement.textContent = mealName;
+
+                availableMeals.innerHTML = `<option value="">${message}</option>`;
+                availableMeals.disabled = true;
+                document.getElementById('createPollBtn').disabled = true;
+                updateMealDetails('No meal planned', 'Cook has not created a meal for today\'s menu cycle');
+            }
+        })
+        .catch(error => {
+            console.error('💥 Error loading today\'s meals:', error);
+            const availableMeals = document.getElementById('availableMeals');
+            availableMeals.innerHTML = '<option value="">Error loading meals</option>';
+            availableMeals.disabled = true;
+            document.getElementById('createPollBtn').disabled = true;
+        });
+}
+
+// Legacy function for backward compatibility
+function loadMealsFromCook(date, mealType) {
+    console.log('⚠️ Legacy function called - redirecting to cycle-based loading');
+    loadMealsFromCookForToday(mealType);
+}
+
+function updateMealDetails(mealName, ingredients) {
+    const nameElement = document.getElementById('selectedMealName');
+    const ingredientsElement = document.getElementById('selectedMealIngredients');
+
+    if (nameElement) {
+        nameElement.textContent = mealName || 'Select a meal to see details';
+    }
+    if (ingredientsElement) {
+        ingredientsElement.textContent = ingredients || 'Ingredients will appear here';
+    }
+}
+
+function createNewPoll() {
+    console.log('=== CREATING MANUAL POLL ===');
+
+    const form = document.getElementById('createPollForm');
+    const formData = new FormData(form);
+
+    // Get form values
+    const mealType = formData.get('meal_type');
+    const pollDate = formData.get('poll_date');
+    const customPollDate = formData.get('custom_poll_date');
+    const mealName = document.getElementById('manualMealName').value.trim();
+    const mealIngredients = document.getElementById('manualMealIngredients').value.trim();
+    const deadlineTime = formData.get('deadline_time');
+    const customDeadline = formData.get('custom_deadline');
+
+    console.log('� Form data collected:', {
+        mealType,
+        pollDate,
+        customPollDate,
+        mealName,
+        mealIngredients,
+        deadlineTime,
+        customDeadline
+    });
+
+    // Determine the actual poll date
+    let actualPollDate;
+    if (pollDate === 'today') {
+        actualPollDate = new Date().toISOString().split('T')[0];
+    } else if (pollDate === 'tomorrow') {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        actualPollDate = tomorrow.toISOString().split('T')[0];
+    } else if (pollDate === 'custom') {
+        actualPollDate = customPollDate;
+    }
+
+    // Get final deadline time
+    const finalTime = deadlineTime === 'custom' ? customDeadline : deadlineTime;
+
+    console.log('📅 Processed data:', {
+        actualPollDate,
+        finalTime
+    });
+
+    const pollData = {
+        meal_type: mealType,
+        poll_date: actualPollDate,
+        deadline: finalTime,
+        manual_meal: {
+            name: mealName,
+            ingredients: mealIngredients
+        }
+    };
+
+    console.log('🚀 Poll data to send:', pollData);
+
+    // Check CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+
+    fetch('/kitchen/pre-orders/create-poll', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken ? csrfToken.content : ''
+        },
+        body: JSON.stringify(pollData)
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+
+        if (data.success) {
+            showToast('Menu poll created successfully', 'success');
+            form.reset();
+            document.getElementById('customDeadlineContainer').style.display = 'none';
+            document.getElementById('customPollDate').style.display = 'none';
+            document.getElementById('createPollBtn').disabled = true;
+            loadPolls(); // Reload the polls table
+        } else {
+            console.error('Poll creation failed:', data);
+            showToast(data.message || 'Failed to create poll', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error creating poll:', error);
+        showToast('Error creating poll: ' + error.message, 'error');
+    });
+}
+
+function loadPolls() {
+    console.log('🔄 LOADING POLLS');
+
+    const dateFilter = document.getElementById('dateFilter');
+    const customDateFilter = document.getElementById('customDateFilter');
+    const mealTypeFilter = document.getElementById('mealTypeFilter');
+    const urgencyFilter = document.getElementById('urgencyFilter');
+
+    // Get the actual date value
+    let date = '';
+    if (dateFilter) {
+        if (dateFilter.value === 'custom' && customDateFilter) {
+            date = customDateFilter.value;
+        } else if (dateFilter.value !== 'custom') {
+            date = dateFilter.value;
+        }
+    }
+
+    const mealType = mealTypeFilter ? mealTypeFilter.value : '';
+    const urgency = urgencyFilter ? urgencyFilter.value : '';
+
+    console.log('📊 Filters:', { date, mealType, urgency, filterType: dateFilter?.value });
+
+    const params = new URLSearchParams();
+    if (date) params.append('date', date);
+    if (mealType) params.append('meal_type', mealType);
+    if (urgency) params.append('urgency', urgency);
+
+    const url = `/kitchen/pre-orders/polls${params.toString() ? '?' + params.toString() : ''}`;
+    console.log('🌐 Fetching polls from:', url);
+
+    fetch(url)
+        .then(response => {
+            console.log('📡 Polls response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('📦 Raw polls data received from backend:', data);
+
+            if (data.success) {
+                console.log('📊 Number of polls:', data.polls ? data.polls.length : 0);
+
+                // Deep debug each poll's deadline
+                if (data.polls && data.polls.length > 0) {
+                    data.polls.forEach((poll, index) => {
+                        console.log(`🔍 Poll ${index + 1} raw data:`, {
+                            id: poll.id,
+                            meal_name: poll.meal_name,
+                            deadline: poll.deadline,
+                            poll_date: poll.poll_date,
+                            deadline_type: typeof poll.deadline,
+                            deadline_length: poll.deadline ? poll.deadline.length : 0
+                        });
+
+                        // Special check for 9 PM
+                        if (poll.deadline && poll.deadline.includes('21:00')) {
+                            console.log('🔍 FOUND 9 PM POLL IN DATABASE:', {
+                                id: poll.id,
+                                stored_deadline: poll.deadline,
+                                should_contain: '21:00',
+                                analysis: 'This should display as 9:00 PM'
+                            });
                         }
-                        
-                        if (ingredientsElement) {
-                            ingredientsElement.textContent = ingredients;
-                        }
-                        
-                        // Update cutoff time in the table header
-                        updateCutoffTime(mealType, cutoffTime, weekCycle);
-                    
-                    // Close the modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('editMenuModal'));
-                    modal.hide();
-                    
-                    // Get current date and time for the success message
-                    const now = new Date();
-                    const options = { 
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    };
-                    const dateTimeString = now.toLocaleDateString('en-US', options);
-                    
-                    // Show success message with real-time date
-                    alert(`${day.charAt(0).toUpperCase() + day.slice(1)} ${mealType} updated successfully on ${dateTimeString}!`);
-                } else {
-                    // If meal not found, show error message
-                    alert(`Could not find the meal to update. Please check your selections and try again.`);
+                    });
                 }
-            });
+
+                updatePreOrdersTable(data.polls || []);
+            } else {
+                console.error('❌ Failed to load polls:', data);
+                showToast('Failed to load polls data: ' + (data.message || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('💥 Error loading polls:', error);
+            showToast('Error loading polls data: ' + error.message, 'error');
+        });
+}
+
+function updatePreOrdersTable(polls) {
+    const tableBody = document.getElementById('preOrdersTableBody');
+    if (!tableBody) return;
+
+    console.log('=== UPDATE TABLE DEBUG ===');
+    console.log('Polls received:', polls);
+
+    if (!polls || polls.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center py-4">
+                    <i class="bi bi-inbox display-4 text-muted"></i>
+                    <p class="text-muted mt-2">No menu polls found. Create a new poll to get started.</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    let html = '';
+    polls.forEach((poll, index) => {
+        console.log(`Poll ${index}:`, {
+            id: poll.id,
+            meal_name: poll.meal_name,
+            deadline: poll.deadline,
+            poll_date: poll.poll_date
+        });
+
+        const statusBadge = getStatusBadge(poll.status);
+        const responseCount = poll.responses_count || 0;
+        const totalStudents = poll.total_students || 0;
+
+        const formattedDeadline = formatDeadlineTime(poll.deadline, poll.poll_date);
+        console.log(`Formatted deadline for poll ${poll.id}:`, formattedDeadline);
+
+        html += `
+            <tr class="poll-item"
+                data-poll-created="${poll.created_at || new Date().toISOString()}"
+                data-poll-id="${poll.id}"
+                data-poll-status="${poll.status}"
+                data-response-count="${responseCount}">
+                <td>
+                    <div class="fw-bold">${poll.meal_name || 'Unknown Meal'}</div>
+                    <small class="text-muted">${Array.isArray(poll.ingredients) ? poll.ingredients.join(', ') : (poll.ingredients || 'No ingredients listed')}</small>
+                    <div class="mt-1">
+                        <small class="text-info">
+                            <i class="bi bi-clock"></i> Deadline: ${formattedDeadline}
+                        </small>
+                        ${poll.urgency_badge ? `
+                            <div class="mt-1">
+                                <span class="badge ${poll.urgency_badge} badge-sm">${poll.urgency_text}</span>
+                                <small class="text-muted ms-1">(${poll.hours_until_deadline})</small>
+                            </div>
+                        ` : ''}
+                    </div>
+                </td>
+                <td class="text-center">
+                    <div class="fw-bold">${formatPollDate(poll.poll_date)}</div>
+                    <small class="text-muted text-capitalize">${poll.meal_type || 'Unknown'}</small>
+                </td>
+                <td class="text-center">
+                    ${statusBadge}
+                </td>
+                <td class="text-center">
+                    <div class="fw-bold text-primary">${responseCount}/${totalStudents}</div>
+                    <small class="text-muted">responses</small>
+                </td>
+                <td class="text-center">
+                    <div class="btn-group-vertical" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary mb-1"
+                                onclick="editPollDeadline('${poll.id}', '${poll.meal_name}', '${poll.deadline}')">
+                            <i class="bi bi-clock"></i> Edit Deadline
+                        </button>
+                        ${getPollActionButton(poll)}
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+
+    tableBody.innerHTML = html;
+}
+
+function getStatusBadge(status) {
+    switch(status) {
+        case 'draft':
+            return '<span class="badge bg-secondary">Draft</span>';
+        case 'active':
+            return '<span class="badge bg-success">Active</span>';
+        case 'sent':
+            return '<span class="badge bg-info">Sent to Students</span>';
+        case 'closed':
+            return '<span class="badge bg-dark">Closed</span>';
+        default:
+            return '<span class="badge bg-warning">Unknown</span>';
+    }
+}
+
+function getPollActionButton(poll) {
+    switch(poll.status) {
+        case 'draft':
+            return `
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-success"
+                            onclick="sendPollToStudents('${poll.id}', '${poll.meal_name}')">
+                        <i class="bi bi-send"></i> Send
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning"
+                            onclick="editPollDeadline('${poll.id}', '${poll.meal_name}', '${poll.poll_date}', '${poll.meal_type}', '${poll.ingredients}', '${poll.deadline}')"
+                            title="Edit deadline before sending">
+                        <i class="bi bi-clock-history"></i> Edit
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                            onclick="deletePoll('${poll.id}', '${poll.meal_name}')"
+                            title="Delete this poll">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </div>
+            `;
+        case 'active':
+        case 'sent':
+            return `
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-info"
+                            onclick="viewPollResults('${poll.id}', '${poll.meal_name}')"
+                            title="See how many students will eat this meal">
+                        <i class="bi bi-bar-chart"></i> View Results
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                            onclick="deletePoll('${poll.id}', '${poll.meal_name}')"
+                            title="Delete this poll and all student responses">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </div>
+            `;
+        case 'closed':
+            return `<button type="button" class="btn btn-sm btn-outline-secondary" disabled>
+                        <i class="bi bi-check-circle"></i> Completed
+                    </button>`;
+        default:
+            return `<button type="button" class="btn btn-sm btn-outline-warning" disabled>
+                        <i class="bi bi-question-circle"></i> Unknown
+                    </button>`;
+    }
+}
+
+function editDeadline(day, mealType, weekCycle, mealName, ingredients) {
+    // Populate the modal with meal information (read-only)
+    document.getElementById('displayMealName').textContent = mealName || 'Unknown Meal';
+    document.getElementById('displayIngredients').textContent = ingredients || 'No ingredients listed';
+
+    // Set hidden form fields
+    document.getElementById('editDay').value = day;
+    document.getElementById('editMealType').value = mealType;
+    document.getElementById('editWeekCycle').value = weekCycle;
+
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('editDeadlineModal'));
+    modal.show();
+}
+
+function sendPollToStudents(pollId, mealName) {
+    if (!confirm(`Send poll to students for "${mealName}"?\n\nThis will notify all students to respond to the poll.`)) {
+        return;
+    }
+
+    fetch('/kitchen/pre-orders/send-poll', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            poll_id: pollId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`Poll sent to ${data.student_count || 0} students for "${mealName}"`, 'success');
+            loadPolls(); // Reload the table to update poll status
+        } else {
+            showToast(data.message || 'Failed to send poll to students', 'error');
         }
-        
-        // Helper function to get meal type from button
-        function getMealTypeFromButton(button) {
-            const row = button.closest('tr');
-            const cells = row.querySelectorAll('td');
-            const buttonCell = button.closest('td');
-            const cellIndex = Array.from(cells).indexOf(buttonCell);
-            
-            // Determine meal type based on cell index
-            // Cell indexes: 0=Day, 1=Breakfast, 2=Lunch, 3=Dinner, 4=Actions
-            switch (cellIndex) {
-                case 1: return 'breakfast';
-                case 2: return 'lunch';
-                case 3: return 'dinner';
-                default: return 'breakfast'; // Default fallback
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error sending poll to students', 'error');
+    });
+}
+
+function sendAllActivePolls() {
+    if (!confirm('Send all draft polls to students with the same timestamp?\n\n✅ This ensures all polls have identical send times for consistency.\n\nThis will notify students about all pending meal polls.')) {
+        return;
+    }
+
+    fetch('/kitchen/pre-orders/send-all-polls', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`${data.count || 0} polls sent to students successfully`, 'success');
+            loadPolls(); // Reload the table to update poll status
+        } else {
+            showToast(data.message || 'Failed to send polls to students', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error sending polls to students', 'error');
+    });
+}
+
+
+
+function viewPollResults(pollId, mealName) {
+    console.log('Viewing results for poll:', pollId, mealName);
+
+    // Show loading modal first
+    showResultsModal(pollId, mealName, null, true);
+
+    // Fetch poll results
+    fetch(`/kitchen/pre-orders/poll-results/${pollId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showResultsModal(pollId, mealName, data.results, false);
+            } else {
+                showToast('Failed to load poll results: ' + (data.message || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading poll results:', error);
+            showToast('Error loading poll results: ' + error.message, 'error');
+        });
+}
+
+function showResultsModal(pollId, mealName, results, isLoading) {
+    const modalHtml = `
+        <div class="modal fade" id="pollResultsModal" tabindex="-1" aria-labelledby="pollResultsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="pollResultsModalLabel">
+                            <i class="bi bi-bar-chart me-2"></i>Poll Results: ${mealName}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        ${isLoading ? `
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Loading poll results...</p>
+                            </div>
+                        ` : `
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Purpose:</strong> This shows how many students plan to eat this meal, helping you prepare the right amount of food.
+                            </div>
+
+                            ${results ? `
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card bg-success text-white">
+                                            <div class="card-body text-center">
+                                                <h3>${results.yes_count || 0}</h3>
+                                                <p class="mb-0">Will Eat</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card bg-danger text-white">
+                                            <div class="card-body text-center">
+                                                <h3>${results.no_count || 0}</h3>
+                                                <p class="mb-0">Won't Eat</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <strong>Total Responses:</strong> ${results.total_responses || 0}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <strong>Total Students:</strong> ${results.total_students || 0}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <strong>Response Rate:</strong> ${Math.round(results.response_rate || 0)}%
+                                        </div>
+                                    </div>
+                                </div>
+
+                            ` : `
+                                <div class="text-center py-4">
+                                    <i class="bi bi-inbox display-4 text-muted"></i>
+                                    <p class="text-muted mt-2">No responses yet. Students haven't responded to this poll.</p>
+                                </div>
+                            `}
+                        `}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        ${!isLoading && results ? `
+                            <button type="button" class="btn btn-primary" onclick="refreshPollResults('${pollId}', '${mealName}')">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Close any existing modals first
+    closeAllModals();
+
+    // Add new modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Wait a moment for DOM to update, then show modal
+    setTimeout(() => {
+        if (window.ModalFixes && window.ModalFixes.showModal) {
+            const success = window.ModalFixes.showModal('pollResultsModal');
+            if (success) {
+                const modalElement = document.getElementById('pollResultsModal');
+                // Add event listener to clean up when modal is hidden
+                modalElement.addEventListener('hidden.bs.modal', function () {
+                    modalElement.remove();
+                    if (window.ModalFixes && window.ModalFixes.cleanupModalStates) {
+                        window.ModalFixes.cleanupModalStates();
+                    } else {
+                        closeAllModals();
+                    }
+                });
+            } else {
+                console.error('Failed to show poll results modal');
+                showToast('Error opening modal. Please refresh the page.', 'error');
+            }
+        } else {
+            // Fallback to existing function
+            const modal = createSafeModal('pollResultsModal');
+            if (modal) {
+                const modalElement = document.getElementById('pollResultsModal');
+
+                // Add event listener to clean up when modal is hidden
+                modalElement.addEventListener('hidden.bs.modal', function () {
+                    modalElement.remove();
+                    closeAllModals();
+                });
+
+                modal.show();
+            } else {
+                console.error('Failed to create poll results modal');
+                showToast('Error opening modal. Please refresh the page.', 'error');
             }
         }
-        
-        // Helper function to get meal item from button and meal type
-        function getMealItemFromButton(button, mealType) {
-            // If the button is inside a meal item, return that meal item directly
-            const mealItem = button.closest('.meal-item');
-            if (mealItem) {
-                return mealItem;
-            }
-            
-            // Otherwise, find the meal item based on row and meal type
-            const row = button.closest('tr');
-            const cells = row.querySelectorAll('td');
-            
-            // Get meal cell based on meal type
-            let cellIndex = 1; // Default to breakfast
-            if (mealType === 'lunch') cellIndex = 2;
-            if (mealType === 'dinner') cellIndex = 3;
-            
-            return cells[cellIndex].querySelector('.meal-item');
-        }
-        
-        // Helper function to update cutoff time in table header
-        function updateCutoffTime(mealType, cutoffTime, weekCycle) {
-            const weekMenuId = weekCycle === '1' ? 'week1Menu' : 'week2Menu';
-            const weekMenu = document.getElementById(weekMenuId);
-            if (!weekMenu) return;
-            
-            const headers = weekMenu.querySelectorAll('th');
-            let headerIndex = 1; // Default to breakfast
-            if (mealType === 'lunch') headerIndex = 2;
-            if (mealType === 'dinner') headerIndex = 3;
-            
-            if (headers[headerIndex]) {
-                const badge = headers[headerIndex].querySelector('.badge');
-                if (badge) {
-                    badge.textContent = `Deadline: ${cutoffTime}`;
+    }, 100);
+}
+
+function refreshPollResults(pollId, mealName) {
+    viewPollResults(pollId, mealName);
+}
+
+// Helper function to check if Bootstrap is available
+function isBootstrapAvailable() {
+    return typeof bootstrap !== 'undefined' && bootstrap.Modal;
+}
+
+// Helper function to safely create a modal
+function createSafeModal(elementId) {
+    if (!isBootstrapAvailable()) {
+        console.error('Bootstrap is not available');
+        return null;
+    }
+
+    const element = document.getElementById(elementId);
+    if (!element) {
+        console.error('Modal element not found:', elementId);
+        return null;
+    }
+
+    try {
+        return new bootstrap.Modal(element);
+    } catch (error) {
+        console.error('Error creating modal:', error);
+        return null;
+    }
+}
+
+// Helper function to close all modals and clean up
+function closeAllModals() {
+    try {
+        // Close all Bootstrap modals
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            try {
+                if (isBootstrapAvailable()) {
+                    const modalInstance = bootstrap.Modal.getInstance(modal);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
                 }
+            } catch (e) {
+                console.warn('Error closing modal instance:', e);
             }
+
+            // Only remove dynamically created modals (like pollResultsModal)
+            // Don't remove static modals that are part of the page HTML
+            if (modal && modal.parentNode && modal.id === 'pollResultsModal') {
+                modal.remove();
+            }
+        });
+
+        // Remove modal backdrops
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => {
+            if (backdrop && backdrop.parentNode) {
+                backdrop.remove();
+            }
+        });
+
+        // Remove modal-open class from body and reset styles
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+
+        // Force remove any remaining modal classes
+        document.body.className = document.body.className.replace(/modal-[a-z-]*/g, '');
+
+    } catch (e) {
+        console.error('Error in closeAllModals:', e);
+        // Force cleanup even if there are errors
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    }
+}
+
+function deletePoll(pollId, mealName) {
+    // Show confirmation dialog with warning about student responses
+    if (!confirm(`Are you sure you want to delete the poll for "${mealName}"?\n\n⚠️ WARNING: This will also delete all student responses to this poll.\n\nThis action cannot be undone.`)) {
+        return;
+    }
+
+    console.log('Deleting poll:', pollId, mealName);
+
+    fetch(`/kitchen/pre-orders/delete-poll/${pollId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`Poll for "${mealName}" deleted successfully`, 'success');
+            loadPolls(); // Reload the polls table
+        } else {
+            showToast(data.message || 'Failed to delete poll', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting poll:', error);
+        showToast('Error deleting poll: ' + error.message, 'error');
+    });
+}
+
+function editPollDeadline(pollId, mealName, pollDate, mealType, ingredients, currentDeadline) {
+    console.log('Editing deadline for poll:', pollId);
+    console.log('Looking for modal element: editPollDeadlineModal');
+
+    // Check if modal exists before proceeding
+    const modalCheck = document.getElementById('editPollDeadlineModal');
+    console.log('Modal element found:', !!modalCheck);
+    if (!modalCheck) {
+        console.error('Modal element editPollDeadlineModal not found in DOM');
+        showToast('Modal not found. Please refresh the page.', 'error');
+        return;
+    }
+
+    // Populate modal with poll information
+    console.log('Setting poll ID in form:', pollId);
+    document.getElementById('editPollId').value = pollId;
+    document.getElementById('editPollMealName').textContent = mealName;
+    document.getElementById('editPollDate').textContent = formatPollDate(pollDate);
+    document.getElementById('editPollMealType').textContent = mealType;
+    document.getElementById('editPollIngredients').textContent = ingredients || 'No ingredients listed';
+
+    // Debug: Check if poll ID was set correctly
+    console.log('Poll ID set to:', document.getElementById('editPollId').value);
+
+    // Set current deadline in the new modal structure
+    const deadlineDateSelect = document.getElementById('editDeadlineDate');
+    const deadlineTimeSelect = document.getElementById('editDeadlineTime');
+    const customContainer = document.getElementById('editCustomTimeContainer');
+    const customInput = document.getElementById('editCustomDeadlineTime');
+
+    // Parse current deadline format (12-hour format)
+    let dateValue = new Date().toISOString().split('T')[0]; // Default to today
+    let timeValue = '3:00 PM';
+
+    console.log('🕐 EDIT MODAL - Parsing deadline:', currentDeadline);
+
+    if (currentDeadline && currentDeadline.includes('|')) {
+        // New format: "2025-01-16|9:00 PM"
+        const [datePart, timePart] = currentDeadline.split('|');
+        dateValue = datePart;
+        timeValue = timePart;
+        console.log('📅 Pipe format - Date:', datePart, 'Time:', timePart);
+    } else if (currentDeadline && currentDeadline.includes(' ')) {
+        // Full datetime format: "2025-01-16 21:00:00" (MySQL format)
+        const parts = currentDeadline.split(' ');
+        dateValue = parts[0];
+        const mysqlTime = parts[1]; // "21:00:00"
+
+        if (mysqlTime.includes('AM') || mysqlTime.includes('PM')) {
+            timeValue = mysqlTime; // Already 12-hour (shouldn't happen)
+        } else {
+            // Convert MySQL time to 12-hour format
+            const timeOnly = mysqlTime.substring(0, 5); // "21:00"
+            timeValue = format24HourTo12Hour(timeOnly);
+        }
+        console.log('📅 MySQL format - Date:', dateValue, 'MySQL Time:', mysqlTime, 'Converted:', timeValue);
+    } else if (currentDeadline && (currentDeadline.includes('AM') || currentDeadline.includes('PM'))) {
+        // Time only in 12-hour format: "9:00 PM"
+        timeValue = currentDeadline;
+        dateValue = new Date().toISOString().split('T')[0];
+        console.log('🕐 12-hour time only - Time:', timeValue);
+    } else if (currentDeadline && currentDeadline.includes(':')) {
+        // Old 24-hour format: "21:00" - convert to 12-hour
+        timeValue = format24HourTo12Hour(currentDeadline);
+        dateValue = new Date().toISOString().split('T')[0];
+        console.log('🔄 Converted 24h to 12h - Time:', timeValue);
+    }
+
+    console.log('✅ Final parsed values - Date:', dateValue, 'Time:', timeValue);
+
+    // Set the date dropdown
+    if (deadlineDateSelect) {
+        const customDateInput = document.getElementById('editCustomDate');
+
+        // Check if the date is in our preset options
+        const option = Array.from(deadlineDateSelect.options).find(opt => opt.value === dateValue);
+
+        if (option) {
+            deadlineDateSelect.value = dateValue;
+            if (customDateInput) customDateInput.style.display = 'none';
+        } else {
+            // Use custom date
+            deadlineDateSelect.value = 'custom';
+            if (customDateInput) {
+                customDateInput.style.display = 'block';
+                customDateInput.value = dateValue;
+                customDateInput.required = true;
+            }
+        }
+    }
+
+    // Set the time dropdown
+    if (deadlineTimeSelect) {
+        // Check if the time is in our preset options (12-hour format)
+        const timeOptions = ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM', '10:00 PM', '11:00 PM'];
+
+        console.log('🔍 Checking if time is in options:', timeValue);
+        console.log('Available options:', timeOptions);
+
+        if (timeOptions.includes(timeValue)) {
+            deadlineTimeSelect.value = timeValue;
+            if (customContainer) customContainer.style.display = 'none';
+            console.log('✅ Found in preset options');
+        } else {
+            deadlineTimeSelect.value = 'custom';
+            if (customContainer) customContainer.style.display = 'block';
+            if (customInput) customInput.value = timeValue;
+            console.log('⚠️ Not in preset options, using custom');
+        }
+    }
+
+    // Close any dynamic modals first (but keep static modals)
+    const dynamicModals = document.querySelectorAll('#pollResultsModal');
+    dynamicModals.forEach(modal => {
+        if (modal && modal.parentNode) {
+            modal.remove();
         }
     });
+
+    // Show the static modal using safe modal function
+    if (window.ModalFixes && window.ModalFixes.showModal) {
+        const success = window.ModalFixes.showModal('editPollDeadlineModal');
+        if (!success) {
+            console.error('Failed to show edit deadline modal');
+            showToast('Error opening modal. Please refresh the page.', 'error');
+        }
+    } else {
+        // Fallback to existing function
+        const modal = createSafeModal('editPollDeadlineModal');
+        if (modal) {
+            modal.show();
+        } else {
+            console.error('Failed to create edit deadline modal');
+            showToast('Error opening modal. Please refresh the page.', 'error');
+        }
+    }
+}
+
+function initializePollDeadlineModal() {
+    // Handle custom deadline time selection
+    const deadlineTimeSelect = document.getElementById('editDeadlineTime');
+    const customTimeContainer = document.getElementById('editCustomTimeContainer');
+
+    if (deadlineTimeSelect && customTimeContainer) {
+        deadlineTimeSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customTimeContainer.style.display = 'block';
+            } else {
+                customTimeContainer.style.display = 'none';
+            }
+        });
+    }
+
+    // Handle custom date selection
+    const deadlineDateSelect = document.getElementById('editDeadlineDate');
+    const customDateInput = document.getElementById('editCustomDate');
+    const customDateBtn = document.getElementById('editCustomDateBtn');
+
+    if (deadlineDateSelect && customDateInput) {
+        deadlineDateSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customDateInput.style.display = 'block';
+                customDateInput.required = true;
+            } else {
+                customDateInput.style.display = 'none';
+                customDateInput.required = false;
+            }
+        });
+    }
+
+    if (customDateBtn && deadlineDateSelect && customDateInput) {
+        customDateBtn.addEventListener('click', function() {
+            deadlineDateSelect.value = 'custom';
+            customDateInput.style.display = 'block';
+            customDateInput.required = true;
+            customDateInput.focus();
+        });
+    }
+
+    // Handle save button
+    const saveBtn = document.getElementById('savePollDeadlineBtn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', savePollDeadline);
+    }
+}
+
+function savePollDeadline() {
+    console.log('=== SAVE POLL DEADLINE DEBUG ===');
+
+    const form = document.getElementById('editPollDeadlineForm');
+    const formData = new FormData(form);
+
+    const pollId = formData.get('poll_id');
+    const deadlineDate = formData.get('deadline_date');
+    const deadlineTime = formData.get('deadline_time');
+    const customDeadline = formData.get('custom_deadline');
+    const customDate = formData.get('custom_date');
+
+    console.log('Form data extracted:', {
+        pollId: pollId,
+        deadlineDate: deadlineDate,
+        deadlineTime: deadlineTime,
+        customDeadline: customDeadline,
+        customDate: customDate,
+        pollIdElement: document.getElementById('editPollId').value
+    });
+
+    // Determine final deadline date
+    const finalDate = deadlineDate === 'custom' ? customDate : deadlineDate;
+
+    // Determine final deadline time
+    const finalTime = deadlineTime === 'custom' ? customDeadline : deadlineTime;
+
+    if (!finalDate) {
+        showToast('Please select a deadline date', 'error');
+        return;
+    }
+
+    if (!finalTime) {
+        showToast('Please select a deadline time', 'error');
+        return;
+    }
+
+    if (!pollId) {
+        console.error('Poll ID is missing!');
+        showToast('Poll ID is missing. Please close and reopen the modal.', 'error');
+        return;
+    }
+
+    // Create deadline string that includes both date and time info
+    const deadlineString = `${finalDate}|${finalTime}`;
+
+    console.log('Saving poll deadline:', { pollId, deadlineString, finalDate, finalTime });
+    console.log('=== END SAVE POLL DEADLINE DEBUG ===');
+
+    const requestData = {
+        poll_id: pollId,
+        deadline: deadlineString
+    };
+
+    console.log('🔧 SENDING UPDATE REQUEST:', {
+        url: '/kitchen/pre-orders/update-poll-deadline',
+        method: 'POST',
+        data: requestData,
+        poll_id_type: typeof pollId,
+        deadline_type: typeof deadlineString,
+        csrf_token: document.querySelector('meta[name="csrf-token"]').content
+    });
+
+    fetch('/kitchen/pre-orders/update-poll-deadline', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            console.error('Response is not JSON, content-type:', contentType);
+            throw new Error('Server returned non-JSON response (likely an error page)');
+        }
+
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+
+        if (data.success) {
+            showToast('Poll deadline updated successfully', 'success');
+
+            // Close the specific modal
+            const modalElement = document.getElementById('editPollDeadlineModal');
+            if (modalElement && isBootstrapAvailable()) {
+                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
+
+            // Reload polls table with a small delay to ensure update is processed
+            setTimeout(() => {
+                loadPolls();
+            }, 500);
+        } else {
+            showToast(data.message || 'Failed to update deadline', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating deadline:', error);
+        showToast('Error updating deadline: ' + error.message, 'error');
+    });
+}
+
+// Real-time daily menu status updates
+function loadDailyMenuStatus() {
+    const today = new Date().toISOString().split('T')[0];
+
+    fetch(`/kitchen/daily-menu/updates?date=${today}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateDailyMenuStatusDisplay(data.menu_updates || []);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading daily menu status:', error);
+        });
+}
+
+function updateDailyMenuStatusDisplay(menuUpdates) {
+    const container = document.getElementById('dailyMenuStatus');
+    if (!container) return;
+
+    if (menuUpdates.length === 0) {
+        container.innerHTML = `
+            <div class="col-12 text-center">
+                <p class="text-muted">No menu items for today. Cook needs to create today's menu first.</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    menuUpdates.forEach(item => {
+        const statusColor = getStatusColor(item.status);
+        html += `
+            <div class="col-md-4 mb-3">
+                <div class="card border-${statusColor}">
+                    <div class="card-body">
+                        <h6 class="card-title text-capitalize">${item.meal_type}</h6>
+                        <p class="card-text">
+                            <strong>${item.meal_name}</strong><br>
+                            <small class="text-muted">${Array.isArray(item.ingredients) ? item.ingredients.join(', ') : (item.ingredients || 'No ingredients listed')}</small>
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge ${item.status_badge}">${item.status.charAt(0).toUpperCase() + item.status.slice(1)}</span>
+                            <small class="text-muted">Updated: ${item.updated_at}</small>
+                        </div>
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-outline-primary" onclick="updateMenuStatus('${item.id}', '${item.meal_type}')">
+                                Update Status
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'planned': 'secondary',
+        'preparing': 'warning',
+        'ready': 'success',
+        'served': 'info'
+    };
+    return colors[status] || 'secondary';
+}
+
+function updateMenuStatus(itemId, mealType) {
+    const statuses = ['planned', 'preparing', 'ready', 'served'];
+    const currentIndex = 0; // You'd get this from the current status
+    const nextStatus = statuses[(currentIndex + 1) % statuses.length];
+
+    const today = new Date().toISOString().split('T')[0];
+
+    fetch('/kitchen/daily-menu/update-status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            menu_date: today,
+            meal_type: mealType,
+            status: nextStatus
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`${mealType} status updated to ${nextStatus}`, 'success');
+            loadDailyMenuStatus(); // Refresh the display
+        } else {
+            showToast(data.message || 'Failed to update status', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error updating menu status', 'error');
+    });
+}
+
+// Efficient polling with smart intervals
+let pollInterval = 30000; // Start with 30 seconds
+let lastPollUpdate = null;
+
+function initializeRealTimeNotifications() {
+    // Check for new poll responses more frequently during active hours
+    const now = new Date();
+    const hour = now.getHours();
+
+    // More frequent updates during meal times (6-9 AM, 11-2 PM, 5-8 PM)
+    if ((hour >= 6 && hour <= 9) || (hour >= 11 && hour <= 14) || (hour >= 17 && hour <= 20)) {
+        pollInterval = 15000; // 15 seconds during meal times
+    } else {
+        pollInterval = 60000; // 1 minute during off-peak hours
+    }
+
+    // Adaptive polling based on activity
+    setInterval(() => {
+        checkForPollUpdates();
+    }, pollInterval);
+}
+
+function checkForPollUpdates() {
+    fetch('/kitchen/pre-orders/polls')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const currentUpdate = JSON.stringify(data.polls);
+
+                // Only update UI if data has changed
+                if (lastPollUpdate !== currentUpdate) {
+                    updatePreOrdersTable(data.polls);
+                    lastPollUpdate = currentUpdate;
+
+                    // Show notification for new responses
+                    checkForNewResponses(data.polls);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error checking poll updates:', error);
+        });
+}
+
+function checkForNewResponses(polls) {
+    polls.forEach(poll => {
+        if (poll.status === 'active' && poll.responses_count > 0) {
+            // You could show notifications for new responses here
+            // For now, we'll just update the display
+        }
+    });
+}
+
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+
+    const container = document.createElement('div');
+    container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+    container.appendChild(toast);
+    document.body.appendChild(container);
+
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+
+    // Remove toast after it's hidden
+    toast.addEventListener('hidden.bs.toast', () => {
+        container.remove();
+    });
+}
+
+// Manual meal input functions
+function toggleManualMealInput() {
+    const manualInput = document.getElementById('manualMealInput');
+    const availableMeals = document.getElementById('availableMeals');
+
+    if (manualInput.style.display === 'none') {
+        manualInput.style.display = 'block';
+        availableMeals.disabled = true;
+        console.log('📝 Manual meal input enabled');
+    } else {
+        manualInput.style.display = 'none';
+        availableMeals.disabled = false;
+        console.log('📝 Manual meal input disabled');
+    }
+}
+
+function useManualMeal() {
+    const mealName = document.getElementById('manualMealName').value.trim();
+    const ingredients = document.getElementById('manualMealIngredients').value.trim();
+
+    if (!mealName) {
+        showToast('Please enter a meal name', 'error');
+        return;
+    }
+
+    console.log('✅ Using manual meal:', { mealName, ingredients });
+
+    // Update the meal details display
+    updateMealDetails(mealName, ingredients || 'No ingredients specified');
+
+    // Enable the create poll button
+    document.getElementById('createPollBtn').disabled = false;
+
+    // Hide the manual input
+    document.getElementById('manualMealInput').style.display = 'none';
+
+    // Store manual meal data for poll creation
+    window.manualMealData = {
+        name: mealName,
+        ingredients: ingredients || 'No ingredients specified'
+    };
+
+    showToast('Manual meal selected: ' + mealName, 'success');
+}
+
+function cancelManualMeal() {
+    document.getElementById('manualMealName').value = '';
+    document.getElementById('manualMealIngredients').value = '';
+    document.getElementById('manualMealInput').style.display = 'none';
+    document.getElementById('availableMeals').disabled = false;
+
+    // Clear manual meal data
+    window.manualMealData = null;
+
+    console.log('❌ Manual meal input cancelled');
+}
+
+// Test manual meal creation
+function testManualMealCreation() {
+    console.log('=== TESTING MANUAL MEAL CREATION ===');
+
+    // Simulate manual meal data
+    const testData = {
+        meal_type: 'breakfast',
+        meal_id: null,
+        deadline: '9:00 PM',
+        manual_meal: {
+            name: 'Test Manual Chicken Adobo',
+            ingredients: 'Chicken, soy sauce, vinegar, garlic'
+        }
+    };
+
+    console.log('Test data:', testData);
+
+    fetch('/kitchen/pre-orders/create-poll', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify(testData)
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+            showToast('✅ Manual meal test successful!', 'success');
+        } else {
+            showToast('❌ Manual meal test failed: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Test error:', error);
+        showToast('❌ Manual meal test error: ' + error.message, 'error');
+    });
+}
+
+// Test function to debug available meals API
+function testAvailableMeals() {
+    console.log('=== TESTING AVAILABLE MEALS API ===');
+
+    // Get current week cycle info
+    if (typeof getCurrentWeekCycle === 'function') {
+        const weekInfo = getCurrentWeekCycle();
+        console.log('Week cycle info:', weekInfo);
+    }
+
+    // Test all meal types
+    const mealTypes = ['breakfast', 'lunch', 'dinner'];
+
+    mealTypes.forEach(mealType => {
+        console.log(`\n--- Testing ${mealType} ---`);
+
+        fetch(`/kitchen/pre-orders/available-meals?meal_type=${mealType}`)
+            .then(response => {
+                console.log(`${mealType} response status:`, response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log(`${mealType} response data:`, data);
+
+                if (data.success && data.meals && data.meals.length > 0) {
+                    console.log(`✅ ${mealType}: Found ${data.meals.length} meals`);
+                    data.meals.forEach(meal => {
+                        console.log(`  - ${meal.name} (ID: ${meal.id})`);
+                    });
+                } else {
+                    console.log(`❌ ${mealType}: No meals found`);
+                    if (data.debug) {
+                        console.log(`Debug info:`, data.debug);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error(`💥 ${mealType} error:`, error);
+            });
+    });
+
+    // Also test the debug endpoint
+    console.log('\n--- Testing Debug Endpoint ---');
+    fetch('/kitchen/pre-orders/debug-meals')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Debug endpoint response:', data);
+            if (data.success && data.debug_info) {
+                const info = data.debug_info;
+                console.log(`📊 Database Summary:`);
+                console.log(`  - Today: ${info.today} (${info.day_of_week})`);
+                console.log(`  - Week Cycle: ${info.week_cycle}`);
+                console.log(`  - Total meals in DB: ${info.total_meals}`);
+                console.log(`  - Meals for today: ${info.todays_meals_count}`);
+                console.log(`  - Recommendation: ${info.issue_analysis.recommendation}`);
+            }
+        })
+        .catch(error => {
+            console.error('💥 Debug endpoint error:', error);
+        });
+
+    showToast('Check browser console for detailed API test results', 'info');
+}
+
+
 </script>
 @endpush
 
-<!-- Edit Menu Modal -->
-<div class="modal fade" id="editMenuModal" tabindex="-1" aria-labelledby="editMenuModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editMenuModalLabel">Edit Menu Item</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editMenuForm">
-                    <div class="alert alert-info">
-                        <i class="bi bi-calendar-check me-2"></i> <span id="currentDateTime">Current Date: May 30, 2025 (08:10 AM)</span>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="editDay" class="form-label">Day</label>
-                            <select class="form-select" id="editDay" name="editDay" required>
-                                <option value="monday">Monday</option>
-                                <option value="tuesday">Tuesday</option>
-                                <option value="wednesday">Wednesday</option>
-                                <option value="thursday">Thursday</option>
-                                <option value="friday">Friday</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="editWeekCycle" class="form-label">Week</label>
-                            <select class="form-select" id="editWeekCycle" name="editWeekCycle" required>
-                                <option value="1">Week 1</option>
-                                <option value="2">Week 2</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="editMealType" class="form-label">Meal Type</label>
-                        <select class="form-select" id="editMealType" name="editMealType" required>
-                            <option value="breakfast">Breakfast</option>
-                            <option value="lunch">Lunch</option>
-                            <option value="dinner">Dinner</option>
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="editMealName" class="form-label">Meal Name</label>
-                        <input type="text" class="form-control" id="editMealName" name="editMealName" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="editIngredients" class="form-label">Ingredients</label>
-                        <textarea class="form-control" id="editIngredients" name="editIngredients" rows="3" required></textarea>
-                        <small class="text-muted">Separate ingredients with commas</small>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="editCutoffTime" class="form-label">Cutoff Time</label>
-                        <select class="form-select" id="editCutoffTime" name="editCutoffTime">
-                            <option value="6:00 AM">10:00 PM (Breakfast Default)</option>
-                            <option value="10:00 AM">10:00 PM (Lunch Default)</option>
-                             <option value="10:00 AM">8:00 AM (Lunch Default)</option>
-                            <option value="3:00 PM">10:00 PM (Dinner Default)</option>
-                            <option value="custom">Custom Time</option>
-                        </select>
-                    </div>
-                    
-                    <div id="customTimeContainer" class="mb-3" style="display: none;">
-                        <label for="customCutoffTime" class="form-label">Custom Cutoff Time</label>
-                        <input type="time" class="form-control" id="customCutoffTime" name="customCutoffTime">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveMenuChangesBtn">Save Changes</button>
-            </div>
-        </div>
-    </div>
-</div>
+

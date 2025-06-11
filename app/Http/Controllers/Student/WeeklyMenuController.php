@@ -14,9 +14,10 @@ class WeeklyMenuController extends Controller
      */
     public function index()
     {
-        // Determine the current week number (1-4)
-        $weekOfMonth = ceil(Carbon::now()->day / 7);
-        
+        // FIXED: Use consistent week of month calculation
+        // Use Laravel's built-in weekOfMonth method for consistency
+        $weekOfMonth = Carbon::now()->weekOfMonth;
+
         // For weeks 1 & 3, use week_cycle = 1
         // For weeks 2 & 4, use week_cycle = 2
         $weekCycle = ($weekOfMonth % 2 === 1) ? 1 : 2;

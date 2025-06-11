@@ -15,13 +15,18 @@ class Ingredient extends Model
         'unit',
         'category',
         'description',
-        'stock',
+        'current_stock',
         'minimum_stock',
+        'cost_per_unit',
+        'supplier_id',
+        'created_by',
+        'updated_by'
     ];
 
     protected $casts = [
-        'stock' => 'decimal:2',
+        'current_stock' => 'decimal:2',
         'minimum_stock' => 'decimal:2',
+        'cost_per_unit' => 'decimal:2',
     ];
 
     /**
@@ -45,6 +50,6 @@ class Ingredient extends Model
      */
     public function needsRestock(): bool
     {
-        return $this->stock < $this->minimum_stock;
+        return $this->current_stock < $this->minimum_stock;
     }
 }

@@ -1,10 +1,13 @@
+<!-- User Role Meta Tag for Notification System -->
+<meta name="user-role" content="cook">
+
 <!-- Cook/Admin Header -->
 <header class="cook-header">
     <div class="header-backdrop"></div>
     <div class="header-content">
         <div class="header-left">
-                <img src="https://cdn.jobs.makesense.org/projects/243/project/1644249853968kzcvwr2o.png" 
-                     alt="PN Logo" class="header-logo">
+            <img src="{{ asset('images/PN-Logo.png') }}"
+                 alt="PN Logo" class="header-logo">
         </div>
         <div class="header-right">
             <div class="header-profile">
@@ -49,6 +52,9 @@
         </div>
     </div>
 </header>
+
+<!-- Include notification system for cook -->
+@include('Component.notification-dropdown')
 
 <style>
 .cook-header {

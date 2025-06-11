@@ -17,12 +17,12 @@
 
 .sidebar .nav-link:hover {
     color: #000;
-    background-color: rgba(13, 110, 253, 0.1);
+    background-color: rgba(34, 187, 234, 0.1);
 }
 
 .sidebar .nav-link.active {
-    color: #0d6efd;
-    background-color: rgba(13, 110, 253, 0.1);
+    color: #22bbea;
+    background-color: rgba(34, 187, 234, 0.1);
 }
 
 .sidebar .nav-link i {

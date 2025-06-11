@@ -1,10 +1,13 @@
+<!-- User Role Meta Tag for Notification System -->
+<meta name="user-role" content="student">
+
 <!-- Student Header -->
 <header class="student-header">
     <div class="header-backdrop"></div>
     <div class="header-content">
         <div class="header-left">
-                <img src="https://cdn.jobs.makesense.org/projects/243/project/1644249853968kzcvwr2o.png" 
-                     alt="PN Logo" class="header-logo">
+            <img src="{{ asset('images/PN-Logo.png') }}"
+                 alt="PN Logo" class="header-logo">
         </div>
         <div class="header-right">
             <div class="header-profile">
@@ -50,6 +53,9 @@
     </div>
 </header>
 
+<!-- Include notification system for students -->
+@include('Component.notification-dropdown')
+
 <style>
 .student-header {
     position: fixed;
@@ -87,51 +93,10 @@
     gap: 1rem;
 }
 
-.logo-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 50px;
-    width: 50px;
-    background: white;
-    border-radius: 10px;
-    padding: 5px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
-    margin-left: 10px;
-}
-
-.logo-container:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-}
-
 .header-logo {
     height: 40px;
     width: auto;
     transition: all 0.3s ease;
-}
-
-.title-container {
-    display: flex;
-    flex-direction: column;
-}
-
-.header-title {
-    color: #22bbea;
-    font-weight: 700;
-    font-size: 1.1rem;
-    margin: 0;
-    letter-spacing: 0.5px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.header-subtitle {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.8rem;
-    margin: 0;
-    letter-spacing: 0.5px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .header-right {

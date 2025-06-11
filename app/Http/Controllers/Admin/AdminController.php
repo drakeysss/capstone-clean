@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Order;
+use App\Models\PreOrder;
 use App\Models\Menu;
 
 class AdminController extends Controller
@@ -17,10 +17,9 @@ class AdminController extends Controller
 
     public function dashboard()
     {
-        $totalOrders = Order::count();
+        $totalOrders = PreOrder::count();
         $totalMenuItems = Menu::count();
-        $totalRevenue = Order::where('status', 'completed')->sum('total_amount');
-        $recentOrders = Order::with('student')
+        $recentOrders = PreOrder::with('user')
             ->latest()
             ->take(10)
             ->get();
@@ -28,7 +27,6 @@ class AdminController extends Controller
         return view('admin.dashboard', compact(
             'totalOrders',
             'totalMenuItems',
-            'totalRevenue',
             'recentOrders'
         ));
     }

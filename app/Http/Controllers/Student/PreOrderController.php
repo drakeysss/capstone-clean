@@ -5,6 +5,10 @@ namespace App\Http\Controllers\Student;
 use App\Http\Controllers\Controller;
 use App\Models\Menu;
 use App\Models\PreOrder;
+use App\Models\KitchenMenuPoll;
+use App\Models\KitchenPollResponse;
+use App\Models\User;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -214,81 +218,7 @@ class PreOrderController extends Controller
             ->with('success', 'Your pre-order has been updated successfully!');
     }
 
-    /**
-     * Display the student's pre-order history.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function history()
-    {
-        $user = Auth::user();
-        
-        // Get student's past pre-orders (up to 30 days ago)
-        $pastPreOrders = PreOrder::where('user_id', $user->id)
-            ->where('date', '<', Carbon::today())
-            ->where('date', '>=', Carbon::today()->subDays(30))
-            ->with('menu')
-            ->orderBy('date', 'desc')
-            ->orderBy('meal_type')
-            ->paginate(15);
-        
-        // Define meal costs
-        $mealCosts = [
-            'breakfast' => 3.50,
-            'lunch' => 5.00,
-            'dinner' => 6.50
-        ];
-        
-        // Calculate budget tracking data
-        $monthStart = Carbon::now()->startOfMonth()->format('Y-m-d');
-        $monthEnd = Carbon::now()->endOfMonth()->format('Y-m-d');
-        
-        // Get all pre-orders for the current month
-        $monthlyPreOrders = PreOrder::where('user_id', $user->id)
-            ->whereBetween('date', [$monthStart, $monthEnd])
-            ->where('is_attending', true)
-            ->with('menu')
-            ->get();
-        
-        // Calculate total spent this month
-        $spentThisMonth = 0;
-        $breakfastTotal = 0;
-        $lunchTotal = 0;
-        $dinnerTotal = 0;
-        
-        foreach ($monthlyPreOrders as $preOrder) {
-            $mealCost = $mealCosts[$preOrder->meal_type] ?? 5.00;
-            $spentThisMonth += $mealCost;
-            
-            if ($preOrder->meal_type === 'breakfast') {
-                $breakfastTotal += $mealCost;
-            } elseif ($preOrder->meal_type === 'lunch') {
-                $lunchTotal += $mealCost;
-            } elseif ($preOrder->meal_type === 'dinner') {
-                $dinnerTotal += $mealCost;
-            }
-        }
-        
-        // Calculate remaining budget (assuming monthly budget of $150)
-        $monthlyBudget = 150.00;
-        $remainingBudget = $monthlyBudget - $spentThisMonth;
-        
-        // Calculate daily average
-        $daysInMonth = Carbon::now()->daysInMonth;
-        $daysElapsed = Carbon::now()->day;
-        $dailyAverage = $daysElapsed > 0 ? $spentThisMonth / $daysElapsed : 0;
-        
-        return view('student.pre-order.history', compact(
-            'pastPreOrders',
-            'mealCosts',
-            'spentThisMonth',
-            'remainingBudget',
-            'dailyAverage',
-            'breakfastTotal',
-            'lunchTotal',
-            'dinnerTotal'
-        ));
-    }
+    // REMOVED: history() method - Pre-order history functionality deleted
     
     /**
      * Display the student's meal spending dashboard.
@@ -381,5 +311,171 @@ class PreOrderController extends Controller
             'currentMonth',
             'previousMonth'
         ));
+    }
+
+    /**
+     * Get active kitchen polls for students
+     */
+    public function getKitchenPolls()
+    {
+        try {
+            $user = Auth::user();
+
+            \Log::info('🔄 Student requesting kitchen polls (cycle-based)', [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'current_date' => now()->format('Y-m-d'),
+                'current_day' => strtolower(date('l')),
+                'current_week_cycle' => (now()->weekOfMonth % 2 === 1) ? 1 : 2,
+                'route_called' => 'getKitchenPolls',
+                'controller' => 'Student\PreOrderController'
+            ]);
+
+            // Get active polls that students can respond to
+            $activePolls = KitchenMenuPoll::where('status', 'active')
+                ->orWhere('status', 'sent')
+                ->where('poll_date', '>=', now()->format('Y-m-d'))
+                ->orderBy('poll_date', 'asc')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            \Log::info('📊 Found kitchen polls', [
+                'total_polls' => $activePolls->count(),
+                'poll_ids' => $activePolls->pluck('id')->toArray()
+            ]);
+
+            // Get student's existing responses
+            $studentResponses = KitchenPollResponse::where('student_id', $user->id)
+                ->whereIn('poll_id', $activePolls->pluck('id'))
+                ->get()
+                ->keyBy('poll_id');
+
+            $formattedPolls = $activePolls->map(function ($poll) use ($studentResponses) {
+                $response = $studentResponses->get($poll->id);
+
+                \Log::info('📝 Formatting poll', [
+                    'poll_id' => $poll->id,
+                    'meal_name' => $poll->meal_name,
+                    'poll_date' => $poll->poll_date,
+                    'deadline' => $poll->deadline,
+                    'has_response' => $response !== null
+                ]);
+
+                return [
+                    'id' => $poll->id,
+                    'meal_name' => $poll->meal_name,
+                    'ingredients' => $poll->ingredients,
+                    'poll_date' => $poll->poll_date->format('Y-m-d'),
+                    'meal_type' => $poll->meal_type,
+                    'deadline' => $poll->deadline->format('H:i:s'), // Time format (HH:MM:SS)
+                    'deadline_formatted' => $poll->deadline->format('g:i A'), // 12-hour format
+                    'status' => $poll->status,
+                    'has_responded' => $response !== null,
+                    'response' => $response ? $response->will_eat : null,
+                    'response_notes' => $response ? $response->notes : null,
+                    'can_respond' => $poll->poll_date >= now()->format('Y-m-d') &&
+                                     now()->format('H:i:s') <= $poll->deadline->format('H:i:s')
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'polls' => $formattedPolls
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('🚨 DEEP FIX: Failed to get kitchen polls for student', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => auth()->id(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'controller' => 'Student\PreOrderController',
+                'method' => 'getKitchenPolls'
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load polls: ' . $e->getMessage(),
+                'debug' => [
+                    'error_type' => get_class($e),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
+            ], 500);
+        }
+    }
+
+    /**
+     * Respond to a kitchen poll
+     */
+    public function respondToKitchenPoll(Request $request, $pollId)
+    {
+        $request->validate([
+            'will_eat' => 'required|boolean',
+            'notes' => 'nullable|string|max:500'
+        ]);
+
+        try {
+            $user = Auth::user();
+            $poll = KitchenMenuPoll::findOrFail($pollId);
+
+            // Check if poll is still active and deadline hasn't passed
+            if (!in_array($poll->status, ['active', 'sent'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This poll is no longer active.'
+                ], 400);
+            }
+
+            // Check if deadline has passed (compare date and time separately)
+            $pollDate = $poll->poll_date->format('Y-m-d');
+            $currentDate = now()->format('Y-m-d');
+            $currentTime = now()->format('H:i:s');
+
+            if ($pollDate < $currentDate || ($pollDate === $currentDate && $poll->deadline->format('H:i:s') < $currentTime)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The deadline for this poll has passed.'
+                ], 400);
+            }
+
+            // Create or update response
+            $response = KitchenPollResponse::updateOrCreate(
+                [
+                    'poll_id' => $pollId,
+                    'student_id' => $user->id
+                ],
+                [
+                    'will_eat' => $request->will_eat,
+                    'notes' => $request->notes,
+                    'responded_at' => now()
+                ]
+            );
+
+            // Send notification to kitchen team
+            $notificationService = new NotificationService();
+            $notificationService->pollResponseSubmitted([
+                'student_name' => $user->name,
+                'meal_name' => $poll->meal_name,
+                'poll_date' => $poll->poll_date->format('Y-m-d'),
+                'response' => $request->will_eat ? 'yes' : 'no'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Your response has been recorded successfully!'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to respond to kitchen poll', [
+                'error' => $e->getMessage(),
+                'poll_id' => $pollId,
+                'user_id' => auth()->id()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to submit response: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

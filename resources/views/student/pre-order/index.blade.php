@@ -1,242 +1,565 @@
 @extends('layouts.app')
 
-@section('title', 'Pre-Order Meals')
+@section('title', 'Pre-Select Meals')
 
 @section('content')
 <div class="container">
-    <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div>
-                        <h3 class="mb-0">Pre-Order Meals</h3>
-                        <p class="mb-0 text-muted">Select your meals for the upcoming week</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
     
-    <!-- Pre-Order Instructions -->
+   
+
+    <!-- Kitchen Menu Polls Section -->
     <div class="row mb-4">
         <div class="col-md-12">
-            <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Important Information</h5>
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0"><i class="bi bi-clipboard-check me-2"></i>Kitchen Menu Polls</h5>
+                        <small class="text-muted" id="lastRefreshTime">Last updated: Loading...</small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-dark" id="refreshPollsBtn" onclick="refreshKitchenPolls()">
+                        <i class="bi bi-arrow-clockwise" id="refreshIcon"></i> Refresh
+                    </button>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-warning">
-                        <h5><i class="bi bi-clock me-2"></i>Cutoff Times</h5>
-                        <ul class="mb-0">
-                            <li><strong>Breakfast:</strong> 10:00 PM the day before</li>
-                            <li><strong>Lunch:</strong> 10:00 PM the day before if the students eat early</li>
-                            <li><strong>Lunch:</strong> 8:00 AM the same day</li>
-                            <li><strong>Dinner:</strong> 2:00 PM the same day</li>
-                        </ul>
-                        <p class="mt-2 mb-0">Pre-orders after these times cannot be accepted.</p>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Respond to kitchen polls to help plan meal preparation!</strong>
+                        The kitchen team creates polls to know how many students will eat specific meals.
                     </div>
-                    <p>Pre-ordering helps the kitchen team prepare the right amount of food and reduce waste. Please pre-order your meals whenever possible.</p>
+                    <div id="kitchenPollsContainer">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-warning" role="status">
+                                <span class="visually-hidden">Loading polls...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading kitchen polls...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
     
-    <!-- Weekly Menu Pre-Order Section -->
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Weekly Menu ({{ $startDate->format('M d') }} - {{ $endDate->format('M d') }})</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Day</th>
-                                    <th>Meal</th>
-                                    <th>Menu Items</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php $currentDate = null; @endphp
-                                
-                                @foreach($menuItems as $date => $dayMenus)
-                                    @php 
-                                        $formattedDate = \Carbon\Carbon::parse($date);
-                                        $isToday = $formattedDate->isToday();
-                                        $isPast = $formattedDate->isPast() && !$isToday;
-                                    @endphp
-                                    
-                                    @foreach(['breakfast', 'lunch', 'dinner'] as $mealType)
-                                        @if(isset($dayMenus) && $dayMenus->where('meal_type', $mealType)->count() > 0)
-                                            @php
-                                                $mealItems = $dayMenus->where('meal_type', $mealType);
-                                                $preOrderKey = $date . '_' . $mealType;
-                                                $hasPreOrder = isset($studentPreOrders[$preOrderKey]);
-                                                $cutoffPassed = \Carbon\Carbon::now()->greaterThan($cutoffTimes[$mealType]);
-                                                
-                                                if ($mealType === 'breakfast') {
-                                                    $cutoffPassed = \Carbon\Carbon::now()->greaterThan(
-                                                        \Carbon\Carbon::parse($date)->subDay()->setHour(18)->setMinute(0)
-                                                    );
-                                                } elseif ($mealType === 'lunch') {
-                                                    $cutoffPassed = \Carbon\Carbon::now()->greaterThan(
-                                                        \Carbon\Carbon::parse($date)->setHour(8)->setMinute(0)
-                                                    );
-                                                } elseif ($mealType === 'dinner') {
-                                                    $cutoffPassed = \Carbon\Carbon::now()->greaterThan(
-                                                        \Carbon\Carbon::parse($date)->setHour(14)->setMinute(0)
-                                                    );
-                                                }
-                                                
-                                                $disabled = $isPast || ($isToday && $cutoffPassed);
-                                            @endphp
-                                            
-                                            <tr class="{{ $isToday ? 'table-primary' : '' }} {{ $isPast ? 'text-muted' : '' }}">
-                                                @if($currentDate !== $date)
-                                                    <td class="align-middle" rowspan="{{ $dayMenus->groupBy('meal_type')->count() }}">
-                                                        <strong>{{ $formattedDate->format('D, M d') }}</strong>
-                                                        @if($isToday)
-                                                            <span class="badge bg-primary">Today</span>
-                                                        @endif
-                                                    </td>
-                                                    @php $currentDate = $date; @endphp
-                                                @endif
-                                                
-                                                <td class="align-middle">{{ ucfirst($mealType) }}</td>
-                                                
-                                                <td class="align-middle">
-                                                    <div class="d-flex flex-column">
-                                                        @foreach($mealItems as $menuItem)
-                                                            <div class="mb-1">
-                                                                <strong>{{ $menuItem->menu_item }}</strong>
-                                                                @if($menuItem->description)
-                                                                    <small class="text-muted d-block">{{ $menuItem->description }}</small>
-                                                                @endif
-                                                            </div>
-                                                        @endforeach
-                                                    </div>
-                                                </td>
-                                                
-                                                <td class="align-middle">
-                                                    @if($hasPreOrder)
-                                                        <span class="badge bg-success">Pre-ordered</span>
-                                                    @else
-                                                        <span class="badge bg-secondary">Not ordered</span>
-                                                    @endif
-                                                </td>
-                                                
-                                                <td class="align-middle">
-                                                    @if($disabled)
-                                                        <button class="btn btn-sm btn-secondary" disabled>
-                                                            Cutoff passed
-                                                        </button>
-                                                    @else
-                                                        @if($hasPreOrder)
-                                                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal{{ $date }}_{{ $mealType }}">
-                                                                Cancel
-                                                            </button>
-                                                            
-                                                            <!-- Cancel Modal -->
-                                                            <div class="modal fade" id="cancelModal{{ $date }}_{{ $mealType }}" tabindex="-1" aria-labelledby="cancelModalLabel{{ $date }}_{{ $mealType }}" aria-hidden="true">
-                                                                <div class="modal-dialog">
-                                                                    <div class="modal-content">
-                                                                        <div class="modal-header">
-                                                                            <h5 class="modal-title" id="cancelModalLabel{{ $date }}_{{ $mealType }}">Cancel Pre-order</h5>
-                                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                                        </div>
-                                                                        <div class="modal-body">
-                                                                            <p>Are you sure you want to cancel your pre-order for {{ ucfirst($mealType) }} on {{ $formattedDate->format('D, M d') }}?</p>
-                                                                        </div>
-                                                                        <div class="modal-footer">
-                                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                                            <form action="{{ route('student.pre-order.update', $studentPreOrders[$preOrderKey]->id) }}" method="POST">
-                                                                                @csrf
-                                                                                @method('PUT')
-                                                                                <input type="hidden" name="is_attending" value="0">
-                                                                                <button type="submit" class="btn btn-danger">Cancel Pre-order</button>
-                                                                            </form>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        @else
-                                                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#orderModal{{ $date }}_{{ $mealType }}">
-                                                                Pre-select
-                                                            </button>
-                                                            
-                                                            <!-- Pre-order Modal -->
-                                                            <div class="modal fade" id="orderModal{{ $date }}_{{ $mealType }}" tabindex="-1" aria-labelledby="orderModalLabel{{ $date }}_{{ $mealType }}" aria-hidden="true">
-                                                                <div class="modal-dialog">
-                                                                    <div class="modal-content">
-                                                                        <div class="modal-header">
-                                                                            <h5 class="modal-title" id="orderModalLabel{{ $date }}_{{ $mealType }}">Pre-order {{ ucfirst($mealType) }}</h5>
-                                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                                        </div>
-                                                                        <form action="{{ route('student.pre-order.store') }}" method="POST">
-                                                                            @csrf
-                                                                            <input type="hidden" name="date" value="{{ $date }}">
-                                                                            <input type="hidden" name="meal_type" value="{{ $mealType }}">
-                                                                            
-                                                                            <div class="modal-body">
-                                                                                <div class="mb-3">
-                                                                                    <label class="form-label">Select Menu Item:</label>
-                                                                                    @foreach($mealItems as $menuItem)
-                                                                                        <div class="form-check">
-                                                                                            <input class="form-check-input" type="radio" name="menu_id" value="{{ $menuItem->id }}" id="menuItem{{ $menuItem->id }}" {{ $loop->first ? 'checked' : '' }}>
-                                                                                            <label class="form-check-label" for="menuItem{{ $menuItem->id }}">
-                                                                                                {{ $menuItem->menu_item }}
-                                                                                                @if($menuItem->description)
-                                                                                                    <small class="text-muted d-block">{{ $menuItem->description }}</small>
-                                                                                                @endif
-                                                                                            </label>
-                                                                                        </div>
-                                                                                    @endforeach
-                                                                                </div>
-                                                                                
-                                                                                <div class="mb-3">
-                                                                                    <label for="notes{{ $date }}_{{ $mealType }}" class="form-label">Special Instructions (optional):</label>
-                                                                                    <textarea class="form-control" id="notes{{ $date }}_{{ $mealType }}" name="notes" rows="2" placeholder="Any allergies or special requests?"></textarea>
-                                                                                </div>
-                                                                            </div>
-                                                                            
-                                                                            <div class="modal-footer">
-                                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                                                <button type="submit" class="btn btn-primary">Confirm Pre-order</button>
-                                                                            </div>
-                                                                        </form>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        @endif
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @endif
-                                    @endforeach
-                                @endforeach
-                                
-                                @if(count($menuItems ?? []) === 0)
-                                    <tr>
-                                        <td colspan="5" class="text-center py-4">
-                                            <div class="alert alert-info mb-0">
-                                                <i class="bi bi-info-circle me-2"></i>No menu items available for the upcoming week
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endif
-                            </tbody>
-                        </table>
+
+<!-- Kitchen Poll Response Modal -->
+<div class="modal fade" id="kitchenPollModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Respond to Kitchen Poll</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="pollDetails"></div>
+                <form id="kitchenPollForm">
+                    <input type="hidden" id="pollId" name="poll_id">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Will you eat this meal?</label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="will_eat" value="1" id="willEatYes">
+                                <label class="form-check-label text-success" for="willEatYes">
+                                    <i class="bi bi-check-circle"></i> Yes, I will eat
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="will_eat" value="0" id="willEatNo">
+                                <label class="form-check-label text-danger" for="willEatNo">
+                                    <i class="bi bi-x-circle"></i> No, I won't eat
+                                </label>
+                            </div>
+                        </div>
                     </div>
-                </div>
+
+                  
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitKitchenPollResponse()">
+                    <i class="bi bi-send"></i> Submit Response
+                </button>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('form').forEach(function(form) {
+        if (form.action && form.action.includes('/pre-order')) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
+                }
+                const formData = new FormData(form);
+                fetch(form.action, {
+                    method: form.method || 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Pre-order submitted successfully!');
+                        form.reset();
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Failed to submit pre-order');
+                    }
+                })
+                .catch(error => {
+                    alert('An error occurred while submitting pre-order');
+                })
+                .finally(() => {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = 'Submit';
+                    }
+                });
+            });
+        }
+    });
+
+    // Load kitchen polls on page load
+    loadKitchenPolls();
+
+    // Auto-refresh kitchen polls every 30 seconds
+    setInterval(loadKitchenPolls, 30000);
+});
+
+// Kitchen Polls Functions
+let currentKitchenPolls = [];
+
+// SIMPLE MODAL FUNCTIONS - NO BOOTSTRAP DEPENDENCY
+function showModalSimple(modalId) {
+    const modalElement = document.getElementById(modalId);
+    if (!modalElement) return;
+
+    // Clean up any existing stuff
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    document.body.style.overflow = 'hidden';
+
+    // Show modal manually
+    modalElement.style.cssText = `
+        display: block !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: 999999 !important;
+        background-color: rgba(0, 0, 0, 0.5) !important;
+        pointer-events: auto !important;
+    `;
+
+    modalElement.classList.add('show');
+
+    // Style the dialog
+    const modalDialog = modalElement.querySelector('.modal-dialog');
+    if (modalDialog) {
+        modalDialog.style.cssText = `
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            z-index: 1000000 !important;
+            pointer-events: auto !important;
+            margin: 0 !important;
+        `;
+    }
+
+    // Ensure content is clickable
+    const modalContent = modalElement.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.style.cssText = `
+            pointer-events: auto !important;
+            z-index: 1000001 !important;
+            background: white !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+        `;
+    }
+
+    // Make all inputs clickable
+    modalElement.querySelectorAll('input, textarea, button, select').forEach(el => {
+        el.style.pointerEvents = 'auto';
+    });
+
+    // Close on backdrop click
+    modalElement.onclick = function(e) {
+        if (e.target === modalElement) {
+            hideModalSimple(modalId);
+        }
+    };
+
+    // Close button functionality
+    modalElement.querySelectorAll('[data-bs-dismiss="modal"], .btn-close').forEach(btn => {
+        btn.onclick = function() {
+            hideModalSimple(modalId);
+        };
+    });
+}
+
+function hideModalSimple(modalId) {
+    const modalElement = document.getElementById(modalId);
+    if (modalElement) {
+        modalElement.style.display = 'none';
+        modalElement.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+}
+
+// Enhanced refresh function with visual feedback
+function refreshKitchenPolls() {
+    const refreshBtn = document.getElementById('refreshPollsBtn');
+    const refreshIcon = document.getElementById('refreshIcon');
+
+    // Mark as manual refresh for success feedback
+    window.isManualRefresh = true;
+
+    // Show loading state
+    refreshBtn.disabled = true;
+    refreshIcon.className = 'bi bi-arrow-clockwise spin';
+    refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i> Refreshing...';
+
+    // Call the main load function
+    loadKitchenPolls().finally(() => {
+        // Reset button state with success animation
+        setTimeout(() => {
+            refreshBtn.disabled = false;
+            refreshIcon.className = 'bi bi-arrow-clockwise';
+            refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Refresh';
+
+            // Add success pulse animation
+            refreshBtn.classList.add('refresh-success');
+            setTimeout(() => {
+                refreshBtn.classList.remove('refresh-success');
+            }, 500);
+        }, 500); // Small delay to show the refresh completed
+    });
+}
+
+function loadKitchenPolls() {
+    console.log('🔄 Loading kitchen polls...');
+
+    return fetch('/student/polls/kitchen', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => {
+        console.log('🔧 Response status:', response.status, response.statusText);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            console.error('❌ Response is not JSON, content-type:', contentType);
+            throw new Error('Server returned non-JSON response (likely an error page)');
+        }
+
+        return response.json();
+    })
+    .then(data => {
+        console.log('📦 Kitchen polls data:', data);
+
+        if (data.success) {
+            currentKitchenPolls = data.polls || [];
+            displayKitchenPolls(currentKitchenPolls);
+
+            // Update last refresh time
+            updateLastRefreshTime();
+
+            // Show success feedback for manual refresh
+            if (window.isManualRefresh) {
+                showToast('Polls refreshed successfully!', 'success');
+                window.isManualRefresh = false;
+            }
+        } else {
+            console.error('❌ API returned error:', data);
+            showKitchenPollsError('Failed to load polls: ' + (data.message || 'Unknown error'));
+
+            // Show debug info if available
+            if (data.debug) {
+                console.error('🔍 Debug info:', data.debug);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('💥 Error loading kitchen polls:', error);
+        showKitchenPollsError('Error loading polls: ' + error.message);
+    });
+}
+
+function displayKitchenPolls(polls) {
+    const container = document.getElementById('kitchenPollsContainer');
+
+    if (!polls || polls.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-inbox display-6 text-muted"></i>
+                <h6 class="mt-3 text-muted">No Active Kitchen Polls</h6>
+                <p class="text-muted">There are no menu polls available at the moment.</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '<div class="row">';
+
+    polls.forEach(poll => {
+        const deadlineFormatted = formatKitchenPollDeadline(poll.deadline);
+        const statusBadge = getKitchenPollStatusBadge(poll);
+
+        html += `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100 ${poll.has_responded ? 'border-success' : 'border-warning'}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="card-title text-primary">${poll.meal_name}</h6>
+                            ${statusBadge}
+                        </div>
+
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-calendar"></i> ${formatKitchenPollDate(poll.poll_date)}
+                            <span class="badge bg-secondary ms-1">${poll.meal_type}</span>
+                        </p>
+
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-list-ul"></i> ${poll.ingredients || 'No ingredients listed'}
+                        </p>
+
+                        <p class="text-warning small mb-3">
+                            <i class="bi bi-clock"></i> Deadline: ${deadlineFormatted}
+                        </p>
+
+                        ${getKitchenPollActionButton(poll)}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function getKitchenPollStatusBadge(poll) {
+    if (poll.has_responded) {
+        const response = poll.response ? 'Will Eat' : 'Won\'t Eat';
+        const badgeClass = poll.response ? 'bg-success' : 'bg-danger';
+        return `<span class="badge ${badgeClass}"><i class="bi bi-check-circle"></i> ${response}</span>`;
+    } else {
+        return '<span class="badge bg-warning"><i class="bi bi-clock"></i> Pending</span>';
+    }
+}
+
+function getKitchenPollActionButton(poll) {
+    if (poll.has_responded) {
+        return `
+            <button class="btn btn-sm btn-outline-primary w-100" onclick="openKitchenPollModal(${poll.id})">
+                <i class="bi bi-pencil"></i> Change Response
+            </button>
+        `;
+    } else {
+        return `
+            <button class="btn btn-sm btn-primary w-100" onclick="openKitchenPollModal(${poll.id})">
+                <i class="bi bi-reply"></i> Respond Now
+            </button>
+        `;
+    }
+}
+
+function openKitchenPollModal(pollId) {
+    const poll = currentKitchenPolls.find(p => p.id === pollId);
+    if (!poll) return;
+
+    // Set poll details
+    document.getElementById('pollDetails').innerHTML = `
+        <div class="alert alert-info">
+            <h6><i class="bi bi-info-circle"></i> ${poll.meal_name}</h6>
+            <p class="mb-1"><strong>Date:</strong> ${formatKitchenPollDate(poll.poll_date)} (${poll.meal_type})</p>
+            <p class="mb-1"><strong>Ingredients:</strong> ${poll.ingredients || 'Not specified'}</p>
+            <p class="mb-0"><strong>Deadline:</strong> ${formatKitchenPollDeadline(poll.deadline)}</p>
+        </div>
+    `;
+
+    // Set form values
+    document.getElementById('pollId').value = poll.id;
+
+    // Pre-fill if already responded
+    if (poll.has_responded) {
+        document.getElementById(poll.response ? 'willEatYes' : 'willEatNo').checked = true;
+    } else {
+        // Clear form
+        document.querySelectorAll('input[name="will_eat"]').forEach(input => input.checked = false);
+    }
+
+    // Show modal using simple modal function
+    showModalSimple('kitchenPollModal');
+}
+
+function submitKitchenPollResponse() {
+    const form = document.getElementById('kitchenPollForm');
+    const formData = new FormData(form);
+
+    const pollId = formData.get('poll_id');
+    const willEat = formData.get('will_eat');
+
+    if (!willEat) {
+        alert('Please select whether you will eat this meal.');
+        return;
+    }
+
+    console.log('🔧 Submitting kitchen poll response:', { pollId, willEat });
+
+    fetch(`/student/polls/${pollId}/respond`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            will_eat: willEat === '1'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('✅ Kitchen poll response submitted:', data);
+
+        if (data.success) {
+            // Close modal using simple modal function
+            hideModalSimple('kitchenPollModal');
+
+            // Show success message
+            alert('Response submitted successfully!');
+
+            // Reload polls
+            loadKitchenPolls();
+        } else {
+            alert(data.message || 'Failed to submit response');
+        }
+    })
+    .catch(error => {
+        console.error('💥 Error submitting kitchen poll response:', error);
+        alert('Error submitting response: ' + error.message);
+    });
+}
+
+// Helper functions for kitchen polls
+function formatKitchenPollDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+}
+
+function formatKitchenPollDeadline(deadline) {
+    if (!deadline) return 'Not set';
+
+    // Simple formatting for deadline
+    if (deadline.includes(' ')) {
+        const [datePart, timePart] = deadline.split(' ');
+        const time = timePart.substring(0, 5); // Get HH:MM
+
+        // Convert to 12-hour format
+        const [hour, minute] = time.split(':');
+        const h = parseInt(hour);
+        const period = h >= 12 ? 'PM' : 'AM';
+        const displayHour = h === 0 ? 12 : (h > 12 ? h - 12 : h);
+
+        return `${displayHour}:${minute} ${period}`;
+    }
+
+    return deadline;
+}
+
+function showKitchenPollsError(message) {
+    document.getElementById('kitchenPollsContainer').innerHTML = `
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i> ${message}
+        </div>
+    `;
+}
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    // Remove existing toast if any
+    const existingToast = document.getElementById('refreshToast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.id = 'refreshToast';
+    toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'primary'} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    toast.style.position = 'fixed';
+    toast.style.top = '20px';
+    toast.style.right = '20px';
+    toast.style.zIndex = '9999';
+
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-${type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+
+    // Add to page
+    document.body.appendChild(toast);
+
+    // Initialize and show toast
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: 3000
+    });
+    bsToast.show();
+
+    // Remove from DOM after hiding
+    toast.addEventListener('hidden.bs.toast', () => {
+        toast.remove();
+    });
+}
+
+// Update last refresh time display
+function updateLastRefreshTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+
+    const lastRefreshElement = document.getElementById('lastRefreshTime');
+    if (lastRefreshElement) {
+        lastRefreshElement.textContent = `Last updated: ${timeString}`;
+    }
+}
+</script>
 @endsection
 
 @push('styles')
@@ -244,10 +567,85 @@
     .table th, .table td {
         vertical-align: middle;
     }
-    
+
     .card {
         box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
         margin-bottom: 1.5rem;
+    }
+
+    /* Spinning animation for refresh button */
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+
+    /* ULTIMATE MODAL FIXES - HIGHEST PRIORITY */
+    .modal {
+        z-index: 999999 !important;
+        position: fixed !important;
+    }
+
+    .modal-backdrop {
+        z-index: 999998 !important;
+        background-color: rgba(0, 0, 0, 0.5) !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        pointer-events: auto !important;
+    }
+
+    .modal.show {
+        z-index: 999999 !important;
+        display: block !important;
+    }
+
+    .modal-dialog {
+        z-index: 1000000 !important;
+        position: relative !important;
+        pointer-events: auto !important;
+    }
+
+    .modal-content {
+        z-index: 1000001 !important;
+        position: relative !important;
+        pointer-events: auto !important;
+    }
+
+    /* Ensure modal is clickable */
+    #kitchenPollModal {
+        z-index: 999999 !important;
+        pointer-events: auto !important;
+    }
+
+    #kitchenPollModal .modal-dialog {
+        pointer-events: auto !important;
+    }
+
+    #kitchenPollModal .modal-content {
+        pointer-events: auto !important;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* Enhanced button states */
+    #refreshPollsBtn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    /* Success feedback animation */
+    .refresh-success {
+        animation: pulse 0.5s ease-in-out;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
     }
 </style>
 @endpush

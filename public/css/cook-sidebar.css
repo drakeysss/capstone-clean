@@ -4,19 +4,19 @@
 }
 
 .cook-portal .sidebar-header {
-    background-color: #f0fff4;
+    background-color: #f0f9ff;
 }
 
 .cook-portal .sidebar-title {
-    color: #28a745;
+    color: #ff9933;
 }
 
 .cook-portal .nav-link:hover,
 .cook-portal .nav-link.active {
-    background-color: #28a745;
+    background-color: #ff9933;
     color: white;
 }
 
 .cook-portal .sidebar-category {
-    color: #28a745;
+    color: #ff9933;
 }

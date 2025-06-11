@@ -145,7 +145,7 @@
     .btn-primary:hover {
         background: #ff9933;
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(34, 187, 234, 0.3);
+        box-shadow: 0 8px 20px rgba(255, 153, 51, 0.3);
     }
     .form-control {
         border: 1px solid rgba(255, 255, 255, 0.2);

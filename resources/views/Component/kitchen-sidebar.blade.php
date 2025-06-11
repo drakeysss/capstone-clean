@@ -101,14 +101,14 @@
 </style>
 
 <nav class="sidebar kitchen-portal">
-    <!-- Sidebar Header -->
-    <div class="sidebar-header">
-        <i class="bi bi-house-door icon" style="color: #ff9933;"></i>
-        <h6 class="sidebar-title">Kitchen Team Portal</h6>
-    </div>
+   
+
+    @include('Component.notification-dropdown')
 
     <!-- Navigation -->
     <div class="sidebar-body">
+
+
         <div class="sidebar-category">OVERVIEW</div>
         <ul class="sidebar-nav">
             <li class="nav-item">
@@ -119,24 +119,24 @@
             </li>
         </ul>
 
-        <div class="sidebar-category">MENU & FOOD MANAGEMENT</div>
+        <div class="sidebar-category">MEAL PLANNING</div>
         <ul class="sidebar-nav">
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('kitchen.daily-menu') ? 'active' : '' }}" href="{{ route('kitchen.daily-menu') }}">
+                <a class="nav-link {{ request()->routeIs('kitchen.daily-menu') ? 'active' : '' }}" href="{{ route('kitchen.daily-menu') }}" data-feature="kitchen.daily-menu">
                     <i class="bi bi-journal-text icon"></i>
-                    <span class="small">Daily Menu</span>
+                    <span class="small">Menu Planning</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('kitchen.pre-orders') ? 'active' : '' }}" href="{{ route('kitchen.pre-orders') }}">
+                <a class="nav-link {{ request()->routeIs('kitchen.pre-orders') ? 'active' : '' }}" href="{{ route('kitchen.pre-orders') }}" data-feature="kitchen.pre-orders">
                     <i class="bi bi-calendar-check icon"></i>
-                    <span class="small">Meal Poll</span>
+                    <span class="small">Student Pre-Orders</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('kitchen.post-assessment') ? 'active' : '' }}" href="{{ route('kitchen.post-assessment') }}">
                     <i class="bi bi-clipboard-data icon"></i>
-                    <span class="small">Post Meal Report</span>
+                    <span class="small">Post-Meal Report</span>
                 </a>
             </li>
         </ul>
@@ -144,9 +144,9 @@
         <div class="sidebar-category">INVENTORY</div>
         <ul class="sidebar-nav">
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('kitchen.inventory') ? 'active' : '' }}" href="{{ route('kitchen.inventory') }}">
+                <a class="nav-link {{ request()->routeIs('kitchen.inventory') ? 'active' : '' }}" href="{{ route('kitchen.inventory') }}" data-feature="kitchen.inventory">
                     <i class="bi bi-box-seam icon"></i>
-                    <span class="small">Stock Reporting</span>
+                    <span class="small">Stock Management</span>
                 </a>
             </li>
         </ul>
@@ -154,12 +154,11 @@
         <div class="sidebar-category">COMMUNICATION</div>
         <ul class="sidebar-nav">
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('kitchen.student-feedback') ? 'active' : '' }}" href="{{ route('kitchen.student-feedback') }}">
-                    <i class="bi bi-chat-square-text icon"></i>
-                    <span class="small">Feedback</span>
+                <a class="nav-link {{ request()->routeIs('kitchen.feedback*') ? 'active' : '' }}" href="{{ route('kitchen.feedback') }}" data-feature="kitchen.feedback">
+                    <i class="bi bi-star icon"></i>
+                    <span class="small">Student Feedback</span>
                 </a>
             </li>
-           
         </ul>
     </div>
 </nav>

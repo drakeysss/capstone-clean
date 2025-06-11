@@ -21,7 +21,7 @@ class StudentFeedbackController extends Controller
         $menuId = $request->input('menu_id');
         $rating = $request->input('rating');
         
-        $query = Feedback::with(['user', 'menu'])
+        $query = Feedback::with(['user'])
             ->orderBy('created_at', 'desc');
             
         // Filter by period
@@ -31,9 +31,9 @@ class StudentFeedbackController extends Controller
             $query->where('created_at', '>=', now()->subMonth());
         }
         
-        // Filter by menu item
-        if ($menuId) {
-            $query->where('menu_id', $menuId);
+        // Filter by meal type (instead of menu_id)
+        if ($request->input('meal_type')) {
+            $query->where('meal_type', $request->input('meal_type'));
         }
         
         // Filter by rating
@@ -43,22 +43,19 @@ class StudentFeedbackController extends Controller
         
         $feedback = $query->paginate(20);
         
-        // Get average ratings
+        // Get average ratings by meal type
         $averageRatings = Feedback::select(
-            'menu_id',
+            'meal_type',
             DB::raw('AVG(rating) as average_rating'),
             DB::raw('COUNT(*) as total_ratings')
         )
-            ->groupBy('menu_id')
-            ->having('total_ratings', '>=', 5)
+            ->groupBy('meal_type')
+            ->having('total_ratings', '>=', 3)
             ->orderBy('average_rating', 'desc')
-            ->limit(10)
             ->get();
-            
-        // Get menu items for filter
-        $menuItems = Menu::orderBy('date', 'desc')
-            ->limit(50)
-            ->get();
+
+        // Get meal types for filter
+        $mealTypes = ['breakfast', 'lunch', 'dinner'];
             
         // Get feedback summary stats
         $totalFeedback = Feedback::count();
@@ -68,9 +65,8 @@ class StudentFeedbackController extends Controller
         return view('cook.student-feedback', compact(
             'feedback',
             'averageRatings',
-            'menuItems',
+            'mealTypes',
             'period',
-            'menuId',
             'rating',
             'totalFeedback',
             'averageOverallRating',

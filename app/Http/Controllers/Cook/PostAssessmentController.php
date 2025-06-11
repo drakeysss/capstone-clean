@@ -20,127 +20,224 @@ class PostAssessmentController extends Controller
      */
     public function index(Request $request)
     {
-        $date = $request->input('date', now()->format('Y-m-d'));
-        $mealType = $request->input('meal_type', 'lunch');
-        
-        // Get the menu items for the selected date and meal type
-        $menuItems = Menu::where('date', $date)
-            ->where('meal_type', $mealType)
-            ->get();
-            
-        // Get pre-order counts for each menu item
-        $preOrderCounts = PreOrder::where('date', $date)
-            ->where('meal_type', $mealType)
-            ->select('menu_id', DB::raw('count(*) as total_orders'))
-            ->groupBy('menu_id')
-            ->pluck('total_orders', 'menu_id')
-            ->toArray();
-            
-        // Get post-assessments for the selected date and meal type
-        $postAssessments = PostAssessment::where('date', $date)
-            ->where('meal_type', $mealType)
-            ->get()
-            ->keyBy('menu_id');
-            
+        \Log::info('🍽️ Cook Post-Assessment Index Request', [
+            'filters' => $request->all(),
+            'user_id' => Auth::id()
+        ]);
+
+        $date = $request->input('date');
+        $mealType = $request->input('meal_type');
+
+        // Build query for post-assessments sent by kitchen team
+        $query = PostAssessment::with(['assessedBy'])
+            ->where('is_completed', true)
+            ->orderBy('date', 'desc')
+            ->orderBy('meal_type', 'asc');
+
+        // Apply filters if provided
+        if ($date) {
+            $query->where('date', $date);
+        }
+
+        if ($mealType) {
+            $query->where('meal_type', $mealType);
+        }
+
+        // Get assessments (reports from kitchen)
+        $assessments = $query->get();
+
         // Get dates with post-assessments for the filter
         $assessmentDates = PostAssessment::select('date')
             ->distinct()
+            ->where('is_completed', true)
             ->orderBy('date', 'desc')
             ->limit(30)
             ->pluck('date');
-            
+
+        \Log::info('📊 Cook Post-Assessment Data Loaded', [
+            'total_assessments' => $assessments->count(),
+            'date_filter' => $date,
+            'meal_type_filter' => $mealType
+        ]);
+
         return view('cook.post-assessment', compact(
-            'menuItems', 
-            'preOrderCounts', 
-            'postAssessments', 
-            'date', 
-            'mealType', 
+            'assessments',
+            'date',
+            'mealType',
             'assessmentDates'
         ));
     }
-    
+
     /**
-     * Store a newly created post-assessment in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'date' => 'required|date',
-            'meal_type' => 'required|in:breakfast,lunch,dinner',
-            'menu_id' => 'required|exists:menus,id',
-            'prepared_quantity' => 'required|numeric|min:0',
-            'leftover_quantity' => 'required|numeric|min:0',
-            'wastage_percentage' => 'required|numeric|min:0|max:100',
-            'notes' => 'nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        // Check if assessment already exists
-        $existingAssessment = PostAssessment::where('date', $request->date)
-            ->where('meal_type', $request->meal_type)
-            ->where('menu_id', $request->menu_id)
-            ->first();
-            
-        if ($existingAssessment) {
-            return redirect()->back()
-                ->with('error', 'A post-assessment for this menu item already exists.')
-                ->withInput();
-        }
-
-        PostAssessment::create([
-            'date' => $request->date,
-            'meal_type' => $request->meal_type,
-            'menu_id' => $request->menu_id,
-            'user_id' => Auth::id(),
-            'prepared_quantity' => $request->prepared_quantity,
-            'leftover_quantity' => $request->leftover_quantity,
-            'wastage_percentage' => $request->wastage_percentage,
-            'notes' => $request->notes,
-        ]);
-
-        return redirect()->route('cook.post-assessment', ['date' => $request->date, 'meal_type' => $request->meal_type])
-            ->with('success', 'Post-assessment added successfully.');
-    }
-    
-    /**
-     * Update the specified post-assessment in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * Update a post-assessment (if needed for cook interface)
      */
     public function update(Request $request, $id)
     {
+        \Log::info('🍽️ Cook Post-Assessment Update Request', [
+            'assessment_id' => $id,
+            'request_data' => $request->all(),
+            'user_id' => Auth::id()
+        ]);
+
+        $assessment = PostAssessment::findOrFail($id);
+
         $validator = Validator::make($request->all(), [
-            'prepared_quantity' => 'required|numeric|min:0',
-            'leftover_quantity' => 'required|numeric|min:0',
-            'wastage_percentage' => 'required|numeric|min:0|max:100',
+            'date' => 'required|date',
+            'meal_type' => 'required|in:breakfast,lunch,dinner',
+            'total_prepared' => 'required|numeric|min:0',
+            'total_leftover' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
+            'report_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
         }
 
-        $assessment = PostAssessment::findOrFail($id);
-        $assessment->update([
-            'prepared_quantity' => $request->prepared_quantity,
-            'leftover_quantity' => $request->leftover_quantity,
-            'wastage_percentage' => $request->wastage_percentage,
-            'notes' => $request->notes,
+        try {
+            $totalConsumed = $request->total_prepared - $request->total_leftover;
+
+            // Handle image upload
+            $imagePath = $assessment->image_path; // Keep existing image by default
+            if ($request->hasFile('report_image')) {
+                $image = $request->file('report_image');
+
+                // Delete old image if it exists
+                if ($assessment->image_path && file_exists(public_path($assessment->image_path))) {
+                    try {
+                        unlink(public_path($assessment->image_path));
+                        \Log::info('📸 Old image deleted during update', ['path' => $assessment->image_path]);
+                    } catch (\Exception $e) {
+                        \Log::warning('⚠️ Failed to delete old image', [
+                            'path' => $assessment->image_path,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+
+                // Store new image
+                $filename = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                $uploadPath = 'uploads/post-assessments';
+
+                // Create directory if it doesn't exist
+                if (!file_exists(public_path($uploadPath))) {
+                    mkdir(public_path($uploadPath), 0755, true);
+                }
+
+                $image->move(public_path($uploadPath), $filename);
+                $imagePath = $uploadPath . '/' . $filename;
+
+                \Log::info('📸 New image uploaded during update', [
+                    'filename' => $filename,
+                    'path' => $imagePath,
+                    'assessment_id' => $assessment->id
+                ]);
+            }
+
+            $assessment->update([
+                'date' => $request->date,
+                'meal_type' => $request->meal_type,
+                'planned_portions' => $request->total_prepared,
+                'leftover_portions' => $request->total_leftover,
+                'actual_portions_served' => $totalConsumed,
+                'notes' => $request->notes,
+                'image_path' => $imagePath,
+            ]);
+
+            \Log::info('✅ Cook Post-Assessment Updated Successfully', [
+                'assessment_id' => $assessment->id,
+                'updated_by' => Auth::id()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Assessment updated successfully',
+                'assessment' => $assessment
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('❌ Cook Post-Assessment Update Failed', [
+                'assessment_id' => $id,
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update assessment: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a post-assessment report
+     */
+    public function destroy($id)
+    {
+        \Log::info('🗑️ Cook Post-Assessment Delete Request', [
+            'assessment_id' => $id,
+            'user_id' => Auth::id()
         ]);
 
-        return redirect()->route('cook.post-assessment', ['date' => $assessment->date, 'meal_type' => $assessment->meal_type])
-            ->with('success', 'Post-assessment updated successfully.');
+        try {
+            $assessment = PostAssessment::findOrFail($id);
+
+            // Store image path for cleanup
+            $imagePath = $assessment->image_path;
+
+            // Delete the assessment record
+            $assessment->delete();
+
+            // Clean up associated image file if it exists
+            if ($imagePath && file_exists(public_path($imagePath))) {
+                try {
+                    unlink(public_path($imagePath));
+                    \Log::info('📸 Image file deleted', ['path' => $imagePath]);
+                } catch (\Exception $e) {
+                    \Log::warning('⚠️ Failed to delete image file', [
+                        'path' => $imagePath,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            \Log::info('✅ Cook Post-Assessment Deleted Successfully', [
+                'assessment_id' => $id,
+                'deleted_by' => Auth::id()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Assessment report deleted successfully'
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            \Log::error('❌ Assessment not found for deletion', [
+                'assessment_id' => $id,
+                'user_id' => Auth::id()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Assessment report not found'
+            ], 404);
+
+        } catch (\Exception $e) {
+            \Log::error('❌ Cook Post-Assessment Delete Failed', [
+                'assessment_id' => $id,
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete assessment: ' . $e->getMessage()
+            ], 500);
+        }
     }
+
 }

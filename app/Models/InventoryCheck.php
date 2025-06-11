@@ -15,10 +15,14 @@ class InventoryCheck extends Model
         'user_id',
         'check_date',
         'notes',
+        'approved_at',
+        'approved_by',
+        'approval_notes'
     ];
 
     protected $casts = [
         'check_date' => 'date',
+        'approved_at' => 'datetime',
     ];
 
     /**
@@ -35,5 +39,10 @@ class InventoryCheck extends Model
     public function items(): HasMany
     {
         return $this->hasMany(InventoryCheckItem::class);
+    }
+
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 }

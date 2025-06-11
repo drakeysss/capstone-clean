@@ -14,26 +14,40 @@ class PostAssessment extends Model
         'date',
         'meal_type',
         'menu_id',
-        'user_id',
-        'prepared_quantity',
-        'leftover_quantity',
-        'wastage_percentage',
+        'planned_portions',
+        'actual_portions_served',
+        'leftover_portions',
+        'food_waste_kg',
+        'cost_per_portion',
+        'total_cost',
+        'student_satisfaction_avg',
         'notes',
+        'improvements',
+        'image_path',
+        'is_completed',
+        'assessed_by',
+        'completed_at',
     ];
 
     protected $casts = [
         'date' => 'date',
-        'prepared_quantity' => 'decimal:2',
-        'leftover_quantity' => 'decimal:2',
-        'wastage_percentage' => 'decimal:2',
+        'planned_portions' => 'integer',
+        'actual_portions_served' => 'integer',
+        'leftover_portions' => 'integer',
+        'food_waste_kg' => 'decimal:2',
+        'cost_per_portion' => 'decimal:2',
+        'total_cost' => 'decimal:2',
+        'student_satisfaction_avg' => 'integer',
+        'is_completed' => 'boolean',
+        'completed_at' => 'datetime',
     ];
 
     /**
      * Get the user that created the assessment.
      */
-    public function user(): BelongsTo
+    public function assessedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'assessed_by');
     }
 
     /**

@@ -314,7 +314,7 @@ class StudentDashboardController extends BaseDashboardController
         $daysInMonth = Carbon::now()->daysInMonth;
         $daysElapsed = Carbon::now()->day;
         $dailyAverage = $daysElapsed > 0 ? $spentThisMonth / $daysElapsed : 0;
-        
+
         return view('student.dashboard', compact(
             'todayMenu',
             'studentPreOrders',

@@ -18,6 +18,7 @@ class PreOrder extends Model
         'is_attending',
         'is_prepared',
         'notes',
+        'special_requests', // For compatibility
     ];
 
     protected $casts = [

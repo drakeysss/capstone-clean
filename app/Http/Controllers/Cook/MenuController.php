@@ -2,160 +2,405 @@
 
 namespace App\Http\Controllers\Cook;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\BaseController;
+use App\Models\Meal;
+use App\Models\KitchenMenuPoll;
+use App\Models\KitchenPollResponse;
+use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
-use App\Models\Menu;
-use App\Models\MenuItem;
+use Illuminate\Support\Facades\Validator;
 
-class MenuController extends Controller
+class MenuController extends BaseController
 {
     public function index()
     {
-        // Initialize empty menus array for both cycles
-        $menus = [
-            1 => [], // Week 1 & 3
-            2 => []  // Week 2 & 4
-        ];
-
-        // Get all menus from database, explicitly grouped by cycle
-        $cycle1Menus = Menu::where('week_cycle', 1)->get();
-        $cycle2Menus = Menu::where('week_cycle', 2)->get();
-
-        // Initialize both cycles with empty structure
-        foreach ([1, 2] as $cycle) {
-            foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as $day) {
-                $menus[$cycle][$day] = [
-                    'breakfast' => ['name' => 'Not set', 'ingredients' => ''],
-                    'lunch' => ['name' => 'Not set', 'ingredients' => ''],
-                    'dinner' => ['name' => 'Not set', 'ingredients' => '']
-                ];
-            }
-        }
-
-        // Fill in cycle 1 menu items
-        foreach ($cycle1Menus as $menu) {
-            if ($menu->day && $menu->meal_type) {
-                $menus[1][$menu->day][$menu->meal_type] = [
-                    'name' => $menu->name,
-                    'ingredients' => $menu->description
-                ];
-            }
-        }
-
-        // Fill in cycle 2 menu items
-        foreach ($cycle2Menus as $menu) {
-            if ($menu->day && $menu->meal_type) {
-                $menus[2][$menu->day][$menu->meal_type] = [
-                    'name' => $menu->name,
-                    'ingredients' => $menu->description
-                ];
-            }
-        }
-
-        return view('cook.menu', compact('menus'));
+        return view('cook.menu');
     }
 
-    public function create()
+    public function getMenu($weekCycle)
     {
-        return view('cook.menu.create');
+        return $this->safeApiResponse(function () use ($weekCycle) {
+            $this->logUserAction('get_menu', ['week_cycle' => $weekCycle]);
+
+            $meals = $this->safeTableQuery('meals', function () use ($weekCycle) {
+                return Meal::forWeekCycle($weekCycle)
+                    ->get()
+                    ->groupBy('day_of_week')
+                    ->map(function ($dayMeals) {
+                        return $dayMeals->groupBy('meal_type')
+                            ->map(function ($meal) {
+                                $mealData = $meal->first()->toArray();
+                                // Use safe status getter
+                                $mealData['status'] = $this->getMealStatus($meal->first());
+                                return $mealData;
+                            });
+                    });
+            }, collect());
+
+            // Return just the menu data - safeApiResponse will wrap it properly
+            return $meals;
+        }, 'Failed to load menu data');
     }
 
-    public function store(Request $request)
+    public function getMeal($weekCycle, $day, $mealType)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'category' => 'required|string|max:100',
-            'price' => 'required|numeric|min:0',
-            'image' => 'nullable|image|max:2048',
-            'ingredients' => 'required|array',
-            'ingredients.*.item_id' => 'required|exists:inventory,id',
-            'ingredients.*.quantity' => 'required|numeric|min:0'
+        $meal = Meal::forWeekCycle($weekCycle)
+            ->forDay($day)
+            ->forMealType($mealType)
+            ->first();
+
+        if (!$meal) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Meal not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'meal' => $meal
         ]);
-
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('menu-images', 'public');
-            $validated['image'] = $imagePath;
-        }
-
-        $menu = Menu::create([
-            'name' => $validated['name'],
-            'description' => $validated['description'],
-            'category' => $validated['category'],
-            'price' => $validated['price'],
-            'image' => $validated['image'] ?? null
-        ]);
-
-        foreach ($validated['ingredients'] as $ingredient) {
-            $menu->ingredients()->create([
-                'inventory_item_id' => $ingredient['item_id'],
-                'quantity_required' => $ingredient['quantity']
-            ]);
-        }
-
-        return redirect()->route('cook.menu.index')->with('success', 'Menu item created successfully');
-    }
-
-    public function edit(Menu $menu)
-    {
-        $menu->load('ingredients');
-        return view('cook.menu.edit', compact('menu'));
     }
 
     public function update(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'day' => 'required|string',
-                'meal_type' => 'required|string',
-                'cycle' => 'required|numeric',
-                'name' => 'required|string',
-                'ingredients' => 'required|string'
+        // Add debugging
+        \Log::info('Menu update request received', [
+            'data' => $request->all(),
+            'user' => auth()->id()
+        ]);
+
+        $validator = Validator::make($request->all(), [
+            'day' => 'required|string',
+            'meal_type' => 'required|string|in:breakfast,lunch,dinner',
+            'week_cycle' => 'required|integer|in:1,2',
+            'name' => 'required|string|max:255',
+            'ingredients' => 'required|string'
+        ]);
+
+        if ($validator->fails()) {
+            \Log::warning('Menu update validation failed', [
+                'errors' => $validator->errors(),
+                'data' => $request->all()
             ]);
 
-            $menu = Menu::updateOrCreate(
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Process ingredients - convert string to array if needed
+        $ingredients = $request->ingredients;
+        if (is_string($ingredients)) {
+            // Split by comma and clean up
+            $ingredients = array_map('trim', explode(',', $ingredients));
+            $ingredients = array_filter($ingredients); // Remove empty values
+        }
+
+        try {
+            $meal = Meal::updateOrCreate(
                 [
-                    'day' => $validated['day'],
-                    'meal_type' => $validated['meal_type'],
-                    'week_cycle' => $validated['cycle']
+                    'day_of_week' => strtolower($request->day),
+                    'meal_type' => strtolower($request->meal_type),
+                    'week_cycle' => $request->week_cycle
                 ],
                 [
-                    'name' => $validated['name'],
-                    'description' => $validated['ingredients'],
-                    'category' => 'regular',
-                    'price' => 0.00,
-                    'is_available' => true
+                    'name' => $request->name,
+                    'ingredients' => $ingredients,
+                    'prep_time' => $request->prep_time ?? 30, // Default 30 minutes
+                    'cooking_time' => $request->cooking_time ?? 30, // Default 30 minutes
+                    'serving_size' => $request->serving_size ?? 50 // Default 50 servings
                 ]
             );
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Menu updated successfully',
-                'menu' => $menu
+            \Log::info('Menu updated successfully', [
+                'meal_id' => $meal->id,
+                'data' => $meal->toArray()
             ]);
 
+            // Send notifications to kitchen and students about menu update
+            $notificationService = new \App\Services\NotificationService();
+            $notificationService->menuUpdated([
+                'day' => $request->day,
+                'meal_type' => $request->meal_type,
+                'meal_name' => $request->name,
+                'week_cycle' => $request->week_cycle
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Meal updated successfully',
+                'meal' => $meal
+            ]);
         } catch (\Exception $e) {
+            \Log::error('Menu update failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update menu: ' . $e->getMessage()
+                'message' => 'Failed to update meal: ' . $e->getMessage()
             ], 500);
         }
     }
 
-    public function destroy(Menu $menu)
+    /**
+     * Store a newly created meal in storage.
+     */
+    public function store(Request $request)
     {
-        if ($menu->image) {
-            \Storage::disk('public')->delete($menu->image);
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'ingredients' => 'required|array',
+            'prep_time' => 'required|integer|min:0',
+            'cooking_time' => 'required|integer|min:0',
+            'serving_size' => 'required|integer|min:1',
+            'meal_type' => 'required|in:breakfast,lunch,dinner',
+            'day_of_week' => 'required|string',
+            'week_cycle' => 'required|integer|in:1,2,3,4',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
         }
-        $menu->ingredients()->delete();
-        $menu->delete();
-        return redirect()->route('cook.menu.index')->with('success', 'Menu item deleted successfully');
+
+        $meal = Meal::create([
+            'name' => $request->name,
+            'ingredients' => $request->ingredients,
+            'prep_time' => $request->prep_time,
+            'cooking_time' => $request->cooking_time,
+            'serving_size' => $request->serving_size,
+            'meal_type' => $request->meal_type,
+            'day_of_week' => $request->day_of_week,
+            'week_cycle' => $request->week_cycle,
+        ]);
+
+        // Send notifications to kitchen and students
+        $notificationService = new \App\Services\NotificationService();
+        $notificationService->menuCreated([
+            'day' => $request->day_of_week,
+            'meal_type' => $request->meal_type,
+            'meal_name' => $request->name,
+            'week_cycle' => $request->week_cycle
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'meal' => $meal
+        ]);
     }
 
-    public function toggleAvailability(Menu $menu)
+    /**
+     * Remove the specified meal from storage.
+     */
+    public function destroy($id)
     {
-        $menu->update(['is_available' => !$menu->is_available]);
-        return redirect()->route('cook.menu.index')->with('success', 'Menu availability updated');
+        $meal = Meal::find($id);
+        if (!$meal) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Meal not found.'
+            ], 404);
+        }
+        $meal->delete();
+        return response()->json([
+            'success' => true,
+            'message' => 'Meal deleted successfully.'
+        ]);
+    }
+
+    /**
+     * Get kitchen status for today's meals
+     */
+    public function getKitchenStatus()
+    {
+        try {
+            // UNIFIED: Use WeekCycleService for consistent calculation
+            $weekInfo = \App\Services\WeekCycleService::getWeekInfo();
+            $today = now()->toDateString();
+            $dayOfWeek = $weekInfo['current_day'];
+            $weekCycle = $weekInfo['week_cycle'];
+
+            $todayMeals = Meal::forWeekCycle($weekCycle)
+                ->forDay($dayOfWeek)
+                ->get();
+
+            $status = [];
+            foreach (['breakfast', 'lunch', 'dinner'] as $mealType) {
+                $meal = $todayMeals->where('meal_type', $mealType)->first();
+                if ($meal) {
+                    // Since meal_statuses table was removed, use a simple status based on meal existence
+                    $status[$mealType] = 'Planned';
+                } else {
+                    $status[$mealType] = 'Not Planned';
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'status' => $status
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to get kitchen status', [
+                'error' => $e->getMessage(),
+                'user_id' => auth()->id()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load kitchen status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Clear all meals for a specific week cycle
+     */
+    public function clearWeek(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'week_cycle' => 'required|integer|in:1,2'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid week cycle',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $deletedCount = Meal::where('week_cycle', $request->week_cycle)->delete();
+
+            \Log::info('Week meals cleared', [
+                'week_cycle' => $request->week_cycle,
+                'deleted_count' => $deletedCount,
+                'user' => auth()->id()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully cleared {$deletedCount} meals for Week {$request->week_cycle}",
+                'deleted_count' => $deletedCount
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to clear week meals', [
+                'error' => $e->getMessage(),
+                'week_cycle' => $request->week_cycle
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to clear meals: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+
+    /**
+     * Get cross-system integration data
+     */
+    public function getCrossSystemData()
+    {
+        try {
+            // Get connected users count
+            $connectedUsers = [
+                'kitchen_staff' => User::where('role', 'kitchen')->count(),
+                'students' => User::where('role', 'student')->count(),
+                'total_users' => User::whereIn('role', ['kitchen', 'student'])->count()
+            ];
+
+            // Get kitchen status for today's meals
+            $today = now()->toDateString();
+            $dayOfWeek = strtolower(now()->format('l'));
+            $weekOfMonth = now()->weekOfMonth;
+            $weekCycle = ($weekOfMonth % 2 === 1) ? 1 : 2;
+
+            $todayMeals = Meal::forWeekCycle($weekCycle)
+                ->forDay($dayOfWeek)
+                ->get();
+
+            $kitchenStatus = [];
+            foreach (['breakfast', 'lunch', 'dinner'] as $mealType) {
+                $meal = $todayMeals->where('meal_type', $mealType)->first();
+                if ($meal) {
+                    // Since meal_statuses table was removed, use simple status
+                    $kitchenStatus[$mealType] = 'Planned';
+                } else {
+                    $kitchenStatus[$mealType] = 'Not Planned';
+                }
+            }
+
+            // Get active polls
+            $activePolls = KitchenMenuPoll::where('status', 'active')
+                ->orWhere('status', 'sent')
+                ->get()
+                ->map(function ($poll) {
+                    return [
+                        'id' => $poll->id,
+                        'meal_name' => $poll->meal_name,
+                        'poll_date' => $poll->poll_date->format('Y-m-d'),
+                        'meal_type' => $poll->meal_type,
+                        'status' => $poll->status,
+                        'responses_count' => $poll->total_responses
+                    ];
+                });
+
+            // Get poll responses summary
+            $pollResponses = KitchenMenuPollResponse::whereHas('poll', function ($query) {
+                $query->where('status', '!=', 'draft');
+            })->get()->groupBy('poll_id');
+
+            // Get recent menu updates
+            $recentMenuUpdates = Meal::orderBy('updated_at', 'desc')
+                ->take(5)
+                ->get()
+                ->map(function ($meal) {
+                    return [
+                        'name' => $meal->name,
+                        'day_of_week' => $meal->day_of_week,
+                        'meal_type' => $meal->meal_type,
+                        'week_cycle' => $meal->week_cycle,
+                        'updated_at' => $meal->updated_at->format('Y-m-d H:i:s')
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'connected_users' => $connectedUsers,
+                    'kitchen_status' => $kitchenStatus,
+                    'active_polls' => $activePolls,
+                    'poll_responses' => $pollResponses,
+                    'recent_menu_updates' => $recentMenuUpdates,
+                    'integration_status' => [
+                        'kitchen_connected' => $connectedUsers['kitchen_staff'] > 0,
+                        'students_connected' => $connectedUsers['students'] > 0,
+                        'polls_active' => $activePolls->count() > 0,
+                        'real_time_sync' => true
+                    ]
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to get cross-system data', [
+                'error' => $e->getMessage(),
+                'user_id' => auth()->id()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load cross-system data: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
 

@@ -25,15 +25,50 @@
                 <h6 class="m-0 font-weight-bold text-primary">Inventory Count Form</h6>
             </div>
             <div class="card-body">
+                <!-- Quick Reference Section -->
+                @if(isset($existingItems) && $existingItems->count() > 0)
+                <div class="alert alert-info mb-4">
+                    <h6><i class="bi bi-info-circle me-2"></i>Quick Reference - Previously Reported Items</h6>
+                    <div class="row">
+                        @foreach($existingItems->take(8) as $item)
+                        <div class="col-md-3 mb-2">
+                            <small>
+                                <strong>{{ $item->name }}</strong><br>
+                                Last reported: {{ $item->quantity }} {{ $item->unit }}
+                                @if($item->quantity <= $item->reorder_point)
+                                    <span class="badge bg-warning">Low Stock</span>
+                                @endif
+                            </small>
+                        </div>
+                        @endforeach
+                    </div>
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        These are items from previous reports. Please count current physical inventory below.
+                    </small>
+                </div>
+                @else
+                <div class="alert alert-warning mb-4">
+                    <h6><i class="bi bi-exclamation-triangle me-2"></i>First Inventory Report</h6>
+                    <p class="mb-0">
+                        No previous inventory data found. Please count all items in the kitchen and report them below.
+                        This will establish the baseline for future inventory management.
+                    </p>
+                </div>
+                @endif
+
                 <form id="inventoryCheckForm" action="{{ route('kitchen.inventory.check') }}" method="POST">
                     @csrf
                     <div class="mb-3">
                         <label class="form-label">Notes for Cook</label>
-                        <textarea class="form-control" name="notes" rows="2" placeholder="Any notes about this inventory count"></textarea>
+                        <textarea class="form-control" name="notes" rows="2" placeholder="Any notes about this inventory count (e.g., items near expiry, damaged items, etc.)"></textarea>
                     </div>
-                    
+
                     <div class="mb-4">
-                        <p class="text-muted">Please count the physical inventory items and enter the details below:</p>
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Instructions:</strong> Count the physical inventory items and enter the details below. This report will be sent directly to the cook team for inventory management.
+                        </div>
                     </div>
                     
                     <div id="inventory-items-container">
@@ -92,6 +127,25 @@
         let itemCount = 1;
         const container = document.getElementById('inventory-items-container');
         const addButton = document.getElementById('add-item-btn');
+
+        // Prevent duplicate form submissions
+        const inventoryForm = document.getElementById('inventoryCheckForm');
+        if (inventoryForm) {
+            inventoryForm.addEventListener('submit', function(e) {
+                const submitBtn = inventoryForm.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    // Disable button to prevent double-clicks
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
+
+                    // Re-enable after 5 seconds in case of errors
+                    setTimeout(() => {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bi bi-send"></i> Submit Inventory Count';
+                    }, 5000);
+                }
+            });
+        }
         
         addButton.addEventListener('click', function() {
             const newItem = document.createElement('div');

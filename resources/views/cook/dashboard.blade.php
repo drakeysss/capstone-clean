@@ -27,7 +27,7 @@
             <div class="card main-card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title">Today's Menu <span class="badge bg-primary ms-2" id="todayDayBadge"></span></h5>
-                    <a href="{{ route('cook.menu') }}" class="btn btn-sm btn-outline-primary">View Weekly Plan</a>
+                    <a href="{{ route('cook.menu.index') }}" class="btn btn-sm btn-outline-primary">View Weekly Plan</a>
                 </div>
                 <div class="card-body">
                     <!-- Week cycle indicator -->
@@ -51,14 +51,11 @@
                                     <h6 class="mb-0">Breakfast</h6>
                                 </div>
                                 <div class="card-body text-center">
-                                    <div id="todayBreakfast" class="meal-item">
-                                        <div class="fw-bold mb-2" id="breakfastName">Chicken Loaf with Energen</div>
-                                        <small class="text-muted" id="breakfastIngredients">Chicken Loaf, Energen, Water</small>
-                                    </div>
+                                    <p class="text-muted">Loading...</p>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Lunch -->
                         <div class="col-md-4 mb-3">
                             <div class="card h-100 border-0 shadow-sm">
@@ -66,14 +63,11 @@
                                     <h6 class="mb-0">Lunch</h6>
                                 </div>
                                 <div class="card-body text-center">
-                                    <div id="todayLunch" class="meal-item">
-                                        <div class="fw-bold mb-2" id="lunchName">Fried Fish</div>
-                                        <small class="text-muted" id="lunchIngredients">Fish, Oil, Salt</small>
-                                    </div>
+                                    <p class="text-muted">Loading...</p>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Dinner -->
                         <div class="col-md-4 mb-3">
                             <div class="card h-100 border-0 shadow-sm">
@@ -81,10 +75,7 @@
                                     <h6 class="mb-0">Dinner</h6>
                                 </div>
                                 <div class="card-body text-center">
-                                    <div id="todayDinner" class="meal-item">
-                                        <div class="fw-bold mb-2" id="dinnerName">Ginisang Cabbage</div>
-                                        <small class="text-muted" id="dinnerIngredients">Cabbage, Garlic, Onion, Oil, Salt</small>
-                                    </div>
+                                    <p class="text-muted">Loading...</p>
                                 </div>
                             </div>
                         </div>
@@ -98,32 +89,6 @@
 
     <!-- Menu & Inventory Overview Section -->
    
-        <!-- Post Assessment Overview (Moved here from above) -->
-        <div class="col-xl-6 mb-4">
-            <div class="card main-card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title">Post Assessment</h5>
-                    <a href="{{ route('cook.post-assessment') }}" class="btn btn-sm btn-outline-primary">View Details</a>
-                </div>
-                <div class="card-body">
-                    <div class="leftover-overview text-center">
-                        <div class="leftover-chart mb-3">
-                            <canvas id="leftoverChart" height="180"></canvas>
-                        </div>
-                        <div class="leftover-stats d-flex justify-content-around">
-                            <div class="stat">
-                                <h3 class="mb-0">{{ $avgLeftoverKg ?? '0' }} kg</h3>
-                                <p class="text-muted">Avg. Leftover</p>
-                            </div>
-                            <div class="stat">
-                                <h3 class="mb-0">{{ $totalAssessments ?? '0' }}</h3>
-                                <p class="text-muted">Assessments</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- Inventory Overview -->
         <div class="col-xl-6 mb-4">
@@ -159,9 +124,9 @@
                                     <tbody>
                                         @forelse($lowStockItemsList->take(3) ?? [] as $item)
                                         <tr>
-                                            <td>{{ $item->name }}</td>
-                                            <td>{{ $item->quantity }}</td>
-                                            <td>
+                                            <td data-label="Item Name">{{ $item->name }}</td>
+                                            <td data-label="Quantity">{{ $item->quantity }}</td>
+                                            <td data-label="Status">
                                                 <span class="status-badge warning">
                                                     Low Stock
                                                 </span>
@@ -202,7 +167,7 @@
         justify-content: space-between;
         align-items: center;
     }
-    
+
     /* Food Waste Prevention Styles */
     .meal-attendance {
         background: linear-gradient(135deg, #43a047 0%, #2e7d32 100%);
@@ -224,6 +189,80 @@
         border-radius: 1rem;
         box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
         border: none;
+        transition: all 0.3s ease;
+    }
+
+    .main-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.25rem 2rem 0 rgba(58, 59, 69, 0.25);
+    }
+
+    /* Feature Overview Cards */
+    .feature-overview-card {
+        border: none;
+        overflow: hidden;
+    }
+
+    .feature-overview-card .card-header {
+        border: none;
+        padding: 1rem 1.25rem;
+    }
+
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #ff9933 0%, #ff7700 100%);
+    }
+
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #ff9500 100%);
+    }
+
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #22bbea 0%, #0099cc 100%);
+    }
+
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+
+    .bg-gradient-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    }
+
+    .bg-gradient-dark {
+        background: linear-gradient(135deg, #343a40 0%, #212529 100%);
+    }
+
+    .metric-item {
+        padding: 0.5rem 0;
+    }
+
+    .metric-item h4, .metric-item h5 {
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .metric-item small {
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .feature-overview-card .btn-light {
+        background: rgba(255, 255, 255, 0.9);
+        border: none;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .feature-overview-card .btn-light:hover {
+        background: white;
+        transform: scale(1.1);
     }
 
     .card-header {
@@ -371,31 +410,87 @@
         background-color: #1cc88a;
         color: white;
     }
+
+    /* Responsive Styles */
+    @media (max-width: 768px) {
+        .welcome-card {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+            padding: 15px;
+        }
+
+        .current-time {
+            font-size: 1rem;
+            justify-content: center;
+        }
+
+        .overview-stats {
+            flex-direction: row;
+            justify-content: space-around;
+            padding: 0.75rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+        }
+
+        .card-header {
+            padding: 0.75rem 1rem;
+        }
+
+        .card-title {
+            font-size: 1rem;
+        }
+
+        .table th,
+        .table td {
+            padding: 0.5rem 0.25rem;
+            font-size: 0.8rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .container-fluid {
+            padding: 0.5rem !important;
+        }
+
+        .welcome-card {
+            padding: 10px;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+        }
+
+        .overview-stats {
+            gap: 0.5rem;
+        }
+    }
 </style>
 @endpush
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Real-time date and time display
+    {!! \App\Services\WeekCycleService::getJavaScriptFunction() !!}
+
+    // UNIFIED: Real-time date and time display
     function updateDateTime() {
-        const now = new Date();
-        const options = { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-        };
-        const timeOptions = {
-            hour: '2-digit',
-            minute: '2-digit'
-        };
-        
-        document.getElementById('currentDateTime').innerHTML = `${now.toLocaleDateString('en-US', options)} ${now.toLocaleTimeString('en-US', timeOptions)}`;
+        const weekInfo = getCurrentWeekCycle();
+
+        document.getElementById('currentDateTime').innerHTML = `${weekInfo.displayDate}<br><small>${weekInfo.timeString}</small>`;
+
+        // Also update today's menu information in real-time
+        updateTodayMenu();
     }
-    
+
     updateDateTime();
-    setInterval(updateDateTime, 60000);
+    setInterval(updateDateTime, 1000); // Update every second for real-time display
     
     document.addEventListener('DOMContentLoaded', function() {
         // Leftover Chart
@@ -445,24 +540,29 @@
         });
     });
     
-    // Update today's menu based on current day
+    // UNIFIED: Update today's menu based on current day
     function updateTodayMenu() {
-        const now = new Date();
-        const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const todayName = dayNames[dayOfWeek];
-        
+        const weekInfo = getCurrentWeekCycle();
+
         // Set the day badge
-        document.getElementById('todayDayBadge').textContent = todayName;
-        
+        const todayDayBadge = document.getElementById('todayDayBadge');
+        if (todayDayBadge) {
+            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const todayName = dayNames[new Date().getDay()];
+            todayDayBadge.textContent = todayName;
+        }
+
         // Format and set the date
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById('todayDateDisplay').textContent = now.toLocaleDateString('en-US', options);
-        
-        // Determine which week cycle we're in
-        const weekOfMonth = Math.ceil((now.getDate() + (new Date(now.getFullYear(), now.getMonth(), 1).getDay())) / 7);
-        const isWeek1or3 = weekOfMonth === 1 || weekOfMonth === 3;
-        document.getElementById('weekCycleBadge').textContent = isWeek1or3 ? 'Week 1 & 3' : 'Week 2 & 4';
+        const todayDateDisplay = document.getElementById('todayDateDisplay');
+        if (todayDateDisplay) {
+            todayDateDisplay.textContent = weekInfo.displayDate.split(', ').slice(1).join(', '); // Remove day name
+        }
+
+        // ENHANCED: Set dynamic week cycle badge
+        const weekCycleBadge = document.getElementById('weekCycleBadge');
+        if (weekCycleBadge) {
+            weekCycleBadge.textContent = `${weekInfo.weekName} - ${weekInfo.cycleDescription}`;
+        }
         
         // Set the menu items based on day and week cycle
         let breakfast, lunch, dinner;

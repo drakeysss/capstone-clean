@@ -291,19 +291,27 @@
     // Real-time date and time display
     function updateDateTime() {
         const now = new Date();
-        const options = { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+        const dateOptions = {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
         };
-        document.getElementById('currentDateTime').textContent = now.toLocaleDateString('en-US', options);
+        const timeOptions = {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        };
+
+        const dateString = now.toLocaleDateString('en-US', dateOptions);
+        const timeString = now.toLocaleTimeString('en-US', timeOptions);
+
+        document.getElementById('currentDateTime').innerHTML = `${dateString}<br><small>${timeString}</small>`;
     }
-    
+
     updateDateTime();
-    setInterval(updateDateTime, 60000);
+    setInterval(updateDateTime, 1000); // Update every second for real-time display
     
     // Filter polls by day
     document.getElementById('dayFilter').addEventListener('change', function() {
@@ -354,46 +362,49 @@
     });
     
     // Handle form submission
-    document.getElementById('submitResponseBtn').addEventListener('click', function() {
-        const form = document.getElementById('pollResponseForm');
-        const pollId = form.elements['poll_id'].value;
-        const response = form.elements['response'].value;
-        const notes = form.elements['notes'].value;
-        
-        // In a real application, this would be an AJAX call to submit the response
-        console.log('Submitting response:', { pollId, response, notes });
-        
-        // Update the UI to reflect the response
-        const rows = document.querySelectorAll('.poll-item');
-        rows.forEach(row => {
-            const button = row.querySelector('.respond-btn');
-            if (button && button.dataset.pollId === pollId) {
-                const responseCell = row.querySelector('td:nth-child(5)');
-                const actionCell = row.querySelector('td:nth-child(6)');
-                
-                if (response === 'yes') {
-                    responseCell.innerHTML = '<span class="badge bg-success">Will Attend</span>';
-                } else if (response === 'no') {
-                    responseCell.innerHTML = '<span class="badge bg-danger">Will Not Attend</span>';
-                } else {
-                    responseCell.innerHTML = '<span class="badge bg-secondary">Undecided</span>';
-                }
-                
-                // Change button to "Change" if it was "Respond"
-                if (button.textContent.trim() === 'Respond') {
-                    button.innerHTML = '<i class="bi bi-pencil"></i> Change';
-                    button.classList.remove('btn-primary');
-                    button.classList.add('btn-outline-primary');
-                }
-            }
-        });
-        
-        // Close the modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('respondModal'));
-        modal.hide();
-        
-        // Show success message
-        alert('Your response has been recorded. Thank you!');
+    document.addEventListener('DOMContentLoaded', function() {
+        const pollForm = document.getElementById('pollResponseForm');
+        if (pollForm) {
+            document.getElementById('submitResponseBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                const pollId = pollForm.elements['poll_id'].value;
+                const response = pollForm.elements['response'].value;
+                const notes = pollForm.elements['notes'].value;
+                const submitBtn = this;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
+                fetch(`/polls/${pollId}/respond`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        response: response,
+                        notes: notes
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Poll response submitted successfully!');
+                        // Optionally update UI here
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('respondModal'));
+                        modal.hide();
+                    } else {
+                        alert(data.message || 'Failed to submit poll response');
+                    }
+                })
+                .catch(error => {
+                    alert('An error occurred while submitting poll response');
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Submit Response';
+                });
+            });
+        }
     });
     
     // Initialize attendance chart

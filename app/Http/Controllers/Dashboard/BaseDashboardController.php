@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\Order;
+use App\Models\PreOrder;
 use App\Models\Menu;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -33,10 +33,9 @@ abstract class BaseDashboardController extends Controller
     {
         return [
             'totalUsers' => User::count(),
-            'totalOrders' => Order::count(),
+            'totalOrders' => PreOrder::count(),
             'totalMenuItems' => Menu::count(),
-            'totalRevenue' => Order::where('status', 'completed')->sum('total_amount'),
-            'recentOrders' => Order::with('student')->latest()->take(10)->get()
+            'recentOrders' => PreOrder::with('user')->latest()->take(10)->get()
         ];
     }
 
@@ -71,7 +70,7 @@ abstract class BaseDashboardController extends Controller
             ->select(
                 DB::raw('MONTH(created_at) as month'),
                 DB::raw('YEAR(created_at) as year'),
-                DB::raw('SUM(total_amount) as revenue')
+                DB::raw('SUM(total) as revenue')
             )
             ->groupBy('year', 'month')
             ->orderBy('year')
@@ -90,15 +89,20 @@ abstract class BaseDashboardController extends Controller
             return $actualData ?: $month;
         });
 
-        // Get order statistics
-        $orderStats = Order::select('status', DB::raw('count(*) as count'))
-            ->groupBy('status')
-            ->get();
+        // Get pre-order statistics (replacing old order system)
+        $orderStats = PreOrder::select('is_prepared', DB::raw('count(*) as count'))
+            ->groupBy('is_prepared')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'status' => $item->is_prepared ? 'completed' : 'pending',
+                    'count' => $item->count
+                ];
+            });
 
-        // Get popular menu items
-        $popularMenuItems = Order::select('menus.name', DB::raw('COUNT(*) as order_count'))
-            ->join('order_items', 'orders.id', '=', 'order_items.order_id')
-            ->join('menus', 'order_items.menu_id', '=', 'menus.id')
+        // Get popular menu items from pre-orders
+        $popularMenuItems = PreOrder::select('menus.name', DB::raw('COUNT(*) as order_count'))
+            ->join('menus', 'pre_orders.menu_id', '=', 'menus.id')
             ->groupBy('menus.id', 'menus.name')
             ->orderBy('order_count', 'desc')
             ->limit(5)

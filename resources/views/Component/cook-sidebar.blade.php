@@ -102,13 +102,14 @@
 
 <nav class="sidebar cook-portal">
     <!-- Sidebar Header -->
-    <div class="sidebar-header">
-        <i class="bi bi-person-circle icon" style="color: #ff9933;"></i>
-        <h6 class="sidebar-title">Cook Admin Panel</h6>
-    </div>
+   
+
+    <!-- Notification component included in header -->
 
     <!-- Navigation -->
     <div class="sidebar-body">
+
+
         <div class="sidebar-category">OVERVIEW</div>
         <ul class="sidebar-nav">
             <li class="nav-item">
@@ -122,46 +123,40 @@
         <div class="sidebar-category">MEAL PLANNING</div>
         <ul class="sidebar-nav">
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('cook.menu') ? 'active' : '' }}" href="{{ route('cook.menu') }}">
+                <a class="nav-link {{ request()->routeIs('cook.menu.index') ? 'active' : '' }}" href="{{ route('cook.menu.index') }}">
                     <i class="bi bi-journal-text icon"></i>
                     <span class="small">Menu Planning</span>
                 </a>
             </li>
+
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('cook.pre-orders') ? 'active' : '' }}" href="{{ route('cook.pre-orders') }}">
-                    <i class="bi bi-calendar-check icon"></i>
-                    <span class="small">Student Pre-Orders</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('cook.post-assessment') ? 'active' : '' }}" href="{{ route('cook.post-assessment') }}">
+                <a class="nav-link {{ request()->routeIs('cook.post-assessment') ? 'active' : '' }}" href="{{ route('cook.post-assessment') }}" data-feature="cook.post-assessment">
                     <i class="bi bi-clipboard-data icon"></i>
-                    <span class="small">Post Assessment</span>
+                    <span class="small">Post-Meal Report</span>
                 </a>
             </li>
+
         </ul>
 
         <div class="sidebar-category">INVENTORY</div>
         <ul class="sidebar-nav">
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('cook.inventory') ? 'active' : '' }}" href="{{ route('cook.inventory') }}">
+                <a class="nav-link {{ request()->routeIs('cook.inventory') ? 'active' : '' }}" href="{{ route('cook.inventory') }}" data-feature="cook.inventory">
                     <i class="bi bi-box icon"></i>
                     <span class="small">Stock Management</span>
                 </a>
             </li>
-        
+
         </ul>
 
         <div class="sidebar-category">COMMUNICATION</div>
         <ul class="sidebar-nav">
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('cook.student-feedback') ? 'active' : '' }}" href="{{ route('cook.student-feedback') }}">
-                    <i class="bi bi-chat-square-text icon"></i>
+                <a class="nav-link {{ request()->routeIs('cook.feedback*') ? 'active' : '' }}" href="{{ route('cook.feedback') }}" data-feature="cook.feedback">
+                    <i class="bi bi-star icon"></i>
                     <span class="small">Student Feedback</span>
                 </a>
             </li>
-           
-
         </ul>
     </div>
 </nav>

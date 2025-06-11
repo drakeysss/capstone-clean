@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <title>Responsive Test - Capstone System</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    
+    <!-- Custom Responsive CSS -->
+    <link rel="stylesheet" href="css/responsive.css">
+    
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f8f9fc;
+            overflow-x: hidden;
+        }
+        
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .device-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #007bff;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            z-index: 9999;
+        }
+
+        .overflow-test {
+            background: #ffebee;
+            border: 2px dashed #f44336;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .width-indicator {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="device-info" id="deviceInfo">
+        Screen: <span id="screenSize"></span>
+    </div>
+
+    <div class="container-fluid p-4">
+        <h1 class="text-center mb-4 h1-responsive">📱 Responsive Design Test</h1>
+        
+        <!-- Overflow Prevention Test -->
+        <div class="test-section">
+            <h3>🚫 Overflow Prevention Test</h3>
+            <div class="width-indicator">
+                <strong>Container Width:</strong> <span id="containerWidth"></span>px<br>
+                <strong>Viewport Width:</strong> <span id="viewportWidth"></span>px<br>
+                <strong>Overflow Status:</strong> <span id="overflowStatus"></span>
+            </div>
+            <div class="overflow-test">
+                <h5>This content should NEVER cause horizontal scrolling</h5>
+                <p>Even with very long text that might normally cause overflow issues, the responsive CSS should prevent any horizontal scrolling by using word-wrap and max-width constraints.</p>
+                <div class="d-flex justify-content-between">
+                    <span>Left Content</span>
+                    <span>Right Content</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Header Test -->
+        <div class="test-section">
+            <h3>📱 Mobile Header Test</h3>
+            <div class="d-md-none position-relative w-100 bg-white shadow-sm mobile-header" style="height: 50px;">
+                <div class="d-flex align-items-center justify-content-between px-2 py-1" style="height: 100%;">
+                    <button class="btn btn-outline-primary mobile-menu-btn" onclick="alert('Mobile menu clicked!')">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h6 class="mb-0 fw-bold text-primary mobile-title">Capstone</h6>
+                    <button class="btn btn-outline-secondary mobile-user-btn">
+                        <i class="bi bi-person-circle"></i>
+                    </button>
+                </div>
+            </div>
+            <p class="mt-2 text-muted">This compact header should only appear on mobile devices (768px and below)</p>
+        </div>
+
+        <!-- Responsive Grid Test -->
+        <div class="test-section">
+            <h3 class="h3-responsive">Responsive Grid Test</h3>
+            <div class="row row-mobile-stack">
+                <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
+                    <div class="card card-mobile-responsive">
+                        <div class="card-body">
+                            <h5 class="card-title h5-responsive">Card 1</h5>
+                            <p class="card-text">This card should stack on mobile devices.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
+                    <div class="card card-mobile-responsive">
+                        <div class="card-body">
+                            <h5 class="card-title h5-responsive">Card 2</h5>
+                            <p class="card-text">All cards should be full width on mobile.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-12 col-sm-12 mb-3">
+                    <div class="card card-mobile-responsive">
+                        <div class="card-body">
+                            <h5 class="card-title h5-responsive">Card 3</h5>
+                            <p class="card-text">Cards should have proper spacing on all devices.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Responsive Table Test -->
+        <div class="test-section">
+            <h3 class="h3-responsive">Responsive Table Test</h3>
+            <div class="table-responsive overflow-x-mobile-auto">
+                <table class="table table-bordered table-mobile-compact">
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th class="d-xs-none">Breakfast</th>
+                            <th class="d-xs-none">Lunch</th>
+                            <th>Dinner</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td data-label="Day">Monday</td>
+                            <td data-label="Breakfast" class="d-xs-none">Pancakes</td>
+                            <td data-label="Lunch" class="d-xs-none">Sandwich</td>
+                            <td data-label="Dinner">Pasta</td>
+                        </tr>
+                        <tr>
+                            <td data-label="Day">Tuesday</td>
+                            <td data-label="Breakfast" class="d-xs-none">Cereal</td>
+                            <td data-label="Lunch" class="d-xs-none">Salad</td>
+                            <td data-label="Dinner">Pizza</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-muted">Table should scroll horizontally on mobile or stack on very small screens.</p>
+        </div>
+
+        <!-- Responsive Button Test -->
+        <div class="test-section">
+            <h3 class="h3-responsive">Responsive Button Test</h3>
+            <div class="btn-group btn-group-mobile-responsive mb-3" role="group">
+                <button type="button" class="btn btn-primary btn-mobile-responsive">Button 1</button>
+                <button type="button" class="btn btn-secondary btn-mobile-responsive">Button 2</button>
+                <button type="button" class="btn btn-success btn-mobile-responsive">Button 3</button>
+            </div>
+            <p class="text-muted">Buttons should stack vertically on mobile devices.</p>
+        </div>
+
+        <!-- Responsive Form Test -->
+        <div class="test-section">
+            <h3 class="h3-responsive">Responsive Form Test</h3>
+            <form class="form-mobile-responsive">
+                <div class="row">
+                    <div class="col-md-6 col-mobile-full mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control form-control-mobile-responsive" placeholder="Enter name">
+                    </div>
+                    <div class="col-md-6 col-mobile-full mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control form-control-mobile-responsive" placeholder="Enter email">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Message</label>
+                    <textarea class="form-control form-control-mobile-responsive" rows="3" placeholder="Enter message"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-mobile-responsive w-mobile-100">Submit</button>
+            </form>
+            <p class="text-muted">Form should stack on mobile with touch-friendly inputs (44px min height).</p>
+        </div>
+
+        <!-- Typography Test -->
+        <div class="test-section">
+            <h3 class="h3-responsive">Typography Test</h3>
+            <h1 class="h1-responsive">Heading 1 - Responsive</h1>
+            <h2 class="h2-responsive">Heading 2 - Responsive</h2>
+            <h3 class="h3-responsive">Heading 3 - Responsive</h3>
+            <h4 class="h4-responsive">Heading 4 - Responsive</h4>
+            <h5 class="h5-responsive">Heading 5 - Responsive</h5>
+            <h6 class="h6-responsive">Heading 6 - Responsive</h6>
+            <p class="text-muted">Typography should scale appropriately on different screen sizes.</p>
+        </div>
+
+        <!-- Utility Classes Test -->
+        <div class="test-section">
+            <h3 class="h3-responsive">Utility Classes Test</h3>
+            <div class="d-flex justify-content-between align-items-center flex-mobile-column mb-3">
+                <span>This content should stack on mobile</span>
+                <button class="btn btn-outline-primary btn-mobile-sm">Action</button>
+            </div>
+            <div class="text-center text-mobile-center">
+                <p class="d-md-block d-xs-none">This text is hidden on extra small screens</p>
+                <p class="d-xs-block d-md-none">This text only shows on extra small screens</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Display current screen size and check for overflow
+        function updateScreenInfo() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            let device = '';
+
+            if (width <= 576) device = 'XS (Phone)';
+            else if (width <= 768) device = 'SM (Tablet)';
+            else if (width <= 992) device = 'MD (Tablet)';
+            else if (width <= 1200) device = 'LG (Desktop)';
+            else device = 'XL (Large Desktop)';
+
+            document.getElementById('screenSize').textContent = `${width}x${height} - ${device}`;
+
+            // Check for overflow
+            checkOverflow();
+        }
+
+        function checkOverflow() {
+            const body = document.body;
+            const html = document.documentElement;
+            const containerWidth = document.querySelector('.container-fluid').offsetWidth;
+            const viewportWidth = window.innerWidth;
+
+            // Check if there's horizontal overflow
+            const hasOverflow = body.scrollWidth > viewportWidth || html.scrollWidth > viewportWidth;
+
+            // Update display
+            document.getElementById('containerWidth').textContent = containerWidth;
+            document.getElementById('viewportWidth').textContent = viewportWidth;
+            document.getElementById('overflowStatus').textContent = hasOverflow ? '❌ OVERFLOW DETECTED' : '✅ NO OVERFLOW';
+            document.getElementById('overflowStatus').style.color = hasOverflow ? '#f44336' : '#4caf50';
+
+            // Log to console for debugging
+            if (hasOverflow) {
+                console.warn('🚨 Horizontal overflow detected!');
+                console.log('Body scrollWidth:', body.scrollWidth);
+                console.log('HTML scrollWidth:', html.scrollWidth);
+                console.log('Viewport width:', viewportWidth);
+            }
+        }
+        
+        updateScreenInfo();
+        window.addEventListener('resize', updateScreenInfo);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(updateScreenInfo, 500);
+        });
+        
+        console.log('🔧 Responsive test page loaded');
+        console.log('📱 Resize your browser or test on different devices');
+    </script>
+</body>
+</html>

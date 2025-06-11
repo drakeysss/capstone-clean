@@ -2,15 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Capstone') }}</title>
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}" onerror="console.warn('app.css not found')">
+    <link rel="stylesheet" href="{{ asset('css/sidebar.css') }}" onerror="console.warn('sidebar.css not found')">
+
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
 
     <!-- Bootstrap CSS -->
@@ -23,34 +26,93 @@
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 
-    <!-- Custom CSS -->
+    <!-- Enhanced Custom CSS -->
     <style>
         :root {
             --sidebar-width: 250px;
-            --navbar-height: 60px;
+            --navbar-height: 70px;
             --primary-color: #22bbea;
             --secondary-color: #ff9933;
-            --success-color: #10b981;
-            --bg-color: rgb(250, 249, 251);
-            --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --success-color: #22bbea;
+            --warning-color: #ff9933;
+            --bg-color: #f8f9fc;
+            --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --border-radius: 8px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+            /* Z-index system - FIXED HIERARCHY */
+            --z-sidebar: 1000;
+            --z-header: 1010;
+            --z-dropdown: 1040;
+            --z-modal-backdrop: 1055;
+            --z-modal: 1060;
+            --z-notification: 1070;
+            --z-tooltip: 1080;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
             font-family: 'Nunito', sans-serif;
             background-color: var(--bg-color);
             overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
         }
 
-        /* Sidebar Styles */
+        /* Enhanced Sidebar Styles */
         .sidebar {
             width: var(--sidebar-width);
             height: 100vh;
             position: fixed;
             top: 0;
             left: 0;
-            z-index: 1030;
-            background-color: #ffffff;
-            box-shadow: var(--card-shadow);
+            z-index: var(--z-sidebar);
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fc 100%);
+            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.08);
+            transition: var(--transition);
+            border-right: 1px solid rgba(34, 187, 234, 0.1);
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+            opacity: 0.6;
+        }
+
+        /* Mobile Sidebar */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 1030;
+                display: none;
+            }
+
+            .sidebar-overlay.show {
+                display: block;
+            }
         }
 
         .sidebar-heading {
@@ -129,27 +191,197 @@
             }
         }
 
-        /* Main Content */
+        /* Enhanced Main Content */
         .main-content {
             margin-left: var(--sidebar-width);
+            padding-top: calc(var(--navbar-height) + 20px);
             min-height: 100vh;
-            padding: 1.25rem;
+            background: var(--bg-color);
+            padding: calc(var(--navbar-height) + 20px) 1.5rem 1.5rem;
+            transition: var(--transition);
+            position: relative;
+            z-index: 1;
         }
 
-        .nav-link {
+        .main-content::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            right: 0;
+            height: var(--navbar-height);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: var(--z-header);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        /* Enhanced Mobile Header Styles */
+        .mobile-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--navbar-height);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(34, 187, 234, 0.2);
+            z-index: var(--z-header);
+            display: none;
+            transition: var(--transition);
+        }
+
+        .mobile-menu-btn,
+        .mobile-user-btn {
+            padding: 0.5rem !important;
+            font-size: 1rem !important;
+            min-width: 44px !important;
+            height: 44px !important;
+            border-radius: var(--border-radius) !important;
+            background: rgba(34, 187, 234, 0.1);
+            border: 1px solid rgba(34, 187, 234, 0.2);
+            color: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .mobile-menu-btn:hover,
+        .mobile-user-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .mobile-title {
+            font-size: 1.1rem !important;
+            font-weight: 600;
+            flex: 1;
+            text-align: center;
+            margin: 0 1rem;
+            color: var(--primary-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mobile-dropdown {
+            min-width: 180px !important;
+            font-size: 0.9rem !important;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(34, 187, 234, 0.2);
+        }
+
+        .mobile-dropdown .dropdown-item {
+            padding: 0.4rem 0.8rem !important;
+        }
+
+        /* Enhanced Responsive Design - Fix Overlapping Issues */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: var(--z-sidebar);
+                width: min(280px, 85vw);
+                box-shadow: 4px 0 30px rgba(0, 0, 0, 0.15);
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0 !important;
+                padding: calc(var(--navbar-height) + 10px) 1rem 1rem !important;
+                width: 100vw !important;
+                max-width: 100vw !important;
+                overflow-x: hidden !important;
+            }
+
+            .main-content::before {
+                left: 0;
+            }
+
+            .mobile-header {
+                display: flex !important;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 1rem;
+                height: var(--navbar-height);
+            }
+
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.4);
+                backdrop-filter: blur(2px);
+                z-index: 1030;
+                display: none;
+                transition: var(--transition);
+            }
+
+            .sidebar-overlay.show {
+                display: block;
+                animation: fadeIn 0.3s ease-out;
+            }
+
+            /* Fix notification popup positioning on mobile */
+            .notification-popup {
+                top: calc(var(--navbar-height) + 10px) !important;
+                left: 10px !important;
+                right: 10px !important;
+                max-width: none !important;
+                z-index: var(--z-notification) !important;
+            }
+
+            /* Fix dropdown positioning */
+            .dropdown-menu {
+                z-index: var(--z-dropdown) !important;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .main-content {
+                padding: calc(var(--navbar-height) + 5px) 0.5rem 0.5rem !important;
+            }
+
+            .sidebar {
+                width: min(260px, 90vw);
+            }
+        }
+
+        /* Animation keyframes */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        @keyframes slideOutRight {
+            from { transform: translateX(0); }
+            to { transform: translateX(100%); }
+        }
+
+        /* Preserve original sidebar navigation styles */
+        .main-content .nav-link {
             color: var(--secondary-color);
             transition: all 0.2s ease-in-out;
             border-radius: 0.35rem;
             margin: 0.2rem 0;
         }
 
-        .nav-link.active {
+        .main-content .nav-link.active {
             color: #ffffff;
             background-color: #22bbea;
             font-weight: bold;
         }
-        
-        .nav-link:hover {
+
+        .main-content .nav-link:hover {
             color: #ffffff;
             background-color: var(--primary-color);
             transform: translateX(3px);
@@ -183,6 +415,66 @@
             vertical-align: middle;
         }
 
+        /* Responsive Table Styles */
+        @media (max-width: 768px) {
+            .table-responsive {
+                border: none;
+                margin-bottom: 0;
+            }
+
+            .table th,
+            .table td {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.875rem;
+            }
+
+            .table th {
+                font-size: 0.8rem;
+            }
+
+            /* Stack table cells on very small screens */
+            @media (max-width: 576px) {
+                .table-stack {
+                    display: block;
+                }
+
+                .table-stack thead {
+                    display: none;
+                }
+
+                .table-stack tbody,
+                .table-stack tr,
+                .table-stack td {
+                    display: block;
+                    width: 100%;
+                }
+
+                .table-stack tr {
+                    border: 1px solid #dee2e6;
+                    margin-bottom: 0.5rem;
+                    border-radius: 0.375rem;
+                    padding: 0.5rem;
+                    background: white;
+                }
+
+                .table-stack td {
+                    border: none;
+                    padding: 0.25rem 0;
+                    position: relative;
+                    padding-left: 50%;
+                }
+
+                .table-stack td:before {
+                    content: attr(data-label) ": ";
+                    position: absolute;
+                    left: 0;
+                    width: 45%;
+                    font-weight: bold;
+                    color: var(--secondary-color);
+                }
+            }
+        }
+
         /* Button Styles */
         .btn {
             font-weight: 500;
@@ -196,8 +488,119 @@
         }
 
         .btn-primary:hover {
-            background-color: #e68900;
-            border-color: #e68900;
+            background-color: #1a9bd1;
+            border-color: #1a9bd1;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e6851a;
+            border-color: #e6851a;
+            color: white;
+        }
+
+        .btn-warning {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #e6851a;
+            border-color: #e6851a;
+            color: white;
+        }
+
+        /* Responsive Button and Form Styles */
+        @media (max-width: 768px) {
+            .btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.875rem;
+            }
+
+            .btn-group {
+                flex-wrap: wrap;
+            }
+
+            .btn-group .btn {
+                margin-bottom: 0.25rem;
+            }
+
+            /* Stack buttons vertically on small screens */
+            .btn-stack-mobile {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .btn-stack-mobile .btn {
+                width: 100%;
+            }
+
+            /* Form controls */
+            .form-control,
+            .form-select {
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+
+            /* Card adjustments */
+            .card {
+                margin-bottom: 1rem;
+            }
+
+            .card-body {
+                padding: 1rem 0.75rem;
+            }
+
+            .card-header {
+                padding: 0.75rem;
+            }
+
+            /* Modal adjustments */
+            .modal-dialog {
+                margin: 0.5rem;
+            }
+
+            .modal-content {
+                border-radius: 0.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .btn {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.8rem;
+            }
+
+            .card-body {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .card-header {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            /* Hide less important columns on very small screens */
+            .d-none-xs {
+                display: none !important;
+            }
+
+            /* Compact spacing */
+            .row {
+                margin-left: -0.25rem;
+                margin-right: -0.25rem;
+            }
+
+            .row > * {
+                padding-left: 0.25rem;
+                padding-right: 0.25rem;
+            }
         }
     </style>
 
@@ -227,8 +630,42 @@
                 @include('Component.admin-header')
             @endif
 
+            <!-- Enhanced Mobile Header -->
+            <div class="d-md-none mobile-header">
+                <div class="d-flex align-items-center justify-content-between px-3 py-2" style="height: 100%;">
+                    <button class="mobile-menu-btn" id="mobileSidebarToggle">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div class="mobile-title">
+                        <img src="{{ asset('images/PN-Logo.png') }}" alt="Logo" style="height: 32px; margin-right: 8px;">
+                        {{ config('app.name', 'Capstone') }}
+                    </div>
+                    <div class="dropdown">
+                        <button class="mobile-user-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end mobile-dropdown">
+                            <li><span class="dropdown-item-text">{{ Auth::user()->name }}</span></li>
+                            <li><span class="dropdown-item-text small text-muted">{{ ucfirst(Auth::user()->role) }}</span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Overlay for Mobile -->
+            <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
             <!-- Main Content -->
-            <main class="main-content" style="margin-left:250px; padding-top:60px; min-height:calc(100vh - 70px); margin-top:20px; background:#f8f9fc;">
+            <main class="main-content">
                 @if(session('error'))
                     <div class="alert alert-danger mb-4">
                         {{ session('error') }}
@@ -263,29 +700,12 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- Custom Scripts -->
-    <script>
-        // Add active class to current nav item
-        document.addEventListener('DOMContentLoaded', function() {
-            const currentPath = window.location.pathname;
-            document.querySelectorAll('.nav-link').forEach(link => {
-                if (link.getAttribute('href') === currentPath) {
-                    link.classList.add('active');
-                }
-            });
+    <!-- Global Error Prevention System -->
+    <script src="{{ asset('js/error-prevention.js') }}"></script>
 
-            // Mobile sidebar toggle
-            const mobileSidebar = document.getElementById('mobileSidebar');
-            if (mobileSidebar) {
-                const bsOffcanvas = new bootstrap.Offcanvas(mobileSidebar);
-                
-                document.querySelector('[data-bs-target="#mobileSidebar"]').addEventListener('click', function(e) {
-                    e.preventDefault();
-                    bsOffcanvas.show();
-                });
-            }
-        });
-    </script>
+
+
+
 
     @stack('scripts')
 </body>
