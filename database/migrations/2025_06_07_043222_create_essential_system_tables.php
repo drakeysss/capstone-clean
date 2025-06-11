@@ -166,17 +166,21 @@ return new class extends Migration
         if (!Schema::hasTable('pre_orders')) {
             Schema::create('pre_orders', function (Blueprint $table) {
                 $table->id();
-                $table->unsignedBigInteger('student_id');
+                $table->unsignedBigInteger('user_id');
                 $table->unsignedBigInteger('menu_id')->nullable();
-                $table->date('order_date');
+                $table->date('date');
                 $table->string('meal_type');
-                $table->json('selected_items')->nullable();
+                $table->boolean('is_attending')->default(true);
+                $table->boolean('is_prepared')->default(false);
+                $table->text('notes')->nullable();
                 $table->text('special_requests')->nullable();
-                $table->string('status')->default('pending');
                 $table->timestamps();
 
-                $table->foreign('student_id')->references('id')->on('users')->onDelete('cascade');
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
                 $table->foreign('menu_id')->references('id')->on('menus')->onDelete('set null');
+
+                // Add unique constraint to prevent duplicate pre-orders
+                $table->unique(['user_id', 'date', 'meal_type']);
             });
         }
 
@@ -186,6 +190,7 @@ return new class extends Migration
                 $table->id();
                 $table->unsignedBigInteger('student_id');
                 $table->unsignedBigInteger('meal_id')->nullable();
+                $table->string('meal_name')->nullable();
                 $table->string('meal_type');
                 $table->date('meal_date');
                 $table->integer('rating')->default(1);
@@ -198,6 +203,28 @@ return new class extends Migration
 
                 $table->foreign('student_id')->references('id')->on('users')->onDelete('cascade');
                 $table->foreign('meal_id')->references('id')->on('meals')->onDelete('set null');
+            });
+        }
+
+        // Create inventory table
+        if (!Schema::hasTable('inventory')) {
+            Schema::create('inventory', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->text('description')->nullable();
+                $table->decimal('quantity', 10, 2)->default(0);
+                $table->string('unit')->default('unit');
+                $table->string('category')->nullable();
+                $table->decimal('reorder_point', 10, 2)->default(10);
+                $table->string('supplier')->nullable();
+                $table->string('location')->nullable();
+                $table->decimal('unit_price', 10, 2)->default(0);
+                $table->unsignedBigInteger('last_updated_by')->nullable();
+                $table->enum('status', ['available', 'low_stock', 'out_of_stock', 'expired'])->default('available');
+                $table->timestamps();
+
+                $table->foreign('last_updated_by')->references('id')->on('users')->onDelete('set null');
+                $table->index(['name', 'category']);
             });
         }
 
@@ -226,6 +253,7 @@ return new class extends Migration
     {
         // Drop tables in reverse order to handle foreign key constraints
         Schema::dropIfExists('announcements');
+        Schema::dropIfExists('inventory');
         Schema::dropIfExists('feedback');
         Schema::dropIfExists('pre_orders');
         Schema::dropIfExists('kitchen_menu_polls');
