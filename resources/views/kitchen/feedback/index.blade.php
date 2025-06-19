@@ -3,18 +3,23 @@
 @section('title', 'Student Feedback - Kitchen Dashboard')
 
 @section('content')
-<div class="col-12 mb-4">
-    <div class="card border-0 bg-primary text-white overflow-hidden">
-        <div class="card-body p-4 position-relative" style="background-color: var(--secondary-color);">
-            <div class="row align-items-center">
-                <div class="col">
-                    <h4 class="fw-bold mb-1"><i class="bi bi-chat-dots me-2"></i>Student Feedback</h4>
-                    <p class="mb-0">Monitor student satisfaction and improve meal quality based on feedback</p>
-                </div>
-                <div class="col-auto">
+<div class="container-fluid p-4">
+    <!-- Enhanced Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #22bbea, #1a9bd1);">
+                    <div>
+                        <h3 class="mb-1 fw-bold">
+                            <i class="bi bi-chat-dots me-2"></i>Student Feedback
+                        </h3>
+                        <p class="mb-0 opacity-75">Monitor student satisfaction and improve meal quality based on feedback</p>
+                    </div>
                     <div class="text-end">
-                        <div id="currentDateTime" class="fs-6 mb-1"></div>
-                        <i class="bi bi-chat-dots display-4 opacity-25"></i>
+                        <div id="currentDateTimeBlock" class="date-time-block">
+                            <div id="currentDate" class="date-line">Date</div>
+                            <div id="currentTime" class="time-line">Time</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -28,9 +33,13 @@
                 <h6 class="m-0 font-weight-bold text-primary"><i class="bi bi-funnel me-2"></i>Filter & Search Feedback</h6>
             </div>
             <div class="card-body">
-                <form method="GET" action="{{ route('kitchen.feedback') }}">
+                <form method="GET" action="{{ route('kitchen.feedback') }}" id="feedbackFilterForm">
                     <div class="row mb-3">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <label for="date" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="date" name="date" value="{{ request('date') }}">
+                        </div>
+                        <div class="col-md-3">
                             <label for="anonymous_filter" class="form-label">Student Identity</label>
                             <select class="form-control" id="anonymous_filter" name="anonymous_filter">
                                 <option value="">All Feedback</option>
@@ -38,7 +47,7 @@
                                 <option value="anonymous" {{ request('anonymous_filter') == 'anonymous' ? 'selected' : '' }}>Anonymous Students</option>
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="rating" class="form-label">Rating</label>
                             <select class="form-control" id="rating" name="rating">
                                 <option value="">All Ratings</option>
@@ -49,13 +58,7 @@
                                 <option value="1" {{ request('rating') == '1' ? 'selected' : '' }}>⭐ (1 Star)</option>
                             </select>
                         </div>
-                        <div class="col-md-4">
-                            <label for="date" class="form-label">Date</label>
-                            <input type="date" class="form-control" id="date" name="date" value="{{ request('date') }}">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <label for="meal_type" class="form-label">Meal Type</label>
                             <select class="form-control" id="meal_type" name="meal_type">
                                 <option value="">All Meals</option>
@@ -63,14 +66,6 @@
                                 <option value="lunch" {{ request('meal_type') == 'lunch' ? 'selected' : '' }}>🌞 Lunch</option>
                                 <option value="dinner" {{ request('meal_type') == 'dinner' ? 'selected' : '' }}>🌙 Dinner</option>
                             </select>
-                        </div>
-                        <div class="col-md-3 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary me-2">
-                                <i class="bi bi-search me-1"></i>Filter
-                            </button>
-                            <a href="{{ route('kitchen.feedback') }}" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-clockwise me-1"></i>Clear
-                            </a>
                         </div>
                     </div>
                 </form>
@@ -413,6 +408,9 @@
     .rounded-pill {
         border-radius: 50rem !important;
     }
+    .date-time-block { text-align: center; }
+    .date-line { font-size: 1.15rem; font-weight: 500; }
+    .time-line { font-size: 1rem; font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace; }
 </style>
 @endpush
 
@@ -426,26 +424,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Auto-refresh every 5 minutes
     setInterval(refreshFeedback, 300000);
+
+    function updateDateTimeBlock() {
+        const now = new Date();
+        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
+        document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
+    }
+    updateDateTimeBlock();
+    setInterval(updateDateTimeBlock, 1000);
 });
 
 function initializePage() {
     console.log('✅ Kitchen Feedback page initialized');
 
-    // Auto-submit filter form on any change/input
-    const filterForm = document.querySelector('form[action="{{ route('kitchen.feedback') }}"]');
-    if (filterForm) {
-        filterForm.querySelectorAll('input, select').forEach(function(el) {
-            el.addEventListener('change', function() {
-                filterForm.submit();
-            });
-            el.addEventListener('input', function() {
-                filterForm.submit();
-            });
+    const filterForm = document.getElementById('feedbackFilterForm');
+    filterForm.querySelectorAll('input, select').forEach(function(el) {
+        el.addEventListener('change', function() {
+            filterForm.submit();
         });
-        // Remove the filter button
-        const filterBtn = filterForm.querySelector('button[type="submit"]');
-        if (filterBtn) filterBtn.remove();
-    }
+    });
 
     // Delete single feedback
     document.querySelectorAll('.delete-feedback-btn').forEach(function(btn) {

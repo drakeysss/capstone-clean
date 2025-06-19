@@ -4,22 +4,21 @@
 
 @section('content')
 <div class="container-fluid">
-    <!-- Header -->
+    <!-- Unified Gradient Header Card -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div>
-                        <h3 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Student Feedback</h3>
-                        <p class="mb-0 text-muted">View and analyze student feedback on meals</p>
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #22bbea, #1a9bd1); color: #fff;">
+                <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-center">
+                    <div class="d-flex align-items-center mb-3 mb-md-0">
+                        <i class="bi bi-chat-dots fs-1 me-3"></i>
+                        <div>
+                            <h3 class="mb-1" style="color: #fff;">Student Feedback</h3>
+                            <p class="mb-0" style="color: #e0f7fa;">View and analyze student feedback on meals</p>
+                        </div>
                     </div>
-                    <div class="text-end">
-                        <span class="badge bg-primary fs-6 me-3">{{ $stats['total_feedback'] }} Total Reviews</span>
-                        @if($stats['total_feedback'] > 0)
-                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDeleteAll()">
-                                <i class="bi bi-trash me-1"></i> Delete All Feedback
-                            </button>
-                        @endif
+                    <div id="currentDateTimeBlock" class="date-time-block">
+                        <div id="currentDate" class="date-line">Date</div>
+                        <div id="currentTime" class="time-line">Time</div>
                     </div>
                 </div>
             </div>
@@ -34,11 +33,11 @@
                     <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Filter & Search Feedback</h5>
                 </div>
                 <div class="card-body">
-                    <form method="GET" action="{{ route('cook.feedback') }}">
+                    <form method="GET" action="{{ route('cook.feedback') }}" id="feedbackFilterForm">
                         <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="search" class="form-label">Search in Comments & Suggestions</label>
-                                <input type="text" class="form-control" id="search" name="search" value="{{ request('search') }}" placeholder="Search for keywords...">
+                            <div class="col-md-4">
+                                <label for="date" class="form-label">Date</label>
+                                <input type="date" class="form-control" id="date" name="date" value="{{ request('date') }}">
                             </div>
                             <div class="col-md-3">
                                 <label for="anonymous_filter" class="form-label">Student Identity</label>
@@ -59,17 +58,7 @@
                                     <option value="1" {{ request('rating') == '1' ? 'selected' : '' }}>⭐ (1 Star)</option>
                                 </select>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-3">
-                                <label for="date_from" class="form-label">From Date</label>
-                                <input type="date" class="form-control" id="date_from" name="date_from" value="{{ request('date_from') }}">
-                            </div>
-                            <div class="col-md-3">
-                                <label for="date_to" class="form-label">To Date</label>
-                                <input type="date" class="form-control" id="date_to" name="date_to" value="{{ request('date_to') }}">
-                            </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label for="meal_type" class="form-label">Meal Type</label>
                                 <select class="form-control" id="meal_type" name="meal_type">
                                     <option value="">All Meals</option>
@@ -77,14 +66,6 @@
                                     <option value="lunch" {{ request('meal_type') == 'lunch' ? 'selected' : '' }}>🌞 Lunch</option>
                                     <option value="dinner" {{ request('meal_type') == 'dinner' ? 'selected' : '' }}>🌙 Dinner</option>
                                 </select>
-                            </div>
-                            <div class="col-md-3 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary me-2">
-                                    <i class="bi bi-search me-1"></i>Filter
-                                </button>
-                                <a href="{{ route('cook.feedback') }}" class="btn btn-outline-secondary">
-                                    <i class="bi bi-arrow-clockwise me-1"></i>Clear
-                                </a>
                             </div>
                         </div>
                     </form>
@@ -97,8 +78,13 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Recent Feedback</h5>
+                    @if($stats['total_feedback'] > 0)
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDeleteAll()">
+                            <i class="bi bi-trash me-1"></i> Delete All Feedback
+                        </button>
+                    @endif
                 </div>
                 <div class="card-body p-0">
                     @forelse($feedbacks as $feedback)
@@ -218,6 +204,14 @@
         </div>
     </div>
 </div>
+
+@push('styles')
+<style>
+.date-time-block { text-align: center; min-width: 150px; }
+.date-line { font-size: 1.15rem; font-weight: 500; }
+.time-line { font-size: 1rem; font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace; }
+</style>
+@endpush
 
 @push('scripts')
 <script>
@@ -382,6 +376,25 @@ function showAlert(type, message) {
         }
     }, 5000);
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    function updateDateTimeBlock() {
+        const now = new Date();
+        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
+        document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
+    }
+    updateDateTimeBlock();
+    setInterval(updateDateTimeBlock, 1000);
+
+    const filterForm = document.getElementById('feedbackFilterForm');
+    filterForm.querySelectorAll('input, select').forEach(function(el) {
+        el.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    });
+});
 </script>
 @endpush
 

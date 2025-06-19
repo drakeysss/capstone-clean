@@ -2,23 +2,24 @@
 
 @section('content')
 <div class="container-fluid p-4">
-    <!-- Header Section -->
+    <!-- Enhanced Header Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="welcome-card">
-                <div class="welcome-content">
-                    <h2>Daily & Weekly Menu</h2>
-                    <p class="text-muted" style="color: white;">View today's menu and upcoming meals for the week</p>
-                </div>
-                <div class="current-time">
-                    <i class="bi bi-clock"></i>
-                    <span id="currentDateTime"></span>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #22bbea, #1a9bd1);">
+                    <div>
+                        <h3 class="mb-1 fw-bold">
+                            <i class="bi bi-calendar-week me-2"></i>Daily & Weekly Menu
+                        </h3>
+                        <p class="mb-0 opacity-75">View today's menu and upcoming meals for the week</p>
+                    </div>
+                    <div class="text-end">
+                        <span id="currentDateTime" class="fs-6"></span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-
 
     <!-- Today's Menu Section -->
     <div class="row mb-4">
@@ -981,5 +982,17 @@
             }, 30000);
         }
     });
+
+    function updateDateTimeHeader() {
+        const now = new Date();
+        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const timeString = now.toLocaleTimeString('en-US', timeOptions);
+        const dateString = now.toLocaleDateString('en-US', dateOptions);
+        const el = document.getElementById('currentDateTime');
+        if (el) el.textContent = `${dateString} ${timeString}`;
+    }
+    updateDateTimeHeader();
+    setInterval(updateDateTimeHeader, 1000);
 </script>
 @endpush

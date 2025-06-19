@@ -99,4 +99,31 @@ class FeedbackController extends Controller
         
         return view('kitchen.feedback.show', compact('feedback'));
     }
+
+    /**
+     * Delete a single feedback entry
+     */
+    public function destroy($id)
+    {
+        $feedback = Feedback::findOrFail($id);
+        $feedback->delete();
+
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Feedback deleted.']);
+        }
+        return redirect()->back()->with('success', 'Feedback deleted.');
+    }
+
+    /**
+     * Delete all feedback entries
+     */
+    public function destroyAll()
+    {
+        Feedback::query()->delete();
+
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'All feedback deleted.']);
+        }
+        return redirect()->back()->with('success', 'All feedback deleted.');
+    }
 }

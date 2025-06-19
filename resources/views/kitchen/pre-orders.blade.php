@@ -5,21 +5,27 @@
     <!-- Alert Container -->
     <div id="alertContainer"></div>
 
-    <!-- Header Section -->
+    <!-- Enhanced Header Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="welcome-card">
-                <div class="welcome-content">
-                    <h2>Student Menu Polling</h2>
-                    <p class="text-muted" style="color: white;">Send polls to students so they can pre-select their meal choices from today's menu</p>
-                    <small style="color: rgba(255,255,255,0.8);" id="todayInfo">
-                        <i class="bi bi-calendar-week me-1"></i>
-                        <span id="todayDayAndWeek">Loading...</span>
-                    </small>
-                </div>
-                <div class="current-time">
-                    <i class="bi bi-clock"></i>
-                    <span id="currentDateTime"></span>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #22bbea, #1a9bd1);">
+                    <div>
+                        <h3 class="mb-1 fw-bold">
+                            <i class="bi bi-people me-2"></i>Student Menu Polling
+                        </h3>
+                        <p class="mb-0 opacity-75">Send polls to students so they can pre-select their meal choices from today's menu</p>
+                        <small style="color: rgba(255,255,255,0.8);" id="todayInfo">
+                            <i class="bi bi-calendar-week me-1"></i>
+                            <span id="todayDayAndWeek">Loading...</span>
+                        </small>
+                    </div>
+                    <div class="text-end">
+                        <div id="currentDateTimeBlock" class="date-time-block">
+                            <div id="currentDate" class="date-line">Date</div>
+                            <div id="currentTime" class="time-line">Time</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -436,6 +442,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Utility function to clean up any stuck modal backdrops
     cleanupStuckBackdrops();
+
+    let lastDateString = '';
+    function updateDateTimeHeader() {
+        const now = new Date();
+        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const timeString = now.toLocaleTimeString('en-US', timeOptions);
+        const dateString = now.toLocaleDateString('en-US', dateOptions);
+        const dateEl = document.getElementById('currentDate');
+        const timeEl = document.getElementById('currentTime');
+        if (dateEl && lastDateString !== dateString) {
+            dateEl.textContent = dateString;
+            lastDateString = dateString;
+        }
+        if (timeEl) timeEl.textContent = timeString;
+        console.log('DateTime script running:', dateString, timeString);
+    }
+    updateDateTimeHeader();
+    setInterval(updateDateTimeHeader, 1000);
+
+    function updateDateTimeBlock() {
+        const now = new Date();
+        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
+        document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
+    }
+    updateDateTimeBlock();
+    setInterval(updateDateTimeBlock, 1000);
 });
 
 function updateDateTime() {
@@ -457,10 +492,10 @@ function updateDateTime() {
     const timeString = now.toLocaleTimeString('en-US', timeOptions);
 
     // Update main date/time display
-    const element = document.getElementById('currentDateTime');
-    if (element) {
-        element.innerHTML = `${dateString}<br><small>${timeString}</small>`;
-    }
+    // const element = document.getElementById('currentDateTime');
+    // if (element) {
+    //     element.innerHTML = `${dateString}<br><small>${timeString}</small>`;
+    // }
 
     // UNIFIED: Update today info in header
     const todayDayAndWeek = document.getElementById('todayDayAndWeek');
@@ -2287,6 +2322,33 @@ function cleanupStuckBackdrops() {
 
 // Also call on DOMContentLoaded as a safety net
 
+function updateDateTimeHeader() {
+    const now = new Date();
+    const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const timeString = now.toLocaleTimeString('en-US', timeOptions);
+    const dateString = now.toLocaleDateString('en-US', dateOptions);
+    const dateEl = document.getElementById('currentDate');
+    const timeEl = document.getElementById('currentTime');
+    if (dateEl && lastDateString !== dateString) {
+        dateEl.textContent = dateString;
+        lastDateString = dateString;
+    }
+    if (timeEl) timeEl.textContent = timeString;
+}
+updateDateTimeHeader();
+setInterval(updateDateTimeHeader, 1000);
+
+document.addEventListener('DOMContentLoaded', function() {
+    function updateDateTime() {
+        const now = new Date();
+        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+        document.getElementById('currentDateTime').textContent = now.toLocaleDateString('en-US', dateOptions) + ' ' + now.toLocaleTimeString('en-US', timeOptions);
+    }
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+});
 </script>
 @endpush
 
@@ -2344,5 +2406,8 @@ function cleanupStuckBackdrops() {
         min-height: 44px;
         font-size: 1rem;
     }
+    .date-time-block { text-align: center; }
+    .date-line { font-size: 1.15rem; font-weight: 500; }
+    .time-line { font-size: 1rem; font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace; }
 </style>
 @endpush

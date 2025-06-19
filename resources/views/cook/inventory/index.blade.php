@@ -4,22 +4,21 @@
 
 @section('content')
 <div class="container-fluid">
-    <!-- Header -->
+    <!-- Gradient Header Card -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div>
-                        <h3 class="mb-0"><i class="bi bi-clipboard-check me-2"></i>Stock Management</h3>
-                        <p class="mb-0 text-muted">Review kitchen inventory reports and approve restocking decisions</p>
+            <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #22bbea, #1a9bd1); color: #fff;">
+                <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-center">
+                    <div class="d-flex align-items-center mb-3 mb-md-0">
+                        <i class="bi bi-clipboard-check fs-1 me-3"></i>
+                        <div>
+                            <h3 class="mb-1" style="color: #fff;">Stock Management</h3>
+                            <p class="mb-0" style="color: #e0f7fa;">Review kitchen inventory reports and approve restocking decisions</p>
+                        </div>
                     </div>
-                    <div>
-                        <a href="{{ route('cook.inventory.reports') }}" class="btn btn-outline-primary me-2">
-                            <i class="bi bi-file-earmark-text me-1"></i>All Reports
-                        </a>
-                        <a href="{{ route('cook.inventory.alerts') }}" class="btn btn-outline-warning">
-                            <i class="bi bi-exclamation-triangle me-1"></i>Alerts
-                        </a>
+                    <div id="currentDateTimeBlock" class="date-time-block">
+                        <div id="currentDate" class="date-line">Date</div>
+                        <div id="currentTime" class="time-line">Time</div>
                     </div>
                 </div>
             </div>
@@ -305,6 +304,10 @@
 #deleteReportModal .modal-content, #clearAllReportsModal .modal-content {
     pointer-events: auto !important;
 }
+
+.date-time-block { text-align: center; min-width: 150px; }
+.date-line { font-size: 1.15rem; font-weight: 500; }
+.time-line { font-size: 1rem; font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace; }
 </style>
 
 <script>
@@ -514,6 +517,16 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    function updateDateTimeBlock() {
+        const now = new Date();
+        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
+        document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
+    }
+    updateDateTimeBlock();
+    setInterval(updateDateTimeBlock, 1000);
 });
 
 function showAlert(type, message) {

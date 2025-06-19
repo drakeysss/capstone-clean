@@ -3,9 +3,28 @@
 @section('title', 'Pre-Select Meals')
 
 @section('content')
-<div class="container">
-    
-   
+<div class="container-fluid">
+    <!-- Enhanced Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #22bbea, #1a9bd1);">
+                    <div>
+                        <h3 class="mb-1 fw-bold">
+                            <i class="bi bi-clipboard-check me-2"></i>Kitchen Menu Polls
+                        </h3>
+                        <p class="mb-0 opacity-75">Respond to kitchen polls to help plan meal preparation</p>
+                    </div>
+                    <div class="text-end">
+                        <div id="currentDateTimeBlock" class="date-time-block">
+                            <div id="currentDate" class="date-line">Date</div>
+                            <div id="currentTime" class="time-line">Time</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Kitchen Menu Polls Section -->
     <div class="row mb-4">
@@ -306,7 +325,6 @@ function loadKitchenPolls() {
 
 function displayKitchenPolls(polls) {
     const container = document.getElementById('kitchenPollsContainer');
-
     if (!polls || polls.length === 0) {
         container.innerHTML = `
             <div class="text-center py-4">
@@ -318,12 +336,44 @@ function displayKitchenPolls(polls) {
         return;
     }
 
-    let html = '<div class="row">';
+    // Split polls into pending, finished, expired
+    const now = new Date();
+    const pending = [];
+    const finished = [];
+    const expired = [];
+    polls.forEach(poll => {
+        const deadline = new Date(poll.deadline);
+        if (deadline < now) {
+            expired.push(poll);
+        } else if (poll.has_responded) {
+            finished.push(poll);
+        } else {
+            pending.push(poll);
+        }
+    });
 
+    let html = '';
+    // Pending Polls
+    html += `<h5 class="mb-3 text-warning"><i class="bi bi-clock-history me-2"></i>Pending Polls</h5>`;
+    html += renderPollSection(pending, 'No pending polls!');
+    // Finished Polling
+    html += `<h5 class="mb-3 text-success mt-4"><i class="bi bi-check2-circle me-2"></i>Finished Polling</h5>`;
+    html += renderPollSection(finished, 'No finished polls!');
+    // Expired Polls
+    html += `<h5 class="mb-3 text-danger mt-4"><i class="bi bi-x-octagon me-2"></i>Expired Polls</h5>`;
+    html += renderPollSection(expired, 'No expired polls!');
+
+    container.innerHTML = html;
+}
+
+function renderPollSection(polls, emptyMsg) {
+    if (!polls || polls.length === 0) {
+        return `<div class='text-center text-muted mb-4'><i class='bi bi-inbox'></i> ${emptyMsg}</div>`;
+    }
+    let html = '<div class="row">';
     polls.forEach(poll => {
         const deadlineFormatted = formatKitchenPollDeadline(poll.deadline);
         const statusBadge = getKitchenPollStatusBadge(poll);
-
         html += `
             <div class="col-md-6 col-lg-4 mb-3">
                 <div class="card h-100 ${poll.has_responded ? 'border-success' : 'border-warning'}">
@@ -332,29 +382,24 @@ function displayKitchenPolls(polls) {
                             <h6 class="card-title text-primary">${poll.meal_name}</h6>
                             ${statusBadge}
                         </div>
-
                         <p class="text-muted small mb-2">
                             <i class="bi bi-calendar"></i> ${formatKitchenPollDate(poll.poll_date)}
                             <span class="badge bg-secondary ms-1">${poll.meal_type}</span>
                         </p>
-
                         <p class="text-muted small mb-2">
                             <i class="bi bi-list-ul"></i> ${poll.ingredients || 'No ingredients listed'}
                         </p>
-
                         <p class="text-warning small mb-3">
                             <i class="bi bi-clock"></i> Deadline: ${deadlineFormatted}
                         </p>
-
                         ${getKitchenPollActionButton(poll)}
                     </div>
                 </div>
             </div>
         `;
     });
-
     html += '</div>';
-    container.innerHTML = html;
+    return html;
 }
 
 function getKitchenPollStatusBadge(poll) {
@@ -559,6 +604,16 @@ function updateLastRefreshTime() {
         lastRefreshElement.textContent = `Last updated: ${timeString}`;
     }
 }
+
+function updateDateTimeBlock() {
+    const now = new Date();
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+    document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
+    document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
+}
+updateDateTimeBlock();
+setInterval(updateDateTimeBlock, 1000);
 </script>
 @endsection
 
@@ -647,5 +702,9 @@ function updateLastRefreshTime() {
         50% { transform: scale(1.05); }
         100% { transform: scale(1); }
     }
+
+    .date-time-block { text-align: center; }
+    .date-line { font-size: 1.15rem; font-weight: 500; }
+    .time-line { font-size: 1rem; font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace; }
 </style>
 @endpush

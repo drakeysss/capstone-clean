@@ -16,7 +16,10 @@
                         <p class="mb-0 opacity-75">Share your thoughts about the meals you've had</p>
                     </div>
                     <div class="text-end">
-                        <i class="bi bi-star-fill text-warning fs-1 opacity-75"></i>
+                        <div id="currentDateTimeBlock" class="date-time-block">
+                            <div id="currentDate" class="date-line">Date</div>
+                            <div id="currentTime" class="time-line">Time</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -25,7 +28,7 @@
     
     <div class="row">
         <!-- Enhanced Feedback Form -->
-        <div class="col-lg-8 col-md-12">
+        <div class="col-12">
             <div class="card border-0 shadow-sm">
                 <div class="card-header text-white" style="background: linear-gradient(135deg, #22bbea, #1a9bd1);">
                     <h5 class="mb-0 fw-semibold">
@@ -146,19 +149,24 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Enhanced Previous Feedback -->
-        <div class="col-lg-4 col-md-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header text-white" style="background: linear-gradient(135deg, #ff9933, #e6851a);">
-                    <h5 class="mb-0 fw-semibold">
-                        <i class="bi bi-clock-history me-2"></i>Your Feedback History
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        @forelse($studentFeedback as $feedback)
-                            <div class="list-group-item">
+    </div>
+</div>
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #22bbea, #1a9bd1);">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="bi bi-clock-history me-2"></i>Your Feedback History
+                </h5>
+                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" id="deleteAllHistoryBtn">
+                    <i class="bi bi-trash me-1"></i>Delete All History
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    @forelse($studentFeedback as $feedback)
+                        <div class="list-group-item d-flex justify-content-between align-items-start" id="feedback-history-{{ $feedback->id }}">
+                            <div class="flex-grow-1">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h6 class="mb-1">
                                         {{ $feedback->meal_name ?? ucfirst($feedback->meal_type) }}
@@ -179,28 +187,15 @@
                                     <i class="bi bi-clock me-1"></i>{{ $feedback->created_at->diffForHumans() }}
                                 </small>
                             </div>
-                        @empty
-                            <div class="list-group-item">
-                                <p class="mb-0 text-center text-muted">You haven't provided any feedback yet.</p>
-                            </div>
-                        @endforelse
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card mt-4 border-0 shadow-sm">
-                <div class="card-header text-white" style="background: linear-gradient(135deg, #22bbea, #1a9bd1);">
-                    <h5 class="mb-0 fw-semibold">
-                        <i class="bi bi-lightbulb me-2"></i>Why Your Feedback Matters
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <ul class="mb-0">
-                        <li>Helps improve meal quality</li>
-                        <li>Influences future menu planning</li>
-                        <li>Reduces food waste</li>
-                        <li>Ensures dietary needs are met</li>
-                    </ul>
+                            <button type="button" class="btn btn-outline-danger btn-sm ms-2 delete-history-btn" data-id="{{ $feedback->id }}" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    @empty
+                        <div class="list-group-item">
+                            <p class="mb-0 text-center text-muted">You haven't provided any feedback yet.</p>
+                        </div>
+                    @endforelse
                 </div>
             </div>
         </div>
@@ -250,6 +245,10 @@
         background-color: #e6851a !important;
         border-color: #e6851a !important;
     }
+
+    .date-time-block { text-align: center; }
+    .date-line { font-size: 1.15rem; font-weight: 500; }
+    .time-line { font-size: 1rem; font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace; }
 </style>
 @endpush
 
@@ -300,6 +299,65 @@
                 });
             });
         }
+        // Delete single feedback history
+        document.querySelectorAll('.delete-history-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                if (confirm('Are you sure you want to delete this feedback history?')) {
+                    fetch(`/student/feedback/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json',
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            const row = document.getElementById(`feedback-history-${id}`);
+                            if (row) row.remove();
+                        } else {
+                            alert(data.message || 'Failed to delete feedback history.');
+                        }
+                    })
+                    .catch(() => alert('An error occurred while deleting feedback history.'));
+                }
+            });
+        });
+        // Delete all feedback history
+        const deleteAllBtn = document.getElementById('deleteAllHistoryBtn');
+        if (deleteAllBtn) {
+            deleteAllBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to delete ALL feedback history?')) {
+                    fetch(`/student/feedback/delete-all`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json',
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.querySelectorAll('div[id^="feedback-history-"]').forEach(row => row.remove());
+                        } else {
+                            alert(data.message || 'Failed to delete all feedback history.');
+                        }
+                    })
+                    .catch(() => alert('An error occurred while deleting all feedback history.'));
+                }
+            });
+        }
+
+        function updateDateTimeBlock() {
+            const now = new Date();
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
+        }
+        updateDateTimeBlock();
+        setInterval(updateDateTimeBlock, 1000);
     });
 </script>
 @endpush

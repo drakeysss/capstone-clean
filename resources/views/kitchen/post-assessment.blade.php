@@ -1,105 +1,109 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="col-12 mb-4">
-    <div class="card border-0 bg-primary text-white overflow-hidden">
-        <div class="card-body p-4 position-relative" style="background-color: var(--secondary-color);">
-            <div class="row align-items-center">
-                <div class="col">
-                    <h4 class="fw-bold mb-1">Post-meal Report</h4>
-                    <p class="mb-0">Report leftover food to Cook</p>
-                </div>
-                <div class="col-auto">
+<div class="container-fluid p-4">
+    <!-- Enhanced Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #22bbea, #1a9bd1);">
+                    <div>
+                        <h3 class="mb-1 fw-bold">
+                            <i class="bi bi-clipboard-data me-2"></i>Post-meal Report
+                        </h3>
+                        <p class="mb-0 opacity-75">Report leftover food to Cook</p>
+                    </div>
                     <div class="text-end">
-                        <div id="currentDateTime" class="fs-6 mb-1"></div>
-                        <i class="bi bi-trash display-4 opacity-25"></i>
+                        <div id="currentDateTimeBlock" class="date-time-block">
+                            <div id="currentDate" class="date-line">Date</div>
+                            <div id="currentTime" class="time-line">Time</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="row">
-    <!-- Simple Leftover Report Form -->
-    <div class="col-12">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Report Leftovers</h6>
-            </div>
-            <div class="card-body">
-                <form action="{{ route('kitchen.post-assessment.store') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Report Leftovers</h6>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('kitchen.post-assessment.store') }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="date" class="form-label">Date</label>
+                                <input type="date" id="date" name="date" class="form-control" value="{{ now()->format('Y-m-d') }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="meal_type" class="form-label">Meal Type</label>
+                                <select id="meal_type" name="meal_type" class="form-select" required>
+                                    <option value="breakfast">Breakfast</option>
+                                    <option value="lunch" selected>Lunch</option>
+                                    <option value="dinner">Dinner</option>
+                                </select>
+                            </div>
+                        </div>
                     
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <label for="date" class="form-label">Date</label>
-                            <input type="date" id="date" name="date" class="form-control" value="{{ now()->format('Y-m-d') }}" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="meal_type" class="form-label">Meal Type</label>
-                            <select id="meal_type" name="meal_type" class="form-select" required>
-                                <option value="breakfast">Breakfast</option>
-                                <option value="lunch" selected>Lunch</option>
-                                <option value="dinner">Dinner</option>
-                            </select>
-                        </div>
-                    </div>
-                
 
-                    <!-- Duplicate Warning Section -->
-                    <div id="duplicate-warning" style="display: none;" class="mb-4"></div>
+                        <!-- Duplicate Warning Section -->
+                        <div id="duplicate-warning" style="display: none;" class="mb-4"></div>
 
-                    <div class="leftover-items mb-4">
-                        <div class="leftover-item card mb-3">
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-md-12 mb-3">
-                                        <label class="form-label">Food Item</label>
-                                        <input type="text" class="form-control" name="items[0][name]" placeholder="Enter food item name" required>
+                        <div class="leftover-items mb-4">
+                            <div class="leftover-item card mb-3">
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-12 mb-3">
+                                            <label class="form-label">Food Item</label>
+                                            <input type="text" class="form-control" name="items[0][name]" placeholder="Enter food item name" required>
+                                        </div>
+                                      
                                     </div>
-                                  
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <button type="button" id="addItemBtn" class="btn btn-outline-primary">
-                            <i class="bi bi-plus-circle me-2"></i> Add Another Food Item
-                        </button>
-                    </div>
-
                         
-                    <div class="mb-4">
-                        <label class="form-label">Notes for Cook</label>
-                        <textarea class="form-control" name="notes" rows="2" placeholder="Any notes about the leftovers"></textarea>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label">
-                            <i class="bi bi-camera me-2"></i>Attach Photo (Optional)
-                        </label>
-                        <input type="file" class="form-control" name="report_image" accept="image/*" id="reportImage">
-                        <div class="form-text">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Upload a photo of the leftovers to help the cook/admin see the actual situation.
-                            Supported formats: JPEG, PNG, GIF (Max: 5MB)
-                        </div>
-                        <div id="imagePreview" class="mt-3" style="display: none;">
-                            <img id="previewImg" src="" alt="Image Preview" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
-                            <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="removeImage">
-                                <i class="bi bi-trash"></i> Remove
+                        <div class="mb-4">
+                            <button type="button" id="addItemBtn" class="btn btn-outline-primary">
+                                <i class="bi bi-plus-circle me-2"></i> Add Another Food Item
                             </button>
                         </div>
-                    </div>
-                    
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-send me-2"></i> Submit Report
-                        </button>
-                    </div>
-                </form>
+
+                            
+                        <div class="mb-4">
+                            <label class="form-label">Notes for Cook</label>
+                            <textarea class="form-control" name="notes" rows="2" placeholder="Any notes about the leftovers"></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-camera me-2"></i>Attach Photo (Optional)
+                            </label>
+                            <input type="file" class="form-control" name="report_image" accept="image/*" id="reportImage">
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Upload a photo of the leftovers to help the cook/admin see the actual situation.
+                                Supported formats: JPEG, PNG, GIF (Max: 5MB)
+                            </div>
+                            <div id="imagePreview" class="mt-3" style="display: none;">
+                                <img id="previewImg" src="" alt="Image Preview" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+                                <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="removeImage">
+                                    <i class="bi bi-trash"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send me-2"></i> Submit Report
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -107,33 +111,28 @@
 
 @endsection
 
+@push('styles')
+<style>
+.date-time-block { text-align: center; }
+.date-line { font-size: 1.15rem; font-weight: 500; }
+.time-line { font-size: 1rem; font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace; }
+</style>
+@endpush
+
 @push('scripts')
 <script>
     // Real-time date and time display
-    function updateDateTime() {
+    function updateDateTimeBlock() {
         const now = new Date();
-        const dateOptions = {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        };
-        const timeOptions = {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: true
-        };
-
-        const dateString = now.toLocaleDateString('en-US', dateOptions);
-        const timeString = now.toLocaleTimeString('en-US', timeOptions);
-
-        document.getElementById('currentDateTime').innerHTML = `${dateString}<br><small>${timeString}</small>`;
+        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
+        document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
     }
 
     // Update immediately and then every second
-    updateDateTime();
-    setInterval(updateDateTime, 1000);
+    updateDateTimeBlock();
+    setInterval(updateDateTimeBlock, 1000);
 
     // Image upload preview functionality
     document.addEventListener('DOMContentLoaded', function() {
@@ -489,7 +488,5 @@
         if (dateInput) dateInput.addEventListener('change', checkForDuplicates);
         if (mealTypeSelect) mealTypeSelect.addEventListener('change', checkForDuplicates);
     });
-
-
 </script>
 @endpush

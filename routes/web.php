@@ -274,6 +274,8 @@ Route::middleware(['auth', 'role:kitchen'])->prefix('kitchen')->name('kitchen.')
     // Feedback
     Route::get('/feedback', [KitchenFeedbackController::class, 'index'])->name('feedback');
     Route::get('/feedback/{id}', [KitchenFeedbackController::class, 'show'])->name('feedback.show');
+    Route::delete('/feedback/delete-all', [App\Http\Controllers\Kitchen\FeedbackController::class, 'destroyAll'])->name('kitchen.feedback.deleteAll');
+    Route::delete('/feedback/{id}', [App\Http\Controllers\Kitchen\FeedbackController::class, 'destroy'])->name('kitchen.feedback.destroy');
 });
 
 // Additional Kitchen Routes (for menu management)

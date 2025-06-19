@@ -1,28 +1,30 @@
 @extends('layouts.app')
 
-@section('title', 'Today\'s Menu - Student Dashboard')
+@section('title', "Today's Menu - Student Dashboard")
 
 @section('content')
-<div class="container">
-    <!-- Header Section -->
+<div class="container-fluid">
+    <!-- Enhanced Header Section -->
     <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #22bbea, #1a9bd1);">
                     <div>
-                        <h3 class="mb-0">Today's Menu</h3>
-                        <p class="mb-0 text-muted">Welcome, {{ Auth::user()->name ?? 'Student' }}!</p>
+                        <h3 class="mb-1 fw-bold">
+                            <i class="bi bi-house-door me-2"></i>Today's Menu
+                        </h3>
+                        <p class="mb-0 opacity-75">Welcome, {{ Auth::user()->name ?? 'Student' }}!</p>
                     </div>
                     <div class="text-end">
-                        <div id="currentTime" class="h4 mb-0 text-primary"></div>
-                        <div id="currentDate" class="text-muted"></div>
+                        <div id="currentDateTimeBlock" class="date-time-block">
+                            <div id="currentDate" class="date-line">Date</div>
+                            <div id="currentTime" class="time-line">Time</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-
 
     <!-- Quick Actions Section -->
     <div class="row mb-4">
@@ -107,7 +109,6 @@
         </div>
     </div>
     @endif
-
 
     </div>
 
@@ -252,43 +253,26 @@
     .card:hover {
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
     }
+
+    .date-time-block { text-align: center; }
+    .date-line { font-size: 1.15rem; font-weight: 500; }
+    .time-line { font-size: 1rem; font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace; }
 </style>
 @endpush
 
 @push('scripts')
 <script>
-    // Update date/time every second
-    function updateDateTime() {
+    function updateDateTimeHeader() {
         const now = new Date();
-
-        // Format time in 12-hour format with AM/PM
-        const timeOptions = {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: true
-        };
-        const timeString = now.toLocaleTimeString('en-US', timeOptions);
-
-        // Format date
+        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
         const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const timeString = now.toLocaleTimeString('en-US', timeOptions);
         const dateString = now.toLocaleDateString('en-US', dateOptions);
-
-        // Update elements
-        const currentTimeElement = document.getElementById('currentTime');
-        const currentDateElement = document.getElementById('currentDate');
-
-        if (currentTimeElement) {
-            currentTimeElement.textContent = timeString;
-        }
-        if (currentDateElement) {
-            currentDateElement.textContent = dateString;
-        }
+        const el = document.getElementById('currentDateTime');
+        if (el) el.textContent = `${dateString} ${timeString}`;
     }
-
-    // Call immediately and then every second
-    updateDateTime();
-    setInterval(updateDateTime, 1000);
+    updateDateTimeHeader();
+    setInterval(updateDateTimeHeader, 1000);
 
     // Week cycle toggle functionality
     document.addEventListener('DOMContentLoaded', function() {
@@ -344,6 +328,18 @@
                 });
             });
         });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        function updateDateTimeBlock() {
+            const now = new Date();
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
+        }
+        updateDateTimeBlock();
+        setInterval(updateDateTimeBlock, 1000);
     });
 </script>
 @endpush

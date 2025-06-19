@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .menu-card-header {
-    background: #f8f9fa;
+    background: linear-gradient(135deg, #22bbea, #1a9bd1);
     padding: 1.5rem;
     border-bottom: 3px solid #ff9933;
 }
