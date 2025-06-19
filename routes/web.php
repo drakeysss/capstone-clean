@@ -193,6 +193,8 @@ Route::middleware(['auth', 'role:kitchen'])->prefix('kitchen')->name('kitchen.')
     Route::post('/inventory/check', [InventoryCheckController::class, 'store'])->name('inventory.check');
     Route::get('/inventory/history', [InventoryCheckController::class, 'history'])->name('inventory.history');
     Route::get('/inventory/{id}', [InventoryCheckController::class, 'show'])->name('inventory.show');
+    Route::delete('/inventory/{id}', [InventoryCheckController::class, 'destroy'])->name('inventory.delete');
+    Route::delete('/inventory/delete-all/reports', [InventoryCheckController::class, 'destroyAll'])->name('inventory.delete-all');
     
     // Recipe & Meal Execution
     Route::get('/recipes', [KitchenDashboardController::class, 'recipes'])->name('recipes');

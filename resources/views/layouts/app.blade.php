@@ -44,7 +44,6 @@
             --z-sidebar: 1000;
             --z-header: 1010;
             --z-dropdown: 1040;
-            --z-modal-backdrop: 1055;
             --z-modal: 1060;
             --z-notification: 1070;
             --z-tooltip: 1080;
@@ -71,12 +70,13 @@
             top: 0;
             left: 0;
             z-index: var(--z-sidebar);
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fc 100%);
+            background: #ffffff;
             box-shadow: 2px 0 20px rgba(0, 0, 0, 0.08);
             transition: var(--transition);
             border-right: 1px solid rgba(34, 187, 234, 0.1);
         }
 
+        /* REMOVED: Gradient border effect
         .sidebar::before {
             content: '';
             position: absolute;
@@ -87,6 +87,7 @@
             background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
             opacity: 0.6;
         }
+        */
 
         /* Mobile Sidebar */
         @media (max-width: 768px) {

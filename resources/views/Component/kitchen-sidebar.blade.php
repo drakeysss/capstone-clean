@@ -119,18 +119,18 @@
             </li>
         </ul>
 
-        <div class="sidebar-category">MEAL PLANNING</div>
+        <div class="sidebar-category">GENERAL</div>
         <ul class="sidebar-nav">
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('kitchen.daily-menu') ? 'active' : '' }}" href="{{ route('kitchen.daily-menu') }}" data-feature="kitchen.daily-menu">
                     <i class="bi bi-journal-text icon"></i>
-                    <span class="small">Menu Planning</span>
+                    <span class="small">Weeky Menu</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('kitchen.pre-orders') ? 'active' : '' }}" href="{{ route('kitchen.pre-orders') }}" data-feature="kitchen.pre-orders">
                     <i class="bi bi-calendar-check icon"></i>
-                    <span class="small">Student Pre-Orders</span>
+                    <span class="small">Students Menu Polling</span>
                 </a>
             </li>
             <li class="nav-item">
@@ -139,24 +139,24 @@
                     <span class="small">Post-Meal Report</span>
                 </a>
             </li>
-        </ul>
 
-        <div class="sidebar-category">INVENTORY</div>
-        <ul class="sidebar-nav">
-            <li class="nav-item">
+             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('kitchen.inventory') ? 'active' : '' }}" href="{{ route('kitchen.inventory') }}" data-feature="kitchen.inventory">
                     <i class="bi bi-box-seam icon"></i>
-                    <span class="small">Stock Management</span>
+                    <span class="small">Inventory<span>
                 </a>
             </li>
+
         </ul>
 
+       
+     
         <div class="sidebar-category">COMMUNICATION</div>
         <ul class="sidebar-nav">
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('kitchen.feedback*') ? 'active' : '' }}" href="{{ route('kitchen.feedback') }}" data-feature="kitchen.feedback">
                     <i class="bi bi-star icon"></i>
-                    <span class="small">Student Feedback</span>
+                    <span class="small">Students Feedback</span>
                 </a>
             </li>
         </ul>

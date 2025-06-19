@@ -36,7 +36,25 @@ class InventoryCheckController extends Controller
             ->take(5)
             ->get();
 
-        return view('kitchen.inventory.index', compact('existingItems', 'recentChecks'));
+        // Get all inventory checks for history section (paginated)
+        $allChecks = InventoryCheck::with(['user', 'items'])
+            ->where('user_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        // Get statistics for the current user
+        $stats = [
+            'total_reports' => InventoryCheck::where('user_id', Auth::id())->count(),
+            'total_items_reported' => InventoryCheck::where('user_id', Auth::id())
+                ->withCount('items')
+                ->get()
+                ->sum('items_count'),
+            'last_report_date' => InventoryCheck::where('user_id', Auth::id())
+                ->latest()
+                ->value('created_at'),
+        ];
+
+        return view('kitchen.inventory.index', compact('existingItems', 'recentChecks', 'allChecks', 'stats'));
     }
     
     /**
@@ -264,5 +282,82 @@ class InventoryCheckController extends Controller
             ->findOrFail($id);
 
         return view('kitchen.inventory.show', compact('check'));
+    }
+
+    /**
+     * Delete a specific inventory check report
+     */
+    public function destroy($id)
+    {
+        try {
+            $check = InventoryCheck::findOrFail($id);
+
+            // Only allow deletion by the user who created it or admin
+            if ($check->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You can only delete your own reports.'
+                ], 403);
+            }
+
+            // Delete related inventory check items first
+            $check->items()->delete();
+
+            // Delete the inventory check
+            $check->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Inventory report deleted successfully.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting report: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete all inventory check reports for the current user
+     */
+    public function destroyAll()
+    {
+        try {
+            $userId = Auth::id();
+
+            // Get all checks for the current user
+            $checks = InventoryCheck::where('user_id', $userId)->get();
+
+            if ($checks->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No reports found to delete.'
+                ]);
+            }
+
+            $deletedCount = 0;
+
+            foreach ($checks as $check) {
+                // Delete related inventory check items first
+                $check->items()->delete();
+
+                // Delete the inventory check
+                $check->delete();
+                $deletedCount++;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully deleted {$deletedCount} inventory reports."
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting reports: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

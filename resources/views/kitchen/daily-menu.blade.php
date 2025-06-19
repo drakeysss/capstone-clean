@@ -32,12 +32,7 @@
                         <span class="badge bg-success ms-2" id="currentWeekIndicator">
                             <i class="bi bi-calendar-check"></i> Current Week
                         </span>
-                        <small class="text-success ms-2">
-                            <i class="bi bi-arrow-repeat" id="refreshIcon"></i> Live from Cook's Menu
-                        </small>
-                        <button class="btn btn-sm btn-outline-primary ms-2" onclick="testAPI()" id="testAPIBtn">
-                            <i class="bi bi-bug"></i> Test API
-                        </button>
+                     
                     </div>
                 </div>
                 <div class="card-body">
@@ -254,7 +249,7 @@
     }
 
     .current-week-row:hover {
-        background: linear-gradient(90deg, rgba(34, 187, 234, 0.15) 0%, rgba(255, 153, 51, 0.15) 100%) !important;
+        background: rgba(34, 187, 234, 0.15) !important;
     }
 
     /* UNIFIED: Badge System */
@@ -903,12 +898,12 @@
                     indicator.remove();
                 });
 
-                // UNIFIED: Add week highlighting - highlight current week differently
+                // UNIFIED: Add week highlighting - highlight current week differently (NO GRADIENT)
                 const weekCycleHeader = document.querySelector('.card-header');
                 if (weekCycleHeader) {
                     const highlighting = getMenuHighlighting('monday', selectedWeekCycle); // Use any day to get week status
                     if (highlighting.isCurrentWeek) {
-                        weekCycleHeader.style.background = 'linear-gradient(135deg, #ff9933, #22bbea)';
+                        weekCycleHeader.style.background = '#22bbea';
                         weekCycleHeader.style.color = 'white';
                     } else {
                         weekCycleHeader.style.background = '#f8f9fa';

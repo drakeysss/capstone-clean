@@ -26,99 +26,6 @@
         </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-md-2">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h2 class="text-primary">{{ $stats['average_rating'] }}</h2>
-                    <p class="mb-0">Average Rating</p>
-                    <div class="mt-2">
-                        @for($i = 1; $i <= 5; $i++)
-                            <i class="bi {{ $i <= $stats['average_rating'] ? 'bi-star-fill text-warning' : 'bi-star' }}"></i>
-                        @endfor
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h2 class="text-success">{{ $stats['total_feedback'] }}</h2>
-                    <p class="mb-0">Total Feedback</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h2 class="text-info">{{ $stats['recent_feedback'] }}</h2>
-                    <p class="mb-0">This Week</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h2 class="text-warning">{{ $stats['rating_distribution'][5] }}</h2>
-                    <p class="mb-0">5-Star Reviews</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h2 class="text-secondary">{{ $stats['anonymous_feedback'] }}</h2>
-                    <p class="mb-0">Anonymous</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h2 class="text-dark">{{ $stats['identified_feedback'] }}</h2>
-                    <p class="mb-0">Identified</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Meal Type Statistics -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Meal Type Performance</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="text-center p-3 border rounded">
-                                <h4 class="text-warning">{{ $stats['meal_type_stats']['breakfast']['avg_rating'] ?? 'N/A' }}</h4>
-                                <p class="mb-1"><strong>Breakfast</strong></p>
-                                <small class="text-muted">{{ $stats['meal_type_stats']['breakfast']['count'] }} reviews</small>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="text-center p-3 border rounded">
-                                <h4 class="text-warning">{{ $stats['meal_type_stats']['lunch']['avg_rating'] ?? 'N/A' }}</h4>
-                                <p class="mb-1"><strong>Lunch</strong></p>
-                                <small class="text-muted">{{ $stats['meal_type_stats']['lunch']['count'] }} reviews</small>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="text-center p-3 border rounded">
-                                <h4 class="text-warning">{{ $stats['meal_type_stats']['dinner']['avg_rating'] ?? 'N/A' }}</h4>
-                                <p class="mb-1"><strong>Dinner</strong></p>
-                                <small class="text-muted">{{ $stats['meal_type_stats']['dinner']['count'] }} reviews</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Enhanced Filters -->
     <div class="row mb-4">
         <div class="col-12">
@@ -278,10 +185,25 @@
                             </div>
                         </div>
                     @empty
-                        <div class="p-4 text-center">
-                            <i class="bi bi-chat-dots fs-1 text-muted"></i>
-                            <p class="mb-0 mt-2">No feedback found matching your criteria.</p>
-                            <small class="text-muted">Try adjusting your filters or check back later.</small>
+                        <div class="p-5 text-center">
+                            <div class="mb-4">
+                                <i class="bi bi-hourglass-split fs-1 text-muted"></i>
+                            </div>
+                            <h4 class="text-muted">Waiting for Student Feedback</h4>
+                            <p class="text-muted mb-4">
+                                Students haven't submitted any feedback yet.<br>
+                                Feedback will appear here once students rate their meals.
+                            </p>
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>How it works:</strong>
+                                <ol class="text-start mt-2 mb-0">
+                                    <li>Students eat their meals</li>
+                                    <li>Students submit feedback and ratings</li>
+                                    <li>Cook reviews feedback to improve meals</li>
+                                    <li>Cook can delete inappropriate feedback</li>
+                                </ol>
+                            </div>
                         </div>
                     @endforelse
                 </div>
@@ -318,6 +240,15 @@ function confirmDeleteAll() {
 
 // Delete single feedback via AJAX
 function deleteFeedback(feedbackId) {
+    const deleteBtn = document.querySelector(`button[onclick*="${feedbackId}"]`);
+    const originalText = deleteBtn ? deleteBtn.innerHTML : '';
+
+    // Show loading state
+    if (deleteBtn) {
+        deleteBtn.disabled = true;
+        deleteBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Deleting...';
+    }
+
     fetch(`/cook/feedback/${feedbackId}`, {
         method: 'DELETE',
         headers: {
@@ -350,11 +281,26 @@ function deleteFeedback(feedbackId) {
     .catch(error => {
         console.error('Error:', error);
         showAlert('error', 'An error occurred while deleting feedback');
+
+        // Reset button on error
+        if (deleteBtn) {
+            deleteBtn.disabled = false;
+            deleteBtn.innerHTML = originalText;
+        }
     });
 }
 
 // Delete all feedback via AJAX
 function deleteAllFeedback() {
+    const deleteAllBtn = document.querySelector('button[onclick="confirmDeleteAll()"]');
+    const originalText = deleteAllBtn ? deleteAllBtn.innerHTML : '';
+
+    // Show loading state
+    if (deleteAllBtn) {
+        deleteAllBtn.disabled = true;
+        deleteAllBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Clearing All...';
+    }
+
     fetch('/cook/feedback', {
         method: 'DELETE',
         headers: {
@@ -366,15 +312,32 @@ function deleteAllFeedback() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Show success message before reload
+            showAlert('success', 'All feedback deleted successfully');
+
             // Reload the page to show empty state
-            window.location.reload();
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
         } else {
             showAlert('error', data.message || 'Failed to delete all feedback');
+
+            // Reset button on error
+            if (deleteAllBtn) {
+                deleteAllBtn.disabled = false;
+                deleteAllBtn.innerHTML = originalText;
+            }
         }
     })
     .catch(error => {
         console.error('Error:', error);
         showAlert('error', 'An error occurred while deleting all feedback');
+
+        // Reset button on error
+        if (deleteAllBtn) {
+            deleteAllBtn.disabled = false;
+            deleteAllBtn.innerHTML = originalText;
+        }
     });
 }
 

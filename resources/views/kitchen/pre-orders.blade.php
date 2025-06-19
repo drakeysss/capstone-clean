@@ -32,47 +32,41 @@
     
     <!-- Edit Poll Deadline Modal -->
     <div class="modal fade" id="editPollDeadlineModal" tabindex="-1" aria-labelledby="editPollDeadlineModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editPollDeadlineModalLabel">
-                        <i class="bi bi-clock-history me-2"></i>Edit Poll Deadline
+                <div class="modal-header bg-info text-white align-items-center">
+                    <h5 class="modal-title d-flex align-items-center" id="editPollDeadlineModalLabel">
+                        <i class="bi bi-clock-history me-2"></i> Edit Poll Deadline
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-info">
+                    <div class="alert alert-info mb-3">
                         <i class="bi bi-info-circle me-2"></i>
                         <strong>Kitchen Team:</strong> You can only modify poll deadlines. Menu content is managed by the cook.
                     </div>
-
                     <form id="editPollDeadlineForm">
                         <input type="hidden" id="editPollId" name="poll_id">
-
-                        <div class="mb-3">
+                        <div class="mb-4">
                             <label class="form-label">Poll Information (Read-only)</label>
-                            <div class="card bg-light">
-                                <div class="card-body">
-                                    <h6 id="editPollMealName" class="card-title mb-1">-</h6>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <small class="text-muted">
-                                                <i class="bi bi-calendar"></i> <span id="editPollDate">-</span>
-                                            </small>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <small class="text-muted text-capitalize">
-                                                <i class="bi bi-clock"></i> <span id="editPollMealType">-</span>
-                                            </small>
-                                        </div>
+                            <div class="card bg-light mb-3 poll-info-card">
+                                <div class="card-body d-flex flex-column flex-md-row align-items-center justify-content-between">
+                                    <div>
+                                        <h6 id="editPollMealName" class="card-title mb-1">-</h6>
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar"></i> <span id="editPollDate">-</span>
+                                        </small>
                                     </div>
-                                    <small id="editPollIngredients" class="text-muted d-block mt-1">-</small>
+                                    <div class="mt-2 mt-md-0">
+                                        <small class="text-muted text-capitalize">
+                                            <i class="bi bi-clock"></i> <span id="editPollMealType">-</span>
+                                        </small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3 mb-md-0">
                                 <label for="editDeadlineDate" class="form-label">Deadline Date</label>
                                 <div class="input-group">
                                     <select class="form-select" id="editDeadlineDate" name="deadline_date">
@@ -110,26 +104,15 @@
                                 </select>
                             </div>
                         </div>
-
                         <div class="mb-3" id="editCustomTimeContainer" style="display: none;">
                             <label for="editCustomDeadlineTime" class="form-label">Custom Deadline Time</label>
                             <input type="time" class="form-control" id="editCustomDeadlineTime" name="custom_deadline">
                         </div>
-
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle me-2"></i>
-                            <strong>Example:</strong> If you select "Today 3:00 PM" for a Tuesday meal, students must respond by Tuesday 3:00 PM.
-                        </div>
-
-                        <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-triangle me-2"></i>
-                            <strong>Note:</strong> Changing the deadline will affect when students can respond to this poll.
-                        </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="savePollDeadlineBtn">
+                <div class="modal-footer d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" id="savePollDeadlineBtn">
                         <i class="bi bi-check-circle"></i> Update Deadline
                     </button>
                 </div>
@@ -210,17 +193,12 @@
                                 <button class="btn btn-outline-primary" onclick="window.location.reload()">
                                     <i class="bi bi-arrow-clockwise"></i> Refresh
                                 </button>
-                                <a href="{{ route('cook.menu.index') }}" class="btn btn-outline-success ms-2">
-                                    <i class="bi bi-plus-circle"></i> Go to Cook Menu (if you're also a cook)
-                                </a>
+                              
                             </div>
                         </div>
                     @else
                        
-                        <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-triangle me-2"></i> Note: Create polls early so students have time to respond before meal preparation.
-                        </div>
-
+                  
 
 
                     <!-- Create Poll from Cook's Menu -->
@@ -231,16 +209,9 @@
                             </h6>
                         </div>
                         <div class="card-body">
-                            <div class="alert alert-info">
-                                <i class="bi bi-info-circle me-2"></i>
-                                <strong>Kitchen Team:</strong> Select meals from the cook's menu and set polling deadlines. You cannot modify the menu content.
-                            </div>
-
+                           
                             <form id="createPollForm">
-                                <div class="alert alert-info">
-                                    <i class="bi bi-info-circle me-2"></i>
-                                    <strong>Cycle-Based Polling:</strong> Create polls for today's menu based on the current week cycle. No need to select dates - polls are automatically created for today's meals.
-                                </div>
+                               
                                 <div class="row">
                                     <div class="col-md-3">
                                         <label for="pollMealType" class="form-label">Meal Type</label>
@@ -267,10 +238,13 @@
                                                 <label for="manualMealName" class="form-label">Meal Name *</label>
                                                 <input type="text" class="form-control" id="manualMealName" placeholder="e.g., Chicken Adobo" required>
                                             </div>
+                                            <!-- Remove the ingredients input field below -->
+                                            <!--
                                             <div class="col-md-6">
                                                 <label for="manualMealIngredients" class="form-label">Ingredients</label>
                                                 <input type="text" class="form-control" id="manualMealIngredients" placeholder="e.g., Chicken, soy sauce, vinegar">
                                             </div>
+                                            -->
                                         </div>
                                     </div>
                                 </div>
@@ -437,7 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
         urgencyFilter.addEventListener('change', loadPolls);
 
         // Efficient polling: Auto-refresh every 2 minutes for polls
-        setInterval(loadPolls, 120000);
+        // setInterval(loadPolls, 120000); // <-- REMOVE THIS LINE
     }
 
 
@@ -459,6 +433,9 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('editPollDeadlineModal exists:', !!document.getElementById('editPollDeadlineModal'));
     console.log('Bootstrap available:', typeof bootstrap !== 'undefined');
     console.log('=== END MODAL DEBUG ===');
+
+    // Utility function to clean up any stuck modal backdrops
+    cleanupStuckBackdrops();
 });
 
 function updateDateTime() {
@@ -998,16 +975,16 @@ function createNewPoll() {
     const pollDate = formData.get('poll_date');
     const customPollDate = formData.get('custom_poll_date');
     const mealName = document.getElementById('manualMealName').value.trim();
-    const mealIngredients = document.getElementById('manualMealIngredients').value.trim();
+    // const mealIngredients = document.getElementById('manualMealIngredients').value.trim(); // REMOVE THIS LINE
     const deadlineTime = formData.get('deadline_time');
     const customDeadline = formData.get('custom_deadline');
 
-    console.log('� Form data collected:', {
+    console.log(' Form data collected:', {
         mealType,
         pollDate,
         customPollDate,
         mealName,
-        mealIngredients,
+        // mealIngredients, // REMOVE THIS LINE
         deadlineTime,
         customDeadline
     });
@@ -1037,8 +1014,8 @@ function createNewPoll() {
         poll_date: actualPollDate,
         deadline: finalTime,
         manual_meal: {
-            name: mealName,
-            ingredients: mealIngredients
+            name: mealName
+            // ingredients: mealIngredients // REMOVE THIS LINE
         }
     };
 
@@ -1599,12 +1576,15 @@ function closeAllModals() {
         // Force remove any remaining modal classes
         document.body.className = document.body.className.replace(/modal-[a-z-]*/g, '');
 
+        // Call the new utility for extra safety
+        cleanupStuckBackdrops();
     } catch (e) {
         console.error('Error in closeAllModals:', e);
         // Force cleanup even if there are errors
         document.body.classList.remove('modal-open');
         document.body.style.overflow = '';
         document.body.style.paddingRight = '';
+        cleanupStuckBackdrops();
     }
 }
 
@@ -1642,6 +1622,9 @@ function editPollDeadline(pollId, mealName, pollDate, mealType, ingredients, cur
     console.log('Editing deadline for poll:', pollId);
     console.log('Looking for modal element: editPollDeadlineModal');
 
+    // Clean up any stuck backdrops before showing modal
+    cleanupStuckBackdrops();
+
     // Check if modal exists before proceeding
     const modalCheck = document.getElementById('editPollDeadlineModal');
     console.log('Modal element found:', !!modalCheck);
@@ -1657,7 +1640,8 @@ function editPollDeadline(pollId, mealName, pollDate, mealType, ingredients, cur
     document.getElementById('editPollMealName').textContent = mealName;
     document.getElementById('editPollDate').textContent = formatPollDate(pollDate);
     document.getElementById('editPollMealType').textContent = mealType;
-    document.getElementById('editPollIngredients').textContent = ingredients || 'No ingredients listed';
+    var ingredientsElem = document.getElementById('editPollIngredients');
+    if (ingredientsElem) ingredientsElem.textContent = ingredients || '';
 
     // Debug: Check if poll ID was set correctly
     console.log('Poll ID set to:', document.getElementById('editPollId').value);
@@ -1774,6 +1758,9 @@ function editPollDeadline(pollId, mealName, pollDate, mealType, ingredients, cur
             showToast('Error opening modal. Please refresh the page.', 'error');
         }
     }
+
+    // Clean up any stuck backdrops after showing modal (in case of double backdrop)
+    setTimeout(cleanupStuckBackdrops, 500);
 }
 
 function initializePollDeadlineModal() {
@@ -2141,17 +2128,17 @@ function toggleManualMealInput() {
 
 function useManualMeal() {
     const mealName = document.getElementById('manualMealName').value.trim();
-    const ingredients = document.getElementById('manualMealIngredients').value.trim();
+    // const ingredients = document.getElementById('manualMealIngredients').value.trim(); // REMOVE
 
     if (!mealName) {
         showToast('Please enter a meal name', 'error');
         return;
     }
 
-    console.log('✅ Using manual meal:', { mealName, ingredients });
+    console.log('✅ Using manual meal:', { mealName });
 
     // Update the meal details display
-    updateMealDetails(mealName, ingredients || 'No ingredients specified');
+    updateMealDetails(mealName, '');
 
     // Enable the create poll button
     document.getElementById('createPollBtn').disabled = false;
@@ -2161,8 +2148,7 @@ function useManualMeal() {
 
     // Store manual meal data for poll creation
     window.manualMealData = {
-        name: mealName,
-        ingredients: ingredients || 'No ingredients specified'
+        name: mealName
     };
 
     showToast('Manual meal selected: ' + mealName, 'success');
@@ -2170,7 +2156,7 @@ function useManualMeal() {
 
 function cancelManualMeal() {
     document.getElementById('manualMealName').value = '';
-    document.getElementById('manualMealIngredients').value = '';
+    // document.getElementById('manualMealIngredients').value = ''; // REMOVE
     document.getElementById('manualMealInput').style.display = 'none';
     document.getElementById('availableMeals').disabled = false;
 
@@ -2287,8 +2273,76 @@ function testAvailableMeals() {
     showToast('Check browser console for detailed API test results', 'info');
 }
 
+// Utility function to clean up any stuck modal backdrops
+function cleanupStuckBackdrops() {
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+}
+
+// Call this after closing/removing any modal
+// Example: after closeAllModals();
+// cleanupStuckBackdrops();
+
+// Also call on DOMContentLoaded as a safety net
 
 </script>
 @endpush
 
-
+@push('styles')
+<style>
+    /* Force modals and backdrops to always be above the header */
+    .modal-backdrop {
+        z-index: 99998 !important;
+    }
+    .modal {
+        z-index: 99999 !important;
+    }
+    /* Match modal header/footer style to poll results modal */
+    .modal-header.bg-info {
+        background: #22bbea !important;
+        color: #fff !important;
+        border-top-left-radius: 0.5rem;
+        border-top-right-radius: 0.5rem;
+    }
+    .modal-footer {
+        background: #f8f9fa;
+        border-bottom-left-radius: 0.5rem;
+        border-bottom-right-radius: 0.5rem;
+        padding-top: 1.25rem;
+        padding-bottom: 1.25rem;
+    }
+    .modal-footer .btn {
+        min-width: 120px;
+        font-weight: 600;
+    }
+    /* Add top margin to modal for separation from header */
+    .modal-lg {
+        margin-top: 5rem !important;
+    }
+    .poll-info-card {
+        border-radius: 1rem;
+        box-shadow: 0 2px 16px rgba(34, 187, 234, 0.08);
+        border: none;
+    }
+    .modal-body label.form-label {
+        font-weight: 600;
+    }
+    .modal-body .form-label {
+        margin-bottom: 0.5rem;
+    }
+    .modal-body .row > [class^='col-'] {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+    }
+    .modal-body .input-group {
+        flex-wrap: nowrap;
+    }
+    .modal-body .form-select, .modal-body .form-control {
+        min-height: 44px;
+        font-size: 1rem;
+    }
+</style>
+@endpush

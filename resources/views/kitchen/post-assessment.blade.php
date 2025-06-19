@@ -6,7 +6,7 @@
         <div class="card-body p-4 position-relative" style="background-color: var(--secondary-color);">
             <div class="row align-items-center">
                 <div class="col">
-                    <h4 class="fw-bold mb-1">Leftover Food Report</h4>
+                    <h4 class="fw-bold mb-1">Post-meal Report</h4>
                     <p class="mb-0">Report leftover food to Cook</p>
                 </div>
                 <div class="col-auto">
@@ -45,7 +45,32 @@
                             </select>
                         </div>
                     </div>
+                
+
+                    <!-- Duplicate Warning Section -->
+                    <div id="duplicate-warning" style="display: none;" class="mb-4"></div>
+
+                    <div class="leftover-items mb-4">
+                        <div class="leftover-item card mb-3">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label">Food Item</label>
+                                        <input type="text" class="form-control" name="items[0][name]" placeholder="Enter food item name" required>
+                                    </div>
+                                  
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     
+                    <div class="mb-4">
+                        <button type="button" id="addItemBtn" class="btn btn-outline-primary">
+                            <i class="bi bi-plus-circle me-2"></i> Add Another Food Item
+                        </button>
+                    </div>
+
+                        
                     <div class="mb-4">
                         <label class="form-label">Notes for Cook</label>
                         <textarea class="form-control" name="notes" rows="2" placeholder="Any notes about the leftovers"></textarea>
@@ -67,42 +92,6 @@
                                 <i class="bi bi-trash"></i> Remove
                             </button>
                         </div>
-                    </div>
-
-                    <!-- Duplicate Warning Section -->
-                    <div id="duplicate-warning" style="display: none;" class="mb-4"></div>
-
-                    <div class="leftover-items mb-4">
-                        <div class="leftover-item card mb-3">
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-md-12 mb-3">
-                                        <label class="form-label">Food Item</label>
-                                        <input type="text" class="form-control" name="items[0][name]" placeholder="Enter food item name" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Prepared Quantity</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" name="items[0][prepared_quantity]" min="0" step="0.01" required>
-                                            <span class="input-group-text">servings</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Leftover Quantity</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" name="items[0][leftover_quantity]" min="0" step="0.01" required>
-                                            <span class="input-group-text">servings</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <button type="button" id="addItemBtn" class="btn btn-outline-primary">
-                            <i class="bi bi-plus-circle me-2"></i> Add Another Food Item
-                        </button>
                     </div>
                     
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -219,17 +208,11 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Prepared Quantity</label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" name="items[${itemCount}][prepared_quantity]" min="0" required>
-                                <span class="input-group-text">servings</span>
-                            </div>
+                            <input type="number" class="form-control" name="items[${itemCount}][prepared_quantity]" min="0" step="0.01" placeholder="Enter quantity" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Leftover Quantity</label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" name="items[${itemCount}][leftover_quantity]" min="0" required>
-                                <span class="input-group-text">servings</span>
-                            </div>
+                            <input type="number" class="form-control" name="items[${itemCount}][leftover_quantity]" min="0" step="0.01" placeholder="Enter quantity" required>
                         </div>
                     </div>
                 </div>

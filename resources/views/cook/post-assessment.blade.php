@@ -196,11 +196,26 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="8" class="text-center py-4">
+                                    <td colspan="8" class="text-center py-5">
                                         <div class="text-muted">
-                                            <i class="bi bi-inbox display-4 d-block mb-2"></i>
-                                            <p class="mb-0">No leftover reports found</p>
-                                            <small>Kitchen team hasn't submitted any reports yet</small>
+                                            <div class="mb-4">
+                                                <i class="bi bi-hourglass-split fs-1 text-muted"></i>
+                                            </div>
+                                            <h4 class="text-muted">Waiting for Kitchen Reports</h4>
+                                            <p class="text-muted mb-4">
+                                                The kitchen team hasn't submitted any post-assessment reports yet.<br>
+                                                Reports will appear here once kitchen staff complete their assessments.
+                                            </p>
+                                            <div class="alert alert-info">
+                                                <i class="bi bi-info-circle me-2"></i>
+                                                <strong>How it works:</strong>
+                                                <ol class="text-start mt-2 mb-0">
+                                                    <li>Kitchen staff prepares meals</li>
+                                                    <li>Kitchen assesses leftover food after service</li>
+                                                    <li>Kitchen submits post-assessment reports</li>
+                                                    <li>Cook reviews reports to optimize portions</li>
+                                                </ol>
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -1271,7 +1286,7 @@
 
         // Show loading state
         deleteBtn.disabled = true;
-        deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Deleting...';
+        deleteBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Deleting...';
 
         // Send delete request
         fetch(`/cook/post-assessment/${assessmentToDelete.id}`, {
@@ -1421,7 +1436,7 @@
 
         // Show loading state
         confirmBtn.disabled = true;
-        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Deleting...';
+        confirmBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Deleting All...';
 
         // Delete assessments one by one
         let deletedCount = 0;

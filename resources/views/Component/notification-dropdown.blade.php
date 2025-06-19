@@ -7,26 +7,27 @@
     border-radius: 50%;
     display: inline-block;
     margin-left: 8px;
-    animation: pulse 2s infinite;
-    box-shadow: 0 0 3px rgba(220, 53, 69, 0.3);
+    /* REMOVED: animation: pulse 2s infinite; */
+    /* REMOVED: box-shadow: 0 0 3px rgba(220, 53, 69, 0.3); */
     border: 1px solid white;
     position: relative;
 }
 
 .feature-notification-dot.new {
-    width: 9px;
-    height: 9px;
-    background: #ff9933;
-    animation: newNotificationPulse 1.5s infinite;
-    box-shadow: 0 0 4px rgba(255, 153, 51, 0.4);
+    width: 8px;
+    height: 8px;
+    background: #dc3545;
+    /* REMOVED: animation: newNotificationPulse 1.5s infinite; */
+    /* REMOVED: box-shadow: 0 0 4px rgba(255, 153, 51, 0.4); */
 }
 
 .feature-notification-dot.urgent {
     background: #dc3545;
-    animation: urgentPulse 1s infinite;
-    box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
+    /* REMOVED: animation: urgentPulse 1s infinite; */
+    /* REMOVED: box-shadow: 0 0 5px rgba(220, 53, 69, 0.5); */
 }
 
+/* REMOVED: All pulse animations disabled
 @keyframes pulse {
     0% { opacity: 1; }
     50% { opacity: 0.7; }
@@ -44,6 +45,7 @@
     50% { opacity: 0.6; }
     100% { opacity: 1; }
 }
+*/
 
 .nav-link {
     position: relative;
@@ -66,6 +68,7 @@
     border: 1px solid rgba(34, 187, 234, 0.3);
 }
 
+/* REMOVED: No special popup highlighting
 .notification-popup.new {
     border: 2px solid #ff9933;
     box-shadow: 0 8px 24px rgba(0,0,0,0.15);
@@ -75,6 +78,7 @@
     border: 2px solid #dc3545;
     box-shadow: 0 8px 24px rgba(0,0,0,0.15);
 }
+*/
 
 .notification-popup.show {
     display: block;
@@ -224,7 +228,7 @@
     }
 }
 
-/* New Notification Item Highlighting */
+/* REMOVED: New Notification Item Highlighting - All highlighting disabled
 .notification-item-new {
     background: #fff3cd !important;
     border-left: 4px solid #ff9933 !important;
@@ -268,7 +272,9 @@
     z-index: 10;
     animation: urgentBadgePulse 1s infinite;
 }
+*/
 
+/* REMOVED: All badge pulse and fade animations disabled
 @keyframes newBadgePulse {
     0% { opacity: 1; }
     50% { opacity: 0.8; }
@@ -281,7 +287,6 @@
     100% { opacity: 1; }
 }
 
-/* Auto-fade highlighting after time */
 .notification-item-new.fade-highlight {
     animation: fadeToNormal 2s ease-out forwards;
 }
@@ -302,6 +307,7 @@
         box-shadow: none;
     }
 }
+*/
 </style>
 
 <!-- Hidden notification backdrop -->
@@ -354,22 +360,25 @@
             }
         },
 
-        // Initialize the system
+        // Initialize the system - HIGHLIGHTS DISABLED
         init: function() {
             if (this.initialized) {
                 console.log('🔄 Notification system already initialized');
                 return;
             }
 
+            // Keep basic notifications but disable highlighting
             this.loadFeatureNotifications();
-            this.highlightNewNotificationItems();
-            // Auto-refresh every 30 seconds
+            // DISABLED: this.highlightNewNotificationItems();
+
+            // Auto-refresh every 30 seconds (but no highlighting)
             setInterval(() => {
                 this.loadFeatureNotifications();
-                this.highlightNewNotificationItems();
+                // DISABLED: this.highlightNewNotificationItems();
             }, 30000);
+
             this.initialized = true;
-            console.log('✅ Notification system initialized');
+            console.log('✅ Notification system initialized - HIGHLIGHTS DISABLED');
         },
 
         // Load feature notifications
@@ -478,24 +487,25 @@
                     existingDot.remove();
                 }
 
-                // Create new dot with appropriate styling
+                // Create new dot with basic styling (no highlighting effects)
                 const dot = document.createElement('span');
                 let dotClass = 'feature-notification-dot';
                 let title = 'New notifications';
 
-                if (isUrgent) {
-                    dotClass += ' urgent';
-                    title = 'Urgent notifications!';
-                } else if (isNew) {
-                    dotClass += ' new';
-                    title = 'New notifications just arrived!';
-                }
+                // REMOVED: No special styling for urgent/new - all dots look the same
+                // if (isUrgent) {
+                //     dotClass += ' urgent';
+                //     title = 'Urgent notifications!';
+                // } else if (isNew) {
+                //     dotClass += ' new';
+                //     title = 'New notifications just arrived!';
+                // }
 
                 dot.className = dotClass;
                 dot.title = title;
                 navLink.appendChild(dot);
 
-                console.log(`✅ Added ${isUrgent ? 'urgent' : isNew ? 'new' : 'regular'} notification dot for route: ${route}`);
+                console.log(`✅ Added notification dot for route: ${route} (highlighting disabled)`);
 
                 // Add click handler to mark as read when feature is accessed
                 const self = this;
@@ -503,16 +513,8 @@
                     self.markFeatureAsRead(route);
                 });
 
-                // For new notifications, add extra highlighting that fades after 10 seconds
-                if (isNew || isUrgent) {
-                    setTimeout(() => {
-                        if (dot.parentNode) {
-                            dot.className = 'feature-notification-dot';
-                            dot.title = 'New notifications';
-                            console.log(`🔄 Faded ${isUrgent ? 'urgent' : 'new'} highlighting for route: ${route}`);
-                        }
-                    }, isUrgent ? 15000 : 10000); // Urgent stays highlighted longer
-                }
+                // REMOVED: No highlighting effects or fading
+                // All dots remain static without animations
             } else {
                 console.log(`❌ Could not add dot for route: ${route}`, {
                     navLinkExists: !!navLink
@@ -578,39 +580,38 @@
 
             console.log(`🔔 Showing notification popup for ${notifications.length} notifications`);
 
-            // Determine urgency level
-            const hasUrgent = notifications.some(n =>
-                n.type.includes('urgent') ||
-                n.type === 'poll_response' ||
-                n.type === 'inventory_report'
-            );
+            // REMOVED: Urgency level detection - no special highlighting
+            // const hasUrgent = notifications.some(n =>
+            //     n.type.includes('urgent') ||
+            //     n.type === 'poll_response' ||
+            //     n.type === 'inventory_report'
+            // );
 
-            const isVeryNew = notifications.some(n => {
-                const ageInMinutes = (new Date() - new Date(n.created_at)) / (1000 * 60);
-                return ageInMinutes <= 0.5;
-            });
+            // const isVeryNew = notifications.some(n => {
+            //     const ageInMinutes = (new Date() - new Date(n.created_at)) / (1000 * 60);
+            //     return ageInMinutes <= 0.5;
+            // });
 
-            // Apply appropriate popup styling
+            // Apply basic popup styling (no urgency highlighting)
             popup.className = 'notification-popup show';
-            if (hasUrgent) {
-                popup.classList.add('urgent');
-            } else if (isVeryNew) {
-                popup.classList.add('new');
-            }
+            // REMOVED: No special urgent or new styling
+            // if (hasUrgent) {
+            //     popup.classList.add('urgent');
+            // } else if (isVeryNew) {
+            //     popup.classList.add('new');
+            // }
 
             if (notifications.length === 1) {
                 const notification = notifications[0];
-                const urgencyBadge = hasUrgent ? '<span class="badge bg-danger ms-2">URGENT</span>' :
-                                   isVeryNew ? '<span class="badge bg-warning ms-2">NEW</span>' : '';
+                // REMOVED: No urgency badges or special highlighting
 
                 content.innerHTML = `
                     <div class="notification-content d-flex align-items-start">
                         <i class="bi ${this.getNotificationIcon(notification.type)} notification-icon"
-                           style="color: ${hasUrgent ? '#dc3545' : isVeryNew ? '#ff9933' : '#22bbea'}; font-size: 24px;"></i>
+                           style="color: #22bbea; font-size: 24px;"></i>
                         <div class="flex-grow-1">
                             <div class="notification-title">
                                 ${notification.title}
-                                ${urgencyBadge}
                             </div>
                             <div class="notification-message">${notification.message}</div>
                             <div class="notification-time">${this.formatTimeAgo(notification.created_at)}</div>
@@ -618,19 +619,16 @@
                     </div>
                 `;
             } else {
-                const urgencyIcon = hasUrgent ? '🚨' : isVeryNew ? '🔔' : '📢';
-                const urgencyText = hasUrgent ? 'Urgent Notifications!' : isVeryNew ? 'New Notifications' : 'New Notifications';
-                const urgencyBadge = hasUrgent ? '<span class="badge bg-danger ms-2">URGENT</span>' :
-                                   isVeryNew ? '<span class="badge bg-warning ms-2">NEW</span>' : '';
+                // REMOVED: No urgency icons or special highlighting
+                const notificationText = 'New Notifications';
 
                 content.innerHTML = `
                     <div class="notification-content d-flex align-items-start">
                         <i class="bi bi-bell-fill notification-icon"
-                           style="color: ${hasUrgent ? '#dc3545' : isVeryNew ? '#ff9933' : '#22bbea'}; font-size: 28px;"></i>
+                           style="color: #22bbea; font-size: 28px;"></i>
                         <div class="flex-grow-1">
                             <div class="notification-title">
-                                ${urgencyIcon} ${urgencyText}
-                                ${urgencyBadge}
+                                📢 ${notificationText}
                             </div>
                             <div class="notification-message">You have ${notifications.length} new notifications waiting for you!</div>
                             <div class="notification-time">Just now</div>
@@ -676,10 +674,15 @@
             }, 6000);
         },
 
-        // Highlight new notification items on the page
+        // Highlight new notification items - DISABLED
         highlightNewNotificationItems: function() {
-            console.log('🔍 Checking for new notification items to highlight...');
+            console.log('🚫 Item highlighting disabled - no visual highlights will be applied');
 
+            // DISABLED: All highlighting functionality removed
+            // Items will appear normally without any special highlighting
+            return;
+
+            /* DISABLED CODE:
             // Get current timestamp for comparison
             const now = new Date();
             const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
@@ -703,85 +706,10 @@
                 '.poll-item',
                 '.assessment-item'
             ];
+            */
 
-            itemSelectors.forEach(selector => {
-                const items = document.querySelectorAll(selector);
-                console.log(`📊 Found ${items.length} items with selector: ${selector}`);
-
-                items.forEach(item => {
-                    // Skip if already highlighted
-                    if (item.classList.contains('notification-item-new') ||
-                        item.classList.contains('notification-item-urgent')) {
-                        return;
-                    }
-
-                    // Get creation timestamp from various data attributes
-                    let createdAt = null;
-                    const possibleAttributes = [
-                        'data-feedback-created',
-                        'data-created-at',
-                        'data-timestamp',
-                        'data-poll-created',
-                        'data-inventory-created',
-                        'data-assessment-created'
-                    ];
-
-                    for (const attr of possibleAttributes) {
-                        const value = item.getAttribute(attr);
-                        if (value) {
-                            createdAt = new Date(value);
-                            break;
-                        }
-                    }
-
-                    // If no timestamp found, try to parse from text content
-                    if (!createdAt) {
-                        const timeElements = item.querySelectorAll('[data-time], .time, .created-at, .timestamp');
-                        for (const timeEl of timeElements) {
-                            const timeText = timeEl.textContent || timeEl.getAttribute('data-time');
-                            if (timeText) {
-                                const parsed = new Date(timeText);
-                                if (!isNaN(parsed.getTime())) {
-                                    createdAt = parsed;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    if (createdAt && !isNaN(createdAt.getTime())) {
-                        console.log(`📅 Item created at: ${createdAt.toISOString()}`);
-
-                        // Determine if item is new or urgent
-                        if (createdAt >= thirtySecondsAgo) {
-                            // Very recent - mark as urgent
-                            item.classList.add('notification-item-urgent');
-                            console.log('🚨 Added urgent highlighting to item');
-
-                            // Auto-fade after 15 seconds
-                            setTimeout(() => {
-                                item.classList.add('fade-highlight');
-                                setTimeout(() => {
-                                    item.classList.remove('notification-item-urgent', 'fade-highlight');
-                                }, 2000);
-                            }, 15000);
-
-                        } else if (createdAt >= twoMinutesAgo) {
-                            // Recent - mark as new
-                            item.classList.add('notification-item-new');
-                            console.log('🆕 Added new highlighting to item');
-
-                            // Auto-fade after 10 seconds
-                            setTimeout(() => {
-                                item.classList.add('fade-highlight');
-                                setTimeout(() => {
-                                    item.classList.remove('notification-item-new', 'fade-highlight');
-                                }, 2000);
-                            }, 10000);
-                        }
-                    }
-                });
-            });
+            // DISABLED: All highlighting code removed
+            */
         },
 
         // Close notification popup
