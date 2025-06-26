@@ -3,6 +3,8 @@
 @section('title', 'Provide Feedback')
 
 @section('content')
+<!-- Add CSRF token for AJAX requests -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <div class="container-fluid">
     <!-- Enhanced Header Section -->
     <div class="row mb-4">
@@ -36,19 +38,6 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
-                    
-                    @if(session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="bi bi-exclamation-triangle me-2"></i>{{ session('error') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
                     
                     <form action="{{ route('student.feedback.store') }}" method="POST">
                         @csrf
@@ -180,9 +169,33 @@
                                     @endfor
                                     <span class="ms-2 small text-muted">({{ $feedback->rating }}/5)</span>
                                 </div>
-                                @if($feedback->comments)
-                                    <p class="mb-1 small">{{ Str::limit($feedback->comments, 100) }}</p>
+
+                                @if($feedback->comments || $feedback->suggestions)
+                                    <div class="mb-2">
+                                        @if($feedback->comments)
+                                            <span class="small">
+                                                <strong class="text-primary">
+                                                    <i class="bi bi-chat-text me-1"></i>Comments:
+                                                </strong>
+                                                <span class="text-muted">{{ Str::limit($feedback->comments, 80) }}</span>
+                                            </span>
+                                        @endif
+
+                                        @if($feedback->comments && $feedback->suggestions)
+                                            <span class="mx-2 text-muted">•</span>
+                                        @endif
+
+                                        @if($feedback->suggestions)
+                                            <span class="small">
+                                                <strong class="text-success">
+                                                    <i class="bi bi-lightbulb me-1"></i>Suggestions:
+                                                </strong>
+                                                <span class="text-muted">{{ Str::limit($feedback->suggestions, 80) }}</span>
+                                            </span>
+                                        @endif
+                                    </div>
                                 @endif
+
                                 <small class="text-muted">
                                     <i class="bi bi-clock me-1"></i>{{ $feedback->created_at->diffForHumans() }}
                                 </small>

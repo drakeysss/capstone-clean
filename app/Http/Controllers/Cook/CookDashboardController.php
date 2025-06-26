@@ -132,7 +132,26 @@ class CookDashboardController extends BaseDashboardController
             'recommendation' => $recommendedReduction . '%',
             'meal_type' => ucfirst($lowestAttendanceMeal)
         ];
-        
+
+        // Recent post meal reports
+        $recentPostMealReports = \App\Models\PostAssessment::with(['assessedBy', 'menu'])
+            ->where('is_completed', true)
+            ->orderBy('date', 'desc')
+            ->take(3)
+            ->get();
+
+        // Recent inventory reports
+        $recentInventoryReports = \App\Models\InventoryCheck::with(['user', 'items'])
+            ->orderBy('created_at', 'desc')
+            ->take(3)
+            ->get();
+
+        // Recent student feedback
+        $recentFeedback = \App\Models\Feedback::with(['student', 'meal'])
+            ->orderBy('created_at', 'desc')
+            ->take(3)
+            ->get();
+
         return compact(
             'pendingPreOrders',
             'completedPreOrders',
@@ -144,7 +163,10 @@ class CookDashboardController extends BaseDashboardController
             'lowStockItemsList',
             'recentOrders',
             'mealAttendance',
-            'wasteReduction'
+            'wasteReduction',
+            'recentPostMealReports',
+            'recentInventoryReports',
+            'recentFeedback'
         );
     }
 

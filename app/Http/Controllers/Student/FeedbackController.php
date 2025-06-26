@@ -82,4 +82,75 @@ class FeedbackController extends Controller
 
         return redirect()->route('student.feedback')->with('success', 'Thank you for your feedback!');
     }
+
+    /**
+     * Delete a specific feedback entry (only the student's own feedback)
+     */
+    public function destroy($id)
+    {
+        try {
+            $user = Auth::user();
+
+            // Only allow students to delete their own feedback
+            $feedback = Feedback::where('student_id', $user->id)->findOrFail($id);
+
+            $feedback->delete();
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Feedback deleted successfully'
+                ]);
+            }
+
+            return redirect()->route('student.feedback')
+                ->with('success', 'Feedback deleted successfully');
+
+        } catch (\Exception $e) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to delete feedback'
+                ], 500);
+            }
+
+            return redirect()->route('student.feedback')
+                ->with('error', 'Failed to delete feedback');
+        }
+    }
+
+    /**
+     * Delete all feedback entries for the current student
+     */
+    public function destroyAll()
+    {
+        try {
+            $user = Auth::user();
+
+            // Only delete the current student's feedback
+            $count = Feedback::where('student_id', $user->id)->count();
+            Feedback::where('student_id', $user->id)->delete();
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "All {$count} feedback records deleted successfully"
+                ]);
+            }
+
+            return redirect()->route('student.feedback')
+                ->with('success', "All {$count} feedback records deleted successfully");
+
+        } catch (\Exception $e) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to delete all feedback'
+                ], 500);
+            }
+
+            return redirect()->route('student.feedback')
+                ->with('error', 'Failed to delete all feedback');
+        }
+    }
 }

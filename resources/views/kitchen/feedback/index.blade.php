@@ -168,10 +168,25 @@
                     </table>
                 </div>
                 @else
-                <div class="p-4 text-center">
-                    <i class="bi bi-chat-dots fs-1 text-muted"></i>
-                    <p class="mb-0 mt-2">No feedback found matching your criteria.</p>
-                    <small class="text-muted">Try adjusting your filters or check back later.</small>
+                <div class="p-5 text-center">
+                    <div class="mb-4">
+                        <i class="bi bi-hourglass-split fs-1 text-muted"></i>
+                    </div>
+                    <h4 class="text-muted">Waiting for Student Feedback</h4>
+                    <p class="text-muted mb-4">
+                        Students haven't submitted any feedback yet.<br>
+                        Feedback will appear here once students rate their meals.
+                    </p>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>How it works:</strong>
+                        <ol class="text-start mt-2 mb-0">
+                            <li>Students eat their meals</li>
+                            <li>Students submit feedback and ratings</li>
+                            <li>Kitchen staff reviews feedback to improve meals</li>
+                            <li>Kitchen staff can delete inappropriate feedback</li>
+                        </ol>
+                    </div>
                 </div>
                 @endif
             </div>

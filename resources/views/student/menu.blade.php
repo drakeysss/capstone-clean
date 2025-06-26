@@ -2,18 +2,18 @@
 
 @section('content')
 <div class="container-fluid p-4">
-    <!-- Simple Header Section with Time -->
+    <!-- Enhanced Header Section - Match Cook Menu -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="simple-header-card">
-                <div class="d-flex justify-content-between align-items-center">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #22bbea, #1a9bd1);">
                     <div>
-                        <h2 class="header-title">
+                        <h3 class="mb-1 fw-bold">
                             <i class="bi bi-calendar-week me-2"></i>Weekly Menu
-                        </h2>
-                        <p class="header-subtitle">View this week's meal plan</p>
+                        </h3>
+                        <p class="mb-0 opacity-75">View this week's meal plan</p>
                     </div>
-                    <div class="time-display">
+                    <div class="text-end">
                         <div class="current-time" id="currentTime">
                             <i class="bi bi-clock me-2"></i>
                             <span id="timeDisplay">Loading...</span>
@@ -29,31 +29,32 @@
 
 
 
-    <!-- Simple Weekly Menu Section -->
+    <!-- Weekly Menu Section - Match Cook Menu -->
     <div class="row">
         <div class="col-12">
-            <div class="simple-menu-card">
-                <div class="menu-card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h4 class="menu-title">
-                                <i class="bi bi-journal-text me-2"></i>
-                                Weekly Menu Plan
-                            </h4>
-                            <p class="menu-subtitle">
-                                Current week: <span id="currentWeekInfo">Loading...</span>
-                            </p>
-                        </div>
-                        @if(!isset($waitingForCook) || !$waitingForCook)
-                        <div>
-                            <label for="weekCycleSelect" class="form-label fw-bold mb-1">Week Cycle:</label>
-                            <select id="weekCycleSelect" class="simple-select">
-                                <option value="1">Week 1 & 3</option>
-                                <option value="2">Week 2 & 4</option>
-                            </select>
-                        </div>
-                        @endif
+            <div class="card main-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-1">
+                            <i class="bi bi-journal-text me-2"></i>
+                            Weekly Menu Plan
+                        </h4>
+                        <p class="mb-0 text-muted">
+                            Current week: <span id="currentWeekInfo">Loading...</span>
+                        </p>
                     </div>
+                    @if(!isset($waitingForCook) || !$waitingForCook)
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="text-muted me-2">View Menu for:</span>
+                        <select id="weekCycleSelect" class="form-select form-select-sm d-inline-block w-auto">
+                            <option value="1">Week 1 & 3</option>
+                            <option value="2">Week 2 & 4</option>
+                        </select>
+                        <small class="text-info ms-2" id="currentWeekIndicator">
+                            <i class="bi bi-calendar-check"></i> Current: Week <span id="currentWeekNumber">1</span>
+                        </small>
+                    </div>
+                    @endif
                 </div>
                 <div class="card-body p-0">
                     @if(isset($waitingForCook) && $waitingForCook)
@@ -82,24 +83,13 @@
                     @else
                         <div class="table-responsive">
                             <!-- Week 1 & 3 Table -->
-                            <table class="table table-bordered simple-menu-table" id="week1Table">
-                                <thead class="simple-table-header">
+                            <table class="table table-bordered week-table" id="week1Table">
+                                <thead class="table-light">
                                     <tr>
-                                        <th width="15%">
-                                            <i class="bi bi-calendar-day me-2"></i>Day
-                                        </th>
-                                        <th width="28%" class="breakfast-header">
-                                            <i class="bi bi-sunrise me-2"></i>Breakfast
-                                            <div class="meal-time">7:00 - 9:00 AM</div>
-                                        </th>
-                                        <th width="28%" class="lunch-header">
-                                            <i class="bi bi-sun me-2"></i>Lunch
-                                            <div class="meal-time">12:00 - 2:00 PM</div>
-                                        </th>
-                                        <th width="28%" class="dinner-header">
-                                            <i class="bi bi-moon me-2"></i>Dinner
-                                            <div class="meal-time">6:00 - 8:00 PM</div>
-                                        </th>
+                                        <th width="15%">Day</th>
+                                        <th width="28%">Breakfast</th>
+                                        <th width="28%">Lunch</th>
+                                        <th width="28%">Dinner</th>
                                     </tr>
                                 </thead>
                                 <tbody id="menuTableBody">
@@ -108,24 +98,13 @@
                             </table>
 
                             <!-- Week 2 & 4 Table -->
-                            <table class="table table-bordered simple-menu-table" id="week2Table" style="display:none;">
-                                <thead class="simple-table-header">
+                            <table class="table table-bordered week-table" id="week2Table" style="display:none;">
+                                <thead class="table-light">
                                     <tr>
-                                        <th width="15%">
-                                            <i class="bi bi-calendar-day me-2"></i>Day
-                                        </th>
-                                        <th width="28%" class="breakfast-header">
-                                            <i class="bi bi-sunrise me-2"></i>Breakfast
-                                            <div class="meal-time">7:00 - 9:00 AM</div>
-                                        </th>
-                                        <th width="28%" class="lunch-header">
-                                            <i class="bi bi-sun me-2"></i>Lunch
-                                            <div class="meal-time">12:00 - 2:00 PM</div>
-                                        </th>
-                                        <th width="28%" class="dinner-header">
-                                            <i class="bi bi-moon me-2"></i>Dinner
-                                            <div class="meal-time">6:00 - 8:00 PM</div>
-                                        </th>
+                                        <th width="15%">Day</th>
+                                        <th width="28%">Breakfast</th>
+                                        <th width="28%">Lunch</th>
+                                        <th width="28%">Dinner</th>
                                     </tr>
                                 </thead>
                                 <tbody id="menuTableBody2">
@@ -199,16 +178,14 @@ function updateMenuTable(menuData) {
     days.forEach((day, index) => {
         const dayMeals = menuData[day] || {};
 
-        // UNIFIED: Use consistent highlighting system
-        const highlighting = getMenuHighlighting(day, selectedWeekCycle);
-        const todayClass = highlighting.todayClass;
-        const todayBadge = highlighting.todayBadge;
+        // Use consistent highlighting system like cook menu
+        const isToday = day === currentDayName.toLowerCase() && isCurrentWeek;
+        const todayClass = isToday ? 'today table-warning current-day' : (isCurrentWeek ? 'current-week-row' : '');
 
         const row = `
-            <tr class="simple-menu-row ${todayClass}" data-day="${day}">
+            <tr class="${todayClass}" data-day="${day}">
                 <td class="day-cell">
-                    <div class="day-name">${dayNames[index]}</div>
-                    ${todayBadge}
+                    ${dayNames[index]}
                 </td>
                 <td class="meal-cell">
                     <div class="meal-item">
@@ -310,347 +287,254 @@ document.addEventListener('DOMContentLoaded', function() {
 
 @push('styles')
 <style>
-/* Simple Header Styles */
-.simple-header-card {
-    background: #ff9933;
-    border-radius: 10px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: 1rem;
+/* Enhanced Header Styles - Match Cook Menu */
+.card-header {
+    background: linear-gradient(135deg, #22bbea, #1a9bd1) !important;
+    border-bottom: none;
 }
 
-/* Responsive Header Styles */
+.card-header h3 {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.card-header p {
+    color: white;
+    font-size: 0.9rem;
+    margin-bottom: 0;
+    opacity: 0.85;
+}
+
+/* Time Display Styles */
+.current-time {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    color: white;
+}
+
+.current-date {
+    font-size: 0.8rem;
+    opacity: 0.85;
+    color: white;
+}
+
+/* Main Card Styles - Match Cook Menu */
+.main-card {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.main-card .card-header {
+    background: #f8f9fa !important;
+    border-bottom: 1px solid #dee2e6;
+    padding: 1rem 1.25rem;
+}
+
+.main-card .card-header h4 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.main-card .card-header p {
+    color: #6c757d;
+    margin-bottom: 0;
+    font-size: 0.875rem;
+}
+
+.form-select {
+    background: white;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    color: #495057;
+}
+
+.form-select:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Table Styles - Match Cook Menu */
+.week-table {
+    margin: 0;
+    border: 1px solid #dee2e6;
+}
+
+.week-table thead th {
+    background-color: #f8f9fa;
+    color: #495057;
+    padding: 0.75rem;
+    text-align: center;
+    font-weight: 600;
+    border: 1px solid #dee2e6;
+    font-size: 0.875rem;
+}
+
+.week-table tbody td {
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+    vertical-align: top;
+}
+
+.week-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Current Day and Week Highlighting - Match Cook Menu */
+.today,
+.current-day {
+    background-color: #fff3cd !important;
+    border-left: 3px solid #6c757d !important;
+}
+
+.today:hover,
+.current-day:hover {
+    background-color: #e9ecef !important;
+}
+
+.current-week-row {
+    background-color: #f8f9fa !important;
+}
+
+.current-week-row:hover {
+    background-color: #e9ecef !important;
+}
+
+/* Day Cell Styles - Match Cook Menu */
+.day-cell {
+    padding: 0.75rem;
+    text-align: center;
+    background: #f8f9fa;
+    border-right: 1px solid #dee2e6;
+    vertical-align: middle;
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Meal Cell Styles - Match Cook Menu */
+.meal-cell {
+    padding: 0.75rem;
+    vertical-align: top;
+}
+
+.meal-item {
+    position: relative;
+    padding: 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.meal-item:hover {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.meal-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.25rem;
+}
+
+.meal-ingredients {
+    font-size: 0.75rem;
+    color: #6c757d;
+    line-height: 1.3;
+}
+
+/* Current Day Meal Items - Match Cook Menu */
+.today .meal-item,
+.current-day .meal-item {
+    border: 1px solid #dee2e6;
+    background-color: white;
+}
+
+.today .meal-item:hover,
+.current-day .meal-item:hover {
+    border-color: #6c757d;
+    background-color: #f8f9fa;
+}
+
+/* Responsive Design - Match Cook Menu */
 @media (max-width: 768px) {
-    .simple-header-card {
-        padding: 0.75rem !important;
-        margin: 0 !important;
+    .card-header h3 {
+        font-size: 1.25rem;
     }
 
-    .simple-header-card .d-flex {
+    .current-time {
+        font-size: 0.875rem;
+    }
+
+    .week-table thead th {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.75rem;
+    }
+
+    .meal-cell,
+    .day-cell {
+        padding: 0.5rem 0.25rem;
+    }
+
+    .meal-name {
+        font-size: 0.75rem;
+    }
+
+    .meal-ingredients {
+        font-size: 0.7rem;
+    }
+
+    .card-header .d-flex {
         flex-direction: column !important;
         gap: 0.75rem !important;
         text-align: center !important;
     }
 
-    .time-display {
-        text-align: center !important;
-        width: 100% !important;
-    }
-
-    .menu-card-header .d-flex {
-        flex-direction: column !important;
-        gap: 0.75rem !important;
-        text-align: center !important;
-    }
-
-    .simple-select {
+    .form-select {
         width: 100% !important;
         max-width: 200px !important;
         margin: 0 auto !important;
     }
 }
 
-.header-title {
-    color: white;
-    font-size: 2rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.header-subtitle {
-    color: white;
-    font-size: 1rem;
-    margin-bottom: 0;
-    opacity: 0.9;
-}
-
-/* Time Display Styles */
-.time-display {
-    text-align: right;
-    color: white;
-}
-
-.current-time {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-}
-
-.current-date {
-    font-size: 0.9rem;
-    opacity: 0.9;
-}
-
-/* Simple Menu Card Styles */
-.simple-menu-card {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    border: none;
-}
-
-.menu-card-header {
-    background: linear-gradient(135deg, #22bbea, #1a9bd1);
-    padding: 1.5rem;
-    border-bottom: 3px solid #ff9933;
-}
-
-.menu-title {
-    color: #2c3e50;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.menu-subtitle {
-    color: #6c757d;
-    margin-bottom: 0;
-    font-size: 0.9rem;
-}
-
-.simple-select {
-    background: white;
-    border: 2px solid #22bbea;
-    border-radius: 5px;
-    padding: 0.5rem;
-    font-weight: 500;
-    color: #2c3e50;
-}
-
-.simple-select:focus {
-    outline: none;
-    border-color: #ff9933;
-}
-
-/* Simple Table Styles */
-.simple-menu-table {
-    margin: 0;
-}
-
-.simple-table-header th {
-    background: #2c3e50;
-    color: white;
-    padding: 1rem;
-    text-align: center;
-    font-weight: 600;
-    border: 1px solid #dee2e6;
-}
-
-.meal-time {
-    display: block;
-    font-size: 0.75rem;
-    opacity: 0.8;
-    margin-top: 0.25rem;
-}
-
-.breakfast-header {
-    background: #ff9933 !important;
-}
-
-.lunch-header {
-    background: #22bbea !important;
-}
-
-.dinner-header {
-    background: #6c757d !important;
-}
-
-/* Simple Table Body */
-.simple-menu-row {
-    border-bottom: 1px solid #e9ecef;
-}
-
-.simple-menu-row:hover {
-    background-color: #f8f9fa;
-}
-
-/* UNIFIED: Current Day and Week Highlighting */
-.current-day-row {
-    background: linear-gradient(90deg, rgba(255, 153, 51, 0.15) 0%, rgba(34, 187, 234, 0.15) 100%) !important;
-    border-left: 4px solid #ff9933;
-    animation: currentDayPulse 2s ease-in-out infinite;
-}
-
-.current-day-row:hover {
-    background: linear-gradient(90deg, rgba(255, 153, 51, 0.25) 0%, rgba(34, 187, 234, 0.25) 100%) !important;
-}
-
-/* Current Week Highlighting */
-.current-week-row {
-    background: linear-gradient(90deg, rgba(34, 187, 234, 0.08) 0%, rgba(255, 153, 51, 0.08) 100%) !important;
-    border-left: 2px solid #22bbea;
-}
-
-.current-week-row:hover {
-    background: linear-gradient(90deg, rgba(34, 187, 234, 0.15) 0%, rgba(255, 153, 51, 0.15) 100%) !important;
-}
-
-@keyframes currentDayPulse {
-    0%, 100% {
-        box-shadow: 0 0 0 0 rgba(255, 153, 51, 0.4);
-    }
-    50% {
-        box-shadow: 0 0 0 10px rgba(255, 153, 51, 0);
-    }
-}
-
-/* Day Cell Styles */
-.day-cell {
-    padding: 1rem;
-    text-align: center;
-    background: #f8f9fa;
-    border-right: 1px solid #e9ecef;
-    vertical-align: middle;
-}
-
-.day-name {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 0.25rem;
-}
-
-/* Date display removed - menu is cycle-based */
-
-/* UNIFIED: Badge System */
-.today-badge {
-    background: #ff9933;
-    color: white;
-    padding: 0.2rem 0.5rem;
-    border-radius: 10px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    margin: 0.25rem 0;
-    display: inline-block;
-    animation: badgePulse 2s ease-in-out infinite;
-}
-
-.week-badge {
-    background: #22bbea;
-    color: white;
-    padding: 0.2rem 0.5rem;
-    border-radius: 10px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    margin: 0.25rem 0;
-    display: inline-block;
-}
-
-@keyframes badgePulse {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.05);
-    }
-}
-
-/* Meal Cell Styles */
-.meal-cell {
-    padding: 1rem;
-    vertical-align: top;
-}
-
-.meal-item {
-    text-align: center;
-}
-
-.meal-name {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 0.5rem;
-}
-
-.meal-ingredients {
-    font-size: 0.8rem;
-    color: #6c757d;
-    line-height: 1.3;
-}
-
-/* Simple Responsive Design */
-@media (max-width: 768px) {
-    .header-title {
-        font-size: 1.5rem;
+@media (max-width: 576px) {
+    .card-header h3 {
+        font-size: 1.125rem;
     }
 
     .current-time {
-        font-size: 1.2rem;
-    }
-
-    .simple-table-header th {
-        padding: 0.75rem 0.5rem;
-        font-size: 0.85rem;
-    }
-
-    .meal-cell {
-        padding: 0.75rem 0.5rem;
-    }
-
-    .meal-name {
-        font-size: 0.85rem;
-    }
-
-    .meal-ingredients {
         font-size: 0.75rem;
     }
-}
 
-@media (max-width: 576px) {
-    .simple-header-card {
-        padding: 0.75rem;
-        margin: 0 -0.25rem 1rem -0.25rem;
-    }
-
-    .header-title {
-        font-size: 1.25rem;
-    }
-
-    .current-time {
-        font-size: 1rem;
-    }
-
-    .menu-card-header {
-        padding: 0.75rem;
-    }
-
-    .simple-table-header th {
-        padding: 0.5rem 0.25rem;
-        font-size: 0.8rem;
+    .week-table thead th {
+        padding: 0.375rem 0.125rem;
+        font-size: 0.7rem;
     }
 
     .day-cell,
     .meal-cell {
-        padding: 0.5rem 0.25rem;
-    }
-
-    .day-name {
-        font-size: 0.8rem;
+        padding: 0.375rem 0.125rem;
     }
 
     .meal-name {
-        font-size: 0.8rem;
+        font-size: 0.7rem;
     }
 
     .meal-ingredients {
-        font-size: 0.7rem;
+        font-size: 0.65rem;
         display: none; /* Hide ingredients on very small screens */
     }
 
-    .today-badge,
-    .week-badge {
-        font-size: 0.6rem;
-        padding: 0.15rem 0.3rem;
-    }
-
-    /* Stack table on very small screens */
-    .simple-menu-table {
-        font-size: 0.8rem;
-    }
-
-    .simple-menu-table th:not(:first-child),
-    .simple-menu-table td:not(:first-child) {
-        min-width: 80px;
+    .week-table {
+        font-size: 0.75rem;
     }
 }
 </style>

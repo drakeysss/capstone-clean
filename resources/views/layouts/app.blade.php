@@ -76,18 +76,6 @@
             border-right: 1px solid rgba(34, 187, 234, 0.1);
         }
 
-        /* REMOVED: Gradient border effect
-        .sidebar::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 2px;
-            height: 100%;
-            background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
-            opacity: 0.6;
-        }
-        */
 
         /* Mobile Sidebar */
         @media (max-width: 768px) {

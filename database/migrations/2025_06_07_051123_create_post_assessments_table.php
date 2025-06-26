@@ -17,6 +17,7 @@ return new class extends Migration
                 $table->id();
                 $table->date('date');
                 $table->string('meal_type'); // breakfast, lunch, dinner
+                $table->string('meal_name')->nullable(); // Name provided by kitchen
                 $table->unsignedBigInteger('menu_id')->nullable();
                 $table->integer('planned_portions')->default(0);
                 $table->integer('actual_portions_served')->default(0);

@@ -25,46 +25,8 @@
         </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card text-center border-primary">
-                <div class="card-body">
-                    <h2 class="text-primary">{{ $stats['total_reports'] }}</h2>
-                    <p class="mb-0">Total Reports</p>
-                    <i class="bi bi-file-earmark-text text-primary fs-1 opacity-25"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center border-warning">
-                <div class="card-body">
-                    <h2 class="text-warning">{{ $stats['pending_approvals'] }}</h2>
-                    <p class="mb-0">Pending Approval</p>
-                    <i class="bi bi-clock text-warning fs-1 opacity-25"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center border-danger">
-                <div class="card-body">
-                    <h2 class="text-danger">{{ $stats['items_needing_restock'] }}</h2>
-                    <p class="mb-0">Need Restock</p>
-                    <i class="bi bi-exclamation-triangle text-danger fs-1 opacity-25"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center border-info">
-                <div class="card-body">
-                    <h2 class="text-info">{{ $stats['recent_reports'] }}</h2>
-                    <p class="mb-0">This Week</p>
-                    <i class="bi bi-calendar-week text-info fs-1 opacity-25"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
+  
+    
     <!-- Kitchen Inventory Reports -->
     <div class="row mb-4">
         <div class="col-12">

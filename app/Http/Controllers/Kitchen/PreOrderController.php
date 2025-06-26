@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\PreOrderDeadlineNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 class PreOrderController extends Controller
 {
@@ -478,204 +479,95 @@ class PreOrderController extends Controller
      */
     public function createPoll(Request $request)
     {
-        \Log::info('🚀 CreatePoll START - Method called', [
-            'request_data' => $request->all(),
-            'method' => $request->method(),
-            'url' => $request->url(),
-            'user_id' => auth()->id()
+        \Log::info('Received request to create poll', $request->all());
+
+        // Enhanced validation
+        $validator = Validator::make($request->all(), [
+            'meal_type' => 'required|string|in:breakfast,lunch,dinner',
+            'poll_date' => 'required|string|in:today,tomorrow,custom',
+            'custom_poll_date' => 'nullable|required_if:poll_date,custom|date_format:Y-m-d',
+            'deadline_time' => 'required|string',
+            'custom_deadline' => 'nullable|required_if:deadline_time,custom|date_format:H:i',
+            'manual_meal_name' => 'required|string|max:255',
         ]);
 
-        try {
-            // Check if this is a manual meal or regular meal
-            $isManualMeal = $request->has('manual_meal') && $request->input('manual_meal');
-
-            \Log::info('🔍 Manual meal check', [
-                'is_manual_meal' => $isManualMeal,
-                'has_manual_meal' => $request->has('manual_meal'),
-                'manual_meal_value' => $request->input('manual_meal')
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('💥 EARLY ERROR in createPoll', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
+        if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Early error: ' . $e->getMessage()
-            ], 500);
-        }
-
-        try {
-
-            if ($isManualMeal) {
-                $validated = $request->validate([
-                    'meal_type' => 'required|string|in:breakfast,lunch,dinner',
-                    'poll_date' => 'required|date|after_or_equal:today',
-                    'deadline' => 'required|string',
-                    'custom_deadline' => 'nullable|string',
-                    'manual_meal.name' => 'required|string|max:255',
-                    'manual_meal.ingredients' => 'nullable|string'
-                ]);
-            } else {
-                $validated = $request->validate([
-                    'meal_type' => 'required|string|in:breakfast,lunch,dinner',
-                    'meal_id' => 'required|integer|exists:meals,id',
-                    'poll_date' => 'required|date|after_or_equal:today',
-                    'deadline' => 'required|string',
-                    'custom_deadline' => 'nullable|string'
-                ]);
-            }
-
-            \Log::info('Validation passed:', ['validated' => $validated, 'is_manual_meal' => $isManualMeal]);
-        } catch (\Exception $e) {
-            \Log::error('Validation failed:', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed: ' . $e->getMessage()
+                'message' => 'Validation failed. Please check your inputs.',
+                'errors' => $validator->errors()
             ], 422);
         }
 
-        $finalDeadline = $validated['deadline'] === 'custom'
-            ? $validated['custom_deadline']
-            : $validated['deadline'];
-
-        \Log::info('Processing deadline for new poll', [
-            'original_deadline' => $validated['deadline'],
-            'custom_deadline' => $validated['custom_deadline'] ?? 'none',
-            'final_deadline' => $finalDeadline
-        ]);
-
-        // Process the deadline format
-        $processedDeadline = $this->processDeadlineFormat($finalDeadline);
-
         try {
-            // UNIFIED: Use WeekCycleService for consistent calculation
-            $weekInfo = WeekCycleService::getWeekInfo();
-            $currentDay = $weekInfo['current_day'];
-            $currentWeekCycle = $weekInfo['week_cycle'];
-
-            if ($isManualMeal) {
-                // Handle manual meal
-                $manualMeal = $validated['manual_meal'];
-
-                // Check if poll already exists for this meal type on the specified date (manual meals)
-                $existingPoll = KitchenMenuPoll::where('meal_type', $validated['meal_type'])
-                    ->whereNull('meal_id') // Manual meals have null meal_id
-                    ->whereDate('poll_date', $validated['poll_date'])
-                    ->first();
-
-                if ($existingPoll) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'A manual poll already exists for this meal type on the selected date'
-                    ], 422);
-                }
-
-                // Create poll data using manual meal information
-                $pollData = [
-                    'meal_name' => $manualMeal['name'],
-                    'ingredients' => $manualMeal['ingredients'] ?? 'No ingredients specified',
-                    'poll_date' => $validated['poll_date'],
-                    'meal_type' => $validated['meal_type'],
-                    'deadline' => $processedDeadline,
-                    'status' => 'draft',
-                    'created_by' => auth()->id(),
-                    'meal_id' => null // Manual meals don't have meal_id
-                ];
-            } else {
-                // Handle regular meal from cook's menu
-                $meal = \App\Models\Meal::findOrFail($validated['meal_id']);
-
-                // Verify the meal matches current day and cycle
-                if ($meal->day_of_week !== $currentDay || $meal->week_cycle !== $currentWeekCycle) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Selected meal is not for today\'s menu cycle'
-                    ], 400);
-                }
-
-                // Check if poll already exists for this meal on the specified date
-                $existingPoll = KitchenMenuPoll::where('meal_type', $validated['meal_type'])
-                    ->where('meal_id', $validated['meal_id'])
-                    ->whereDate('poll_date', $validated['poll_date'])
-                    ->first();
-
-                if ($existingPoll) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'A poll already exists for this meal on the selected date'
-                    ], 422);
-                }
-
-                // Create poll data using meal information
-                $pollData = [
-                    'meal_name' => $meal->name,
-                    'ingredients' => is_array($meal->ingredients)
-                        ? implode(', ', $meal->ingredients)
-                        : $meal->ingredients,
-                    'poll_date' => $validated['poll_date'],
-                    'meal_type' => $validated['meal_type'],
-                    'deadline' => $processedDeadline,
-                    'status' => 'draft',
-                    'created_by' => auth()->id(),
-                    'meal_id' => $validated['meal_id']
-                ];
+            // 1. Determine the poll date
+            $pollDate = now()->startOfDay();
+            if ($request->poll_date === 'tomorrow') {
+                $pollDate->addDay();
+            } elseif ($request->poll_date === 'custom') {
+                $pollDate = Carbon::parse($request->custom_poll_date)->startOfDay();
             }
 
-            \Log::info('Poll data prepared for cycle-based system', [
-                'original_deadline' => $finalDeadline,
-                'processed_deadline' => $processedDeadline,
-                'poll_data' => $pollData,
-                'current_day' => $currentDay,
-                'current_week_cycle' => $currentWeekCycle,
-                'is_manual_meal' => $isManualMeal,
-                'meal_source' => $isManualMeal ? 'manual_input' : 'cook_menu'
+            // 2. Determine the deadline date and time
+            $deadlineTimeStr = $request->deadline_time;
+            if ($deadlineTimeStr === 'custom') {
+                $deadlineTimeStr = $request->custom_deadline; // 'HH:mm'
+            } else {
+                // It's in 'g:i A' format like '9:00 AM'
+                $deadlineTimeStr = Carbon::parse($deadlineTimeStr)->format('H:i');
+            }
+            list($hour, $minute) = explode(':', $deadlineTimeStr);
+
+            $deadlineDate = clone $pollDate;
+            $deadlineDateTime = $deadlineDate->setTime($hour, $minute);
+
+            // Check if a poll with the same meal name, type, and date already exists
+            $existingPoll = KitchenMenuPoll::where('meal_name', $request->manual_meal_name)
+                ->where('meal_type', $request->meal_type)
+                ->whereDate('poll_date', $pollDate)
+                ->first();
+
+            if ($existingPoll) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'A poll for this meal already exists on this date.'
+                ], 409);
+            }
+
+            // Create the poll
+            $poll = KitchenMenuPoll::create([
+                'meal_name' => $request->manual_meal_name,
+                'poll_date' => $pollDate,
+                'meal_type' => $request->meal_type,
+                'deadline' => $deadlineDateTime, // Use the combined datetime
+                'status' => 'draft',
+                'created_by' => auth()->id(),
             ]);
 
-            // Create poll record
-            \Log::info('Creating poll with data:', $pollData);
-            $poll = KitchenMenuPoll::create($pollData);
-            \Log::info('Poll created successfully:', ['poll_id' => $poll->id]);
-
-            // Log the poll creation for audit purposes
-            \Log::info('Kitchen user created cycle-based menu poll', [
-                'user_id' => auth()->id(),
+            \Log::info('✅ Poll created successfully', [
                 'poll_id' => $poll->id,
-                'poll_date' => $poll->poll_date,
-                'meal_type' => $validated['meal_type'],
                 'meal_name' => $poll->meal_name,
-                'deadline' => $finalDeadline,
-                'current_day' => $currentDay,
-                'current_week_cycle' => $currentWeekCycle,
-                'timestamp' => now()
+                'poll_date' => $poll->poll_date->format('Y-m-d'),
+                'deadline' => $poll->deadline->format('Y-m-d H:i:s')
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Menu poll created successfully for today\'s menu',
-                'poll' => [
-                    'id' => $poll->id,
-                    'meal_name' => $poll->meal_name,
-                    'poll_date' => $poll->poll_date->format('Y-m-d'),
-                    'meal_type' => $poll->meal_type,
-                    'deadline' => $poll->deadline,
-                    'status' => $poll->status,
-                    'current_day' => $currentDay,
-                    'current_week_cycle' => $currentWeekCycle
-                ]
-            ]);
+                'message' => 'Poll created successfully!',
+                'poll' => $poll,
+            ], 201);
+
         } catch (\Exception $e) {
-            \Log::error('Failed to create menu poll', [
+            \Log::error('❌ Failed to create poll', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'user_id' => auth()->id(),
-                'data' => $validated
+                'request' => $request->all()
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create poll: ' . $e->getMessage()
+                'message' => 'An unexpected error occurred while creating the poll: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -718,7 +610,6 @@ class PreOrderController extends Controller
         try {
             // Query polls from database
             $query = KitchenMenuPoll::with(['creator', 'responses'])
-                ->orderBy('poll_date', 'desc')
                 ->orderBy('created_at', 'desc');
 
             // Apply filters if provided
@@ -752,7 +643,7 @@ class PreOrderController extends Controller
                     'ingredients' => is_array($poll->ingredients) ? implode(', ', $poll->ingredients) : ($poll->ingredients ?? 'No ingredients listed'),
                     'poll_date' => $poll->poll_date->format('Y-m-d'),
                     'meal_type' => $poll->meal_type,
-                    'deadline' => $poll->deadline ? $poll->deadline->format('Y-m-d H:i:s') : null,
+                    'deadline' => $poll->deadline ? $poll->deadline->format('Y-m-d\TH:i:s') : null,
                     'status' => $poll->status,
                     'responses_count' => $poll->total_responses,
                     'yes_count' => $poll->yes_count,
@@ -1734,56 +1625,24 @@ class PreOrderController extends Controller
     public function deletePoll($pollId)
     {
         try {
+            \Log::info('Attempting to delete poll', ['poll_id' => $pollId, 'user_id' => auth()->id()]);
+
             $poll = KitchenMenuPoll::findOrFail($pollId);
 
-            // Allow deletion of draft and active polls, but not closed polls
-            if ($poll->status === 'closed') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Closed polls cannot be deleted as they contain completed response data.'
-                ], 400);
-            }
-
-            // Check if user has permission to delete this poll
-            if ($poll->created_by !== auth()->id() && !auth()->user()->hasRole(['admin', 'cook'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'You do not have permission to delete this poll.'
-                ], 403);
-            }
-
-            $mealName = $poll->meal_name;
-            $pollDate = $poll->poll_date;
-            $pollStatus = $poll->status;
-
-            // Count existing responses before deletion
-            $responseCount = KitchenPollResponse::where('poll_id', $pollId)->count();
-
-            // Delete the poll (responses will be deleted automatically due to foreign key constraints)
+            // Then delete the poll
             $poll->delete();
 
-            \Log::info('Poll deleted successfully', [
-                'poll_id' => $pollId,
-                'meal_name' => $mealName,
-                'poll_date' => $pollDate,
-                'poll_status' => $pollStatus,
-                'student_responses_deleted' => $responseCount,
-                'deleted_by' => auth()->user()->name
-            ]);
-
-            $message = 'Poll deleted successfully';
-            if ($responseCount > 0) {
-                $message .= " (including {$responseCount} student response" . ($responseCount === 1 ? '' : 's') . ")";
-            }
+            \Log::info('✅ Poll deleted successfully', ['poll_id' => $pollId]);
 
             return response()->json([
                 'success' => true,
-                'message' => $message,
-                'deleted_responses' => $responseCount
+                'message' => 'Poll deleted successfully.'
             ]);
-
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            \Log::warning('Poll not found for deletion', ['poll_id' => $pollId]);
+            return response()->json(['success' => false, 'message' => 'Poll not found.'], 404);
         } catch (\Exception $e) {
-            \Log::error('Failed to delete poll', [
+            \Log::error('❌ Failed to delete poll', [
                 'error' => $e->getMessage(),
                 'poll_id' => $pollId,
                 'user_id' => auth()->id()
@@ -1792,6 +1651,87 @@ class PreOrderController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete poll: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Finish a poll manually
+     */
+    public function finishPoll(Request $request)
+    {
+        try {
+            $request->validate([
+                'poll_id' => 'required|exists:kitchen_menu_polls,id'
+            ]);
+
+            $poll = KitchenMenuPoll::findOrFail($request->poll_id);
+
+            // Check if poll can be finished (must be active or sent)
+            if (!in_array($poll->status, ['active', 'sent'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only active polls can be finished'
+                ], 400);
+            }
+
+            // Update poll status to finished
+            $poll->finish();
+
+            \Log::info('Poll finished manually', [
+                'poll_id' => $poll->id,
+                'meal_name' => $poll->meal_name,
+                'finished_by' => auth()->id(),
+                'timestamp' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Poll finished successfully',
+                'poll' => $poll
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to finish poll: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to finish poll: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Check and update expired polls
+     */
+    public function checkExpiredPolls()
+    {
+        try {
+            // Get all active polls that should be expired
+            $expiredPolls = KitchenMenuPoll::whereIn('status', ['active', 'sent'])
+                ->get()
+                ->filter(function ($poll) {
+                    return $poll->isExpired();
+                });
+
+            $count = 0;
+            foreach ($expiredPolls as $poll) {
+                $poll->expire();
+                $count++;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Updated {$count} expired polls",
+                'expired_count' => $count
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to check expired polls: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to check expired polls: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -117,4 +117,61 @@ class KitchenMenuPoll extends Model
     {
         $this->update(['status' => 'closed']);
     }
+
+    public function finish()
+    {
+        $this->update(['status' => 'finished']);
+    }
+
+    public function expire()
+    {
+        $this->update(['status' => 'expired']);
+    }
+
+    /**
+     * Check if the poll has expired based on deadline
+     */
+    public function isExpired()
+    {
+        if (!$this->deadline) {
+            return false;
+        }
+
+        $now = now();
+        $pollDate = $this->poll_date->format('Y-m-d');
+        $currentDate = $now->format('Y-m-d');
+
+        // If poll date is in the past, it's expired
+        if ($pollDate < $currentDate) {
+            return true;
+        }
+
+        // If poll date is today, check the time
+        if ($pollDate === $currentDate) {
+            $deadlineTime = $this->deadline instanceof \Carbon\Carbon
+                ? $this->deadline->format('H:i:s')
+                : \Carbon\Carbon::parse($this->deadline)->format('H:i:s');
+            $currentTime = $now->format('H:i:s');
+
+            return $deadlineTime < $currentTime;
+        }
+
+        return false;
+    }
+
+    /**
+     * Scope for expired polls
+     */
+    public function scopeExpired($query)
+    {
+        return $query->where('status', 'expired');
+    }
+
+    /**
+     * Scope for finished polls
+     */
+    public function scopeFinished($query)
+    {
+        return $query->where('status', 'finished');
+    }
 }

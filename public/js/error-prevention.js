@@ -24,48 +24,48 @@
             error: event.error
         });
         
-        // Send error to server for logging
-        if (typeof fetch !== 'undefined') {
-            fetch('/api/log-error', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-                },
-                body: JSON.stringify({
-                    type: 'javascript_error',
-                    message: event.message,
-                    filename: event.filename,
-                    line: event.lineno,
-                    column: event.colno,
-                    stack: event.error?.stack,
-                    url: window.location.href,
-                    user_agent: navigator.userAgent
-                })
-            }).catch(err => console.warn('Failed to log error to server:', err));
-        }
+        // Send error to server for logging (temporarily disabled to prevent error loops)
+        // if (typeof fetch !== 'undefined') {
+        //     fetch('/api/log-error', {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/json',
+        //             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+        //         },
+        //         body: JSON.stringify({
+        //             type: 'javascript_error',
+        //             message: event.message,
+        //             filename: event.filename,
+        //             line: event.lineno,
+        //             column: event.colno,
+        //             stack: event.error?.stack,
+        //             url: window.location.href,
+        //             user_agent: navigator.userAgent
+        //         })
+        //     }).catch(err => console.warn('Failed to log error to server:', err));
+        // }
     });
 
     // Global unhandled promise rejection handler
     window.addEventListener('unhandledrejection', function(event) {
         console.error('🚨 Unhandled Promise Rejection:', event.reason);
         
-        // Send to server
-        if (typeof fetch !== 'undefined') {
-            fetch('/api/log-error', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-                },
-                body: JSON.stringify({
-                    type: 'promise_rejection',
-                    message: event.reason?.message || 'Unhandled promise rejection',
-                    stack: event.reason?.stack,
-                    url: window.location.href
-                })
-            }).catch(err => console.warn('Failed to log promise rejection to server:', err));
-        }
+        // Send to server (temporarily disabled to prevent error loops)
+        // if (typeof fetch !== 'undefined') {
+        //     fetch('/api/log-error', {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/json',
+        //             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+        //         },
+        //         body: JSON.stringify({
+        //             type: 'promise_rejection',
+        //             message: event.reason?.message || 'Unhandled promise rejection',
+        //             stack: event.reason?.stack,
+        //             url: window.location.href
+        //         })
+        //     }).catch(err => console.warn('Failed to log promise rejection to server:', err));
+        // }
     });
 
     // Safe API call wrapper

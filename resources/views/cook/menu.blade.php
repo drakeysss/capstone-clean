@@ -4,24 +4,20 @@
 <!-- Add CSRF token for AJAX requests -->
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <div class="container-fluid p-4">
-    <!-- Header Section -->
+    <!-- Enhanced Header Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="welcome-card">
-                <div class="welcome-content">
-                    <h2>Menu Management</h2>
-                    <p class="text-muted" style="color: white;">Manage weekly menus for students and kitchen staff</p>
-                </div>
-                <div class="header-actions">
-                    <button class="btn btn-light btn-sm me-2" onclick="refreshMenuData()">
-                        <i class="bi bi-arrow-clockwise"></i> Refresh
-                    </button>
-                    <button class="btn btn-warning btn-sm me-2" onclick="clearAllMeals()">
-                        <i class="bi bi-trash"></i> Clear All
-                    </button>
-                    <button class="btn btn-success btn-sm" onclick="saveAllChanges()">
-                        <i class="bi bi-check-circle"></i> Save All Changes
-                    </button>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #22bbea, #1a9bd1);">
+                    <div>
+                        <h3 class="mb-1 fw-bold">
+                            <i class="bi bi-calendar-week me-2"></i>Menu Management
+                        </h3>
+                        <p class="mb-0 opacity-75">Manage weekly menus for students and kitchen staff</p>
+                    </div>
+                    <div class="text-end">
+                        <span id="currentDateTime" class="fs-6 opacity-75"></span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -34,20 +30,26 @@
         <div class="col-12">
             <div class="card main-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title">
-                        <i class="bi bi-calendar-week"></i> Weekly Menu Management
-                    </h5>
-                    <div class="d-flex align-items-center gap-2">
+                    <div>
+                      
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                       
                         <span class="badge bg-secondary" id="lastUpdated">Last updated: Never</span>
+                        <span class="text-muted me-2">View Menu for:</span>
                         <select id="weekCycleSelect" class="form-select form-select-sm d-inline-block w-auto">
                             <option value="1">Week 1 & 3</option>
                             <option value="2">Week 2 & 4</option>
                         </select>
-                        <button class="btn btn-outline-primary btn-sm me-2" onclick="toggleEditMode()">
+                        <small class="text-info ms-2" id="currentWeekIndicator">
+                            <i class="bi bi-calendar-check"></i> Current: Week <span id="currentWeekNumber">1</span>
+                        </small>
+
+                         <button class="btn btn-outline-primary btn-sm me-2" onclick="toggleEditMode()">
                             <i class="bi bi-pencil"></i> <span id="editModeText">Edit Mode</span>
                         </button>
-                        <button class="btn btn-outline-info btn-sm" onclick="verifyCrossSystemIntegration()" title="Check integration status">
-                            <i class="bi bi-shield-check"></i> Verify
+                        <button class="btn btn-warning btn-sm me-3" onclick="clearAllMeals()">
+                            <i class="bi bi-trash"></i> Clear All
                         </button>
                     </div>
                 </div>
@@ -84,6 +86,12 @@
                         </table>
 
                     </div>
+                </div>
+                <!-- Print Button -->
+                <div class="card-footer text-center">
+                    <button class="btn btn-success btn-lg" onclick="printMenu()">
+                        <i class="bi bi-printer"></i> Print Menu
+                    </button>
                 </div>
             </div>
         </div>
@@ -137,115 +145,70 @@
 
 @push('styles')
 <style>
-    :root {
-        --primary-orange: #ff9933;
-        --primary-blue: #22bbea;
-        --orange-bg: rgba(255, 153, 51, 0.1);
-        --blue-bg: rgba(34, 187, 234, 0.1);
-    }
-
-    .welcome-card {
-        background: var(--primary-orange);
-        color: white;
-        padding: 2rem;
-        border-radius: 15px;
-        margin-bottom: 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 4px 12px rgba(255, 153, 51, 0.2);
-    }
-
-    .header-actions {
-        display: flex;
-        gap: 10px;
-    }
-
-    .header-actions .btn-light {
-        background-color: rgba(255, 255, 255, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: white;
-        transition: all 0.3s ease;
-    }
-
-    .header-actions .btn-light:hover {
-        background-color: rgba(255, 255, 255, 0.3);
-        border-color: rgba(255, 255, 255, 0.5);
-        color: white;
-        transform: translateY(-2px);
-    }
-
-    .header-actions .btn-warning {
-        background-color: var(--primary-orange);
-        border-color: var(--primary-orange);
-        color: white;
-    }
-
-    .header-actions .btn-warning:hover {
-        background-color: #e6851a;
-        border-color: #e6851a;
-        transform: translateY(-2px);
-    }
-
-    .header-actions .btn-success {
-        background-color: var(--primary-blue);
-        border-color: var(--primary-blue);
-        color: white;
-    }
-
-    .header-actions .btn-success:hover {
-        background-color: #1a9bd1;
-        border-color: #1a9bd1;
-        transform: translateY(-2px);
-    }
-
+    /* Simple, clean styling to match kitchen daily-menu */
     .card {
         border: none;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        border-radius: 12px;
-        transition: all 0.3s ease;
-    }
-
-    .card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
     }
 
     .card-header {
-        background: linear-gradient(90deg, var(--orange-bg) 0%, var(--blue-bg) 100%);
-        border-bottom: 2px solid var(--primary-orange);
-        border-radius: 12px 12px 0 0 !important;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        border-radius: 8px 8px 0 0 !important;
+        border: none !important;
     }
 
-    .card-title {
-        color: var(--primary-blue);
-        font-weight: 600;
+    .btn-outline-primary {
+        border-color: #6c757d;
+        color: #6c757d;
+        transition: all 0.2s ease;
     }
 
+    .btn-outline-primary:hover {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+
+    .btn-warning {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        transition: all 0.2s ease;
+    }
+
+    .btn-warning:hover {
+        background-color: #e0a800;
+        border-color: #d39e00;
+    }
+    
+    /* Simple meal item styling */
     .meal-item {
         position: relative;
-        padding: 12px;
-        border-radius: 10px;
-        transition: all 0.3s ease;
-        border: 2px solid transparent;
+        padding: 8px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
     }
 
     .meal-item:hover {
-        background: linear-gradient(135deg, var(--orange-bg) 0%, var(--blue-bg) 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(255, 153, 51, 0.2);
-        border-color: var(--orange-light);
+        background-color: #f8f9fa;
     }
 
     .meal-item.editable {
-        border: 2px dashed var(--primary-orange);
+        border: 1px dashed #6c757d;
         cursor: pointer;
-        background: var(--orange-bg);
+        background-color: #f8f9fa;
     }
 
     .meal-item.editable:hover {
-        border-color: var(--orange-dark);
-        background: linear-gradient(135deg, var(--orange-bg) 0%, var(--blue-bg) 100%);
+        border-color: #495057;
+        background-color: #e9ecef;
+    }
+
+    .card-title {
+        color: #495057;
+        font-weight: 600;
     }
 
     .meal-status {
@@ -255,96 +218,47 @@
         font-size: 0.75rem;
     }
 
-
-
     .kitchen-status-badge {
         font-size: 0.7rem;
         padding: 3px 8px;
-        border-radius: 12px;
+        border-radius: 4px;
     }
 
     .table {
-        border-radius: 12px;
+        border-radius: 4px;
         overflow: hidden;
     }
 
     .table thead th {
-        background: var(--primary-orange);
-        color: white;
+        background-color: #f8f9fa;
+        color: #495057;
         border: none;
         font-weight: 600;
-        padding: 15px;
+        padding: 12px;
     }
 
     .table td {
         vertical-align: middle;
         position: relative;
-        padding: 15px;
-        border-color: rgba(255, 153, 51, 0.2);
+        padding: 12px;
+        border-color: #dee2e6;
     }
 
     .table tbody tr:hover {
-        background: var(--orange-bg);
-    }
-
-    .btn-outline-primary {
-        border-color: var(--primary-blue);
-        color: var(--primary-blue);
-    }
-
-    .btn-outline-primary:hover {
-        background-color: var(--primary-blue);
-        border-color: var(--primary-blue);
-        color: white;
-    }
-
-    .btn-outline-info {
-        border-color: var(--primary-orange);
-        color: var(--primary-orange);
-    }
-
-    .btn-outline-info:hover {
-        background-color: var(--primary-orange);
-        border-color: var(--primary-orange);
-        color: white;
-    }
-
-    .btn-primary {
-        background-color: var(--primary-blue);
-        border-color: var(--primary-blue);
-    }
-
-    .btn-primary:hover {
-        background-color: #1a9bd1;
-        border-color: #1a9bd1;
-    }
-
-    .btn-warning {
-        background-color: var(--primary-orange);
-        border-color: var(--primary-orange);
-        color: white;
-    }
-
-    .btn-warning:hover {
-        background-color: #e6851a;
-        border-color: #e6851a;
-        color: white;
+        background-color: #f8f9fa;
     }
 
     .modal-header {
-        background: var(--primary-orange);
-        color: white;
-        border-radius: 8px 8px 0 0;
-    }
-
-    .modal-header .btn-close {
-        filter: brightness(0) invert(1);
+        background-color: #f8f9fa;
+        color: #495057;
+        border-radius: 4px 4px 0 0;
+        border-bottom: 1px solid #dee2e6;
     }
 
     .modal-content {
         border: none;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     /* ULTIMATE MODAL FIXES - HIGHEST PRIORITY */
@@ -406,18 +320,18 @@
     }
 
     .form-control:focus {
-        border-color: var(--primary-orange);
-        box-shadow: 0 0 0 0.2rem rgba(255, 153, 51, 0.25);
+        border-color: #6c757d;
+        box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25);
     }
 
     .form-label {
-        color: var(--primary-blue);
+        color: #495057;
         font-weight: 600;
     }
 
     .form-select:focus {
-        border-color: var(--primary-orange);
-        box-shadow: 0 0 0 0.2rem rgba(255, 153, 51, 0.25);
+        border-color: #6c757d;
+        box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25);
     }
 
     .loading-overlay {
@@ -435,15 +349,7 @@
     }
 
     .spinner-border.text-primary {
-        color: var(--primary-orange) !important;
-    }
-
-    .badge.bg-success {
-        background-color: var(--primary-blue) !important;
-    }
-
-    .badge.bg-warning {
-        background-color: var(--primary-orange) !important;
+        color: #6c757d !important;
     }
 
     .badge.bg-secondary {
@@ -455,57 +361,17 @@
         font-weight: 500;
     }
 
-    .progress-bar.bg-success {
-        background-color: var(--primary-blue) !important;
-    }
-
-    .progress-bar.bg-warning {
-        background-color: var(--primary-orange) !important;
-    }
-
-    .text-success {
-        color: var(--primary-blue) !important;
-    }
-
-    .text-warning {
-        color: var(--primary-orange) !important;
-    }
-
-    .alert-warning {
-        background-color: var(--orange-bg);
-        border-color: var(--orange-light);
-        color: var(--orange-dark);
-    }
-
-    .alert-success {
-        background-color: var(--blue-bg);
-        border-color: var(--blue-light);
-        color: var(--blue-dark);
-    }
-
-    .toast.bg-success {
-        background-color: var(--primary-blue) !important;
-    }
-
-    .toast.bg-warning {
-        background-color: var(--primary-orange) !important;
-    }
-
     .toast.bg-danger {
         background-color: #dc3545 !important;
     }
 
-    .toast.bg-info {
-        background-color: var(--primary-blue) !important;
-    }
-
     .card.bg-light {
-        background: linear-gradient(135deg, var(--orange-bg) 0%, var(--blue-bg) 100%) !important;
-        border: 1px solid var(--orange-light);
+        background-color: #f8f9fa !important;
+        border: 1px solid #dee2e6;
     }
 
     .card.bg-light .card-body h6 {
-        color: var(--primary-blue);
+        color: #495057;
         font-weight: 600;
     }
 
@@ -539,49 +405,47 @@
     }
 
     .table-responsive::-webkit-scrollbar-track {
-        background: var(--orange-bg);
+        background: #f8f9fa;
         border-radius: 4px;
     }
 
     .table-responsive::-webkit-scrollbar-thumb {
-        background: var(--primary-orange);
+        background: #6c757d;
         border-radius: 4px;
     }
 
     .table-responsive::-webkit-scrollbar-thumb:hover {
-        background: var(--orange-dark);
+        background: #495057;
     }
 
     /* Current Day Highlighting */
     .current-day {
-        background: linear-gradient(90deg, rgba(255, 153, 51, 0.15) 0%, rgba(34, 187, 234, 0.15) 100%) !important;
-        border-left: 4px solid var(--primary-orange);
-        animation: currentDayPulse 2s ease-in-out infinite;
+        background-color: #f8f9fa !important;
+        border-left: 3px solid #6c757d;
     }
 
     .current-day:hover {
-        background: linear-gradient(90deg, rgba(255, 153, 51, 0.25) 0%, rgba(34, 187, 234, 0.25) 100%) !important;
+        background-color: #e9ecef !important;
     }
 
     /* Current Week Highlighting */
     .current-week-row {
-        background: linear-gradient(90deg, rgba(34, 187, 234, 0.08) 0%, rgba(255, 153, 51, 0.08) 100%) !important;
-        border-left: 2px solid var(--secondary-blue);
+        background-color: #f8f9fa !important;
+        border-left: 2px solid #adb5bd;
     }
 
     .current-week-row:hover {
-        background: linear-gradient(90deg, rgba(34, 187, 234, 0.15) 0%, rgba(255, 153, 51, 0.15) 100%) !important;
+        background-color: #e9ecef !important;
     }
 
     .current-day .meal-item {
-        border: 2px solid rgba(255, 153, 51, 0.3);
-        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid #dee2e6;
+        background-color: white;
     }
 
     .current-day .meal-item:hover {
-        border-color: var(--primary-orange);
-        background: rgba(255, 255, 255, 0.95);
-        box-shadow: 0 4px 15px rgba(255, 153, 51, 0.3);
+        border-color: #6c757d;
+        background-color: #f8f9fa;
     }
 
     @keyframes currentDayPulse {
@@ -593,41 +457,48 @@
         }
     }
 
-    /* UNIFIED: Badge System */
+    /* Simple Badge System */
     .today-badge {
-        background: #ff9933;
+        background-color: #6c757d;
         color: white;
         padding: 0.2rem 0.5rem;
-        border-radius: 10px;
+        border-radius: 4px;
         font-size: 0.7rem;
         font-weight: 600;
         margin: 0.25rem 0;
         display: inline-block;
-        animation: badgePulse 2s ease-in-out infinite;
     }
 
     .week-badge {
-        background: #22bbea;
+        background-color: #adb5bd;
         color: white;
         padding: 0.2rem 0.5rem;
-        border-radius: 10px;
+        border-radius: 4px;
         font-size: 0.7rem;
         font-weight: 600;
         margin: 0.25rem 0;
         display: inline-block;
     }
 
-    @keyframes badgePulse {
-        0%, 100% {
-            transform: scale(1);
-        }
-        50% {
-            transform: scale(1.05);
-        }
+    .text-primary {
+        color: #6c757d !important;
     }
 
-    .text-primary {
-        color: var(--primary-orange) !important;
+    /* Print Button Styling */
+    .card-footer {
+        background-color: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+        padding: 1rem;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+
+    .btn-success:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
     }
 </style>
 @endpush
@@ -852,13 +723,8 @@
 
             html += `<tr data-day="${day}" class="${rowClass}">`;
 
-            // UNIFIED: Dynamic day labeling
+            // UNIFIED: Dynamic day labeling (without Today badge for cleaner print)
             let dayLabel = capitalizeFirst(day);
-            if (highlighting.isToday) {
-                dayLabel += ' <span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i> Today</span>';
-            } else if (highlighting.isCurrentWeek) {
-                dayLabel += ' <span class="badge bg-light text-muted">This Week</span>';
-            }
 
             html += `<td class="${highlighting.dayClass}">${dayLabel}</td>`;
 
@@ -897,8 +763,8 @@
                     }
                     html += `<small class="text-muted">${ingredientsDisplay}</small>`;
 
-                    // Add kitchen status if available (but not "Not Started")
-                    if (meal.status && meal.status !== 'Not Started') {
+                    // Add kitchen status if available (but not "Not Started" or "Planned")
+                    if (meal.status && meal.status !== 'Not Started' && meal.status !== 'Planned') {
                         const statusClass = getStatusClass(meal.status);
                         html += `<span class="badge ${statusClass} kitchen-status-badge meal-status">${meal.status}</span>`;
                     }
@@ -1049,120 +915,52 @@
         });
     }
 
-
-
     // Save meal changes
     function saveMealChanges() {
         const form = document.getElementById('editMealForm');
-
-        // Validate form
-        if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
-        }
-
         const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
 
-        // Convert FormData to JSON
-        const data = {};
-        formData.forEach((value, key) => {
-            data[key] = value;
-        });
+        // Debug: Log the data being sent
+        console.log('Form data being sent:', data);
 
-        // Get CSRF token
-        const csrfToken = document.querySelector('meta[name="csrf-token"]');
-        if (!csrfToken) {
-            showToast('CSRF token not found. Please refresh the page.', 'error');
+        // Validate required fields before sending
+        if (!data.name || !data.ingredients) {
+            showToast('Please fill in all required fields (Name and Ingredients)', 'error');
             return;
         }
 
-        // Add debugging
-        console.log('Sending data:', data);
-        console.log('CSRF Token:', csrfToken.content);
-
-        // Show loading
         const saveBtn = document.querySelector('#editMealModal .btn-primary');
-        const originalText = saveBtn.textContent;
-        saveBtn.textContent = 'Saving...';
         saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
 
         fetch('/cook/menu/update', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken.content,
-                'Accept': 'application/json'
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
             },
             body: JSON.stringify(data)
         })
-        .then(response => {
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            return response.json();
-        })
-        .then(data => {
-            console.log('Response data:', data);
-            if (data.success) {
-                showToast('Meal updated successfully', 'success');
-                console.log('Meal saved successfully, reloading menu data...');
-                loadMenuData(); // Reload data
-                // COMPREHENSIVE MODAL HIDE FIX - Use simple modal function
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
                 hideModalSimple('editMealModal');
-
-                // FORCE COMPLETE CLEANUP
-                setTimeout(() => {
-                    // Remove all backdrops
-                    const backdrops = document.querySelectorAll('.modal-backdrop');
-                    backdrops.forEach(backdrop => backdrop.remove());
-
-                    // Reset body state
-                    document.body.classList.remove('modal-open');
-                    document.body.style.overflow = '';
-                    document.body.style.paddingRight = '';
-
-                    // Reset modal state
-                    modalElement.classList.remove('show');
-                    modalElement.style.display = 'none';
-                    modalElement.setAttribute('aria-hidden', 'true');
-                    modalElement.removeAttribute('aria-modal');
-                    modalElement.removeAttribute('role');
-                }, 300);
+                showToast('Menu updated successfully!', 'success');
+                loadMenuData();
                 markUnsavedChanges(false);
-                updateLastUpdated();
-
-                // Show cross-system notification
-                showCrossSystemNotification('updated');
+                setLastUpdatedNow();
             } else {
-                if (data.errors) {
-                    // Show validation errors
-                    let errorMessage = 'Validation errors:\n';
-                    Object.keys(data.errors).forEach(field => {
-                        errorMessage += `${field}: ${data.errors[field].join(', ')}\n`;
-                    });
-                    showToast(errorMessage, 'error');
-                } else {
-                    showToast(data.message || 'Failed to update meal', 'error');
-                }
+                showToast(result.message || 'Failed to update menu.', 'error');
             }
         })
         .catch(error => {
-            console.error('Fetch error:', error);
-            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                showToast('Network error: Please check your connection and try again.', 'error');
-            } else if (error.message.includes('HTTP error')) {
-                showToast(`Server error: ${error.message}`, 'error');
-            } else {
-                showToast('Error updating meal: ' + error.message, 'error');
-            }
+            console.error('Error saving meal:', error);
+            showToast('An error occurred while saving the meal.', 'error');
         })
         .finally(() => {
-            saveBtn.textContent = originalText;
             saveBtn.disabled = false;
+            saveBtn.innerHTML = 'Save Changes';
         });
     }
 
@@ -1202,8 +1000,6 @@
             }
         });
     }
-
-
 
     // Clear current meal in modal
     function clearCurrentMeal() {
@@ -1256,9 +1052,8 @@
             if (data.success) {
                 showToast('All meals cleared successfully', 'success');
                 loadMenuData(); // Reload data
+                setLastUpdatedNow();
                 updateLastUpdated();
-
-                // Notify about cross-system updates
                 showCrossSystemNotification('cleared');
             } else {
                 showToast(data.message || 'Failed to clear meals', 'error');
@@ -1520,13 +1315,25 @@
         }
     }
 
-
-
-    // Update last updated timestamp
-    function updateLastUpdated() {
+    // Store last updated time in localStorage
+    function setLastUpdatedNow() {
         const now = new Date();
-        const timeString = now.toLocaleTimeString();
-        document.getElementById('lastUpdated').textContent = `Last updated: ${timeString}`;
+        localStorage.setItem('cookMenuLastUpdated', now.toISOString());
+        updateLastUpdated();
+    }
+
+    // Update last updated timestamp from localStorage
+    function updateLastUpdated() {
+        const lastUpdated = localStorage.getItem('cookMenuLastUpdated');
+        const label = document.getElementById('lastUpdated');
+        if (lastUpdated) {
+            const date = new Date(lastUpdated);
+            const dateString = date.toLocaleDateString();
+            const timeString = date.toLocaleTimeString();
+            label.textContent = `Last updated: ${dateString}, ${timeString}`;
+        } else {
+            label.textContent = 'Last updated: Never';
+        }
     }
 
     // Utility functions
@@ -1671,5 +1478,133 @@
         currentWeekCycle = parseInt(this.value);
         loadMenuData();
     });
+
+    // Update current date and time display
+    function updateDateTime() {
+        const now = new Date();
+        const options = {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        };
+        document.getElementById('currentDateTime').textContent = now.toLocaleDateString('en-US', options);
+
+        // Update current week number
+        const weekOfMonth = Math.ceil(now.getDate() / 7);
+        document.getElementById('currentWeekNumber').textContent = weekOfMonth;
+    }
+
+    // Print Menu Function
+    function printMenu() {
+        // Get the current week cycle
+        const weekCycle = currentWeekCycle;
+        const weekText = weekCycle === 1 ? 'Week 1 & 3' : 'Week 2 & 4';
+
+        // Get the current table content
+        const tableId = weekCycle === 1 ? 'week1Table' : 'week2Table';
+        const table = document.getElementById(tableId);
+
+        if (!table) {
+            alert('No menu data available to print');
+            return;
+        }
+
+        // Create a new window for printing
+        const printWindow = window.open('data:text/html,', '_blank');
+
+        // Create print content
+        const printContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>June 23-30,2025</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        margin: 20px;
+                        color: #333;
+                    }
+                    .header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                        border-bottom: 2px solid #333;
+                        padding-bottom: 20px;
+                    }
+                    .header h1 {
+                        margin: 0;
+                        color: #2c3e50;
+                        font-size: 32px;
+                        font-weight: bold;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 20px;
+                    }
+                    th, td {
+                        border: 1px solid #333;
+                        padding: 12px;
+                        text-align: left;
+                        vertical-align: top;
+                    }
+                    th {
+                        background-color: #f8f9fa;
+                        font-weight: bold;
+                        text-align: center;
+                    }
+                    .fw-bold {
+                        font-weight: bold;
+                        background-color: #f1f3f4;
+                        text-align: center;
+                    }
+                    .meal-name {
+                        font-weight: bold;
+                        margin-bottom: 5px;
+                    }
+                    .meal-ingredients {
+                        font-size: 11px;
+                        color: #666;
+                        font-style: italic;
+                    }
+                    .text-muted {
+                        color: #999 !important;
+                        font-style: italic;
+                    }
+                    .no-meal {
+                        color: #999;
+                        font-style: italic;
+                    }
+                    @media print {
+                        body { margin: 0; }
+                        .header { page-break-after: avoid; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>${weekText}</h1>
+                </div>
+                ${table.outerHTML}
+            </body>
+            </html>
+        `;
+
+        // Write content to print window
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+
+        // Wait for content to load then print
+        printWindow.onload = function() {
+            printWindow.print();
+            printWindow.close();
+        };
+    }
+
+    // Update date/time immediately and then every minute
+    updateDateTime();
+    setInterval(updateDateTime, 60000);
 </script>
 @endpush

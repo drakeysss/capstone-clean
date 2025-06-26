@@ -124,7 +124,7 @@
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('kitchen.daily-menu') ? 'active' : '' }}" href="{{ route('kitchen.daily-menu') }}" data-feature="kitchen.daily-menu">
                     <i class="bi bi-journal-text icon"></i>
-                    <span class="small">Weeky Menu</span>
+                    <span class="small">Weekly Menu</span>
                 </a>
             </li>
             <li class="nav-item">

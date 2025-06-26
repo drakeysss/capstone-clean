@@ -43,7 +43,7 @@ class NotificationService
     /**
      * Create individual notification
      */
-    private function createNotification(int $userId, string $title, string $message, string $type, array $data)
+    public function createNotification(int $userId, string $title, string $message, string $type, array $data)
     {
         try {
             Notification::create([

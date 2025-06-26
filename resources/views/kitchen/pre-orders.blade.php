@@ -2,8 +2,12 @@
 
 @section('content')
 <div class="container-fluid p-4">
+   
+@push('scripts')
     <!-- Alert Container -->
     <div id="alertContainer"></div>
+
+   
 
     <!-- Enhanced Header Section -->
     <div class="row mb-4">
@@ -34,230 +38,67 @@
     <!-- Deadline Notifications -->
     <div id="deadlineNotifications" class="mb-4"></div>
 
-    <!-- No meal details modal needed -->
-    
-    <!-- Edit Poll Deadline Modal -->
-    <div class="modal fade" id="editPollDeadlineModal" tabindex="-1" aria-labelledby="editPollDeadlineModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-info text-white align-items-center">
-                    <h5 class="modal-title d-flex align-items-center" id="editPollDeadlineModalLabel">
-                        <i class="bi bi-clock-history me-2"></i> Edit Poll Deadline
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-info mb-3">
-                        <i class="bi bi-info-circle me-2"></i>
-                        <strong>Kitchen Team:</strong> You can only modify poll deadlines. Menu content is managed by the cook.
-                    </div>
-                    <form id="editPollDeadlineForm">
-                        <input type="hidden" id="editPollId" name="poll_id">
-                        <div class="mb-4">
-                            <label class="form-label">Poll Information (Read-only)</label>
-                            <div class="card bg-light mb-3 poll-info-card">
-                                <div class="card-body d-flex flex-column flex-md-row align-items-center justify-content-between">
-                                    <div>
-                                        <h6 id="editPollMealName" class="card-title mb-1">-</h6>
-                                        <small class="text-muted">
-                                            <i class="bi bi-calendar"></i> <span id="editPollDate">-</span>
-                                        </small>
-                                    </div>
-                                    <div class="mt-2 mt-md-0">
-                                        <small class="text-muted text-capitalize">
-                                            <i class="bi bi-clock"></i> <span id="editPollMealType">-</span>
-                                        </small>
-                                    </div>
-                                </div>
-                            </div>
+    <!-- Tab Content -->
+    <div class="tab-content" id="pollTabsContent">
+        <!-- Active Polls Tab -->
+        <div class="tab-pane fade show active" id="active-polls" role="tabpanel">
+            <!-- No meal details modal needed -->
+            
+            <!-- Edit Poll Deadline Modal -->
+            <div class="modal fade" id="editPollDeadlineModal" tabindex="-1" aria-labelledby="editPollDeadlineModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-info text-white align-items-center">
+                            <h5 class="modal-title d-flex align-items-center" id="editPollDeadlineModalLabel">
+                                <i class="bi bi-clock-history me-2"></i> Edit Poll Deadline
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="row mb-4">
-                            <div class="col-md-6 mb-3 mb-md-0">
-                                <label for="editDeadlineDate" class="form-label">Deadline Date</label>
-                                <div class="input-group">
-                                    <select class="form-select" id="editDeadlineDate" name="deadline_date">
-                                        <option value="{{ date('Y-m-d') }}">Today ({{ date('M j') }})</option>
-                                        <option value="{{ date('Y-m-d', strtotime('+1 day')) }}">Tomorrow ({{ date('M j', strtotime('+1 day')) }})</option>
-                                        <option value="{{ date('Y-m-d', strtotime('+2 days')) }}">{{ date('M j', strtotime('+2 days')) }}</option>
-                                        <option value="{{ date('Y-m-d', strtotime('+3 days')) }}">{{ date('M j', strtotime('+3 days')) }})</option>
-                                        <option value="custom">Custom Date...</option>
-                                    </select>
-                                    <button class="btn btn-outline-secondary" type="button" id="editCustomDateBtn">
-                                        <i class="bi bi-calendar"></i> Custom
-                                    </button>
-                                </div>
-                                <input type="date" class="form-control mt-2" id="editCustomDate" name="custom_date" style="display: none;">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="editDeadlineTime" class="form-label">Deadline Time</label>
-                                <select class="form-select" id="editDeadlineTime" name="deadline_time">
-                                    <option value="9:00 AM">9:00 AM</option>
-                                    <option value="10:00 AM">10:00 AM</option>
-                                    <option value="11:00 AM">11:00 AM</option>
-                                    <option value="12:00 PM">12:00 PM (Noon)</option>
-                                    <option value="1:00 PM">1:00 PM</option>
-                                    <option value="2:00 PM">2:00 PM</option>
-                                    <option value="3:00 PM">3:00 PM</option>
-                                    <option value="4:00 PM">4:00 PM</option>
-                                    <option value="5:00 PM">5:00 PM</option>
-                                    <option value="6:00 PM">6:00 PM</option>
-                                    <option value="7:00 PM">7:00 PM</option>
-                                    <option value="8:00 PM">8:00 PM</option>
-                                    <option value="9:00 PM">9:00 PM</option>
-                                    <option value="10:00 PM">10:00 PM</option>
-                                    <option value="11:00 PM">11:00 PM</option>
-                                    <option value="custom">Custom Time</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="mb-3" id="editCustomTimeContainer" style="display: none;">
-                            <label for="editCustomDeadlineTime" class="form-label">Custom Deadline Time</label>
-                            <input type="time" class="form-control" id="editCustomDeadlineTime" name="custom_deadline">
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary rounded-pill px-4" id="savePollDeadlineBtn">
-                        <i class="bi bi-check-circle"></i> Update Deadline
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Weekly Meal Selection Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card main-card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title">Menu Polling for Students</h5>
-                    @if(!isset($waitingForCook) || !$waitingForCook)
-                   
-                    @endif
-                </div>
-                <div class="card-body">
-                    @if(isset($waitingForCook) && $waitingForCook)
-                        <!-- No Meals Created Yet -->
-                        <div class="text-center py-5">
-                            <div class="mb-4">
-                                <i class="bi bi-chef-hat display-1 text-muted"></i>
-                            </div>
-                            <h4 class="text-muted">No Meals Created Yet</h4>
-                            <p class="text-muted">
-                                No meals have been created in the system yet.<br>
-                                The system starts completely empty - no pre-populated data.
-                            </p>
-                            <div class="alert alert-info mt-3">
+                        <div class="modal-body">
+                            <div class="alert alert-info mb-3">
                                 <i class="bi bi-info-circle me-2"></i>
-                                <strong>Getting Started:</strong> The cook needs to create meals for different days and week cycles first. Once meals are created, you can create polls for students.
+                                <strong>Kitchen Team:</strong> You can only modify poll deadlines. Menu content is managed by the cook.
                             </div>
-                            <div class="alert alert-warning mt-3">
-                                <i class="bi bi-lightbulb me-2"></i>
-                                <strong>How it works:</strong>
-                                <ol class="text-start mt-2 mb-0">
-                                    <li><strong>Cook creates meals</strong> for each day and week cycle</li>
-                                    <li><strong>Kitchen creates polls</strong> from those meals</li>
-                                    <li><strong>Students respond</strong> to polls</li>
-                                    <li><strong>Kitchen prepares</strong> based on responses</li>
-                                </ol>
-                            </div>
-                            <div class="mt-3">
-                                <button class="btn btn-outline-primary" onclick="window.location.reload()">
-                                    <i class="bi bi-arrow-clockwise"></i> Check Again
-                                </button>
-                                <a href="{{ route('cook.menu.index') }}" class="btn btn-outline-success ms-2">
-                                    <i class="bi bi-plus-circle"></i> Create Meals (Cook Interface)
-                                </a>
-                            </div>
-                        </div>
-                    @elseif(isset($noMenuForToday) && $noMenuForToday)
-                        <!-- No Menu for Today's Cycle -->
-                        <div class="text-center py-5">
-                            <div class="mb-4">
-                                <i class="bi bi-chef-hat display-1 text-muted"></i>
-                            </div>
-                            <h4 class="text-muted">No Menu for Today's Cycle</h4>
-                            <p class="text-muted">
-                                No meals have been created for <strong>{{ ucfirst($currentDay ?? 'today') }}</strong> in <strong>Week {{ $currentWeekCycle ?? 'current' }}</strong> yet.
-                            </p>
-                            <div class="alert alert-info mt-3">
-                                <i class="bi bi-info-circle me-2"></i>
-                                <strong>Next Steps:</strong> The cook needs to create meals for today's menu cycle first. Once meals are created, you can create polls for students.
-                            </div>
-                            <div class="alert alert-warning mt-3">
-                                <i class="bi bi-lightbulb me-2"></i>
-                                <strong>How it works:</strong>
-                                <ol class="text-start mt-2 mb-0">
-                                    <li><strong>Cook creates meals</strong> for each day and week cycle</li>
-                                    <li><strong>Kitchen creates polls</strong> from those meals</li>
-                                    <li><strong>Students respond</strong> to polls</li>
-                                    <li><strong>Kitchen prepares</strong> based on responses</li>
-                                </ol>
-                            </div>
-                            <div class="mt-3">
-                                <button class="btn btn-outline-primary" onclick="window.location.reload()">
-                                    <i class="bi bi-arrow-clockwise"></i> Refresh
-                                </button>
-                              
-                            </div>
-                        </div>
-                    @else
-                       
-                  
-
-
-                    <!-- Create Poll from Cook's Menu -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h6 class="card-title mb-0">
-                                <i class="bi bi-calendar-plus me-2"></i>Create Poll from Cook's Menu
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                           
-                            <form id="createPollForm">
-                               
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <label for="pollMealType" class="form-label">Meal Type</label>
-                                        <select class="form-select" id="pollMealType" name="meal_type" required>
-                                            <option value="">Select Meal Type</option>
-                                            <option value="breakfast">Breakfast</option>
-                                            <option value="lunch">Lunch</option>
-                                            <option value="dinner">Dinner</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label for="pollDate" class="form-label">Poll Date</label>
-                                        <select class="form-select" id="pollDate" name="poll_date" required>
-                                            <option value="today">Today</option>
-                                            <option value="tomorrow">Tomorrow</option>
-                                            <option value="custom">Custom Date...</option>
-                                        </select>
-                                        <input type="date" class="form-control mt-2" id="customPollDate" name="custom_poll_date" style="display: none;">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <!-- Manual Meal Input (Always visible) -->
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <label for="manualMealName" class="form-label">Meal Name *</label>
-                                                <input type="text" class="form-control" id="manualMealName" placeholder="e.g., Chicken Adobo" required>
+                            <form id="editPollDeadlineForm">
+                                <input type="hidden" id="editPollId" name="poll_id">
+                                <div class="mb-4">
+                                    <label class="form-label">Poll Information (Read-only)</label>
+                                    <div class="card bg-light mb-3 poll-info-card">
+                                        <div class="card-body d-flex flex-column flex-md-row align-items-center justify-content-between">
+                                            <div>
+                                                <h6 id="editPollMealName" class="card-title mb-1">-</h6>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-calendar"></i> <span id="editPollDate">-</span>
+                                                </small>
                                             </div>
-                                            <!-- Remove the ingredients input field below -->
-                                            <!--
-                                            <div class="col-md-6">
-                                                <label for="manualMealIngredients" class="form-label">Ingredients</label>
-                                                <input type="text" class="form-control" id="manualMealIngredients" placeholder="e.g., Chicken, soy sauce, vinegar">
+                                            <div class="mt-2 mt-md-0">
+                                                <small class="text-muted text-capitalize">
+                                                    <i class="bi bi-clock"></i> <span id="editPollMealType">-</span>
+                                                </small>
                                             </div>
-                                            -->
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-3">
+                                <div class="row mb-4">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label for="editDeadlineDate" class="form-label">Deadline Date</label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="editDeadlineDate" name="deadline_date">
+                                                <option value="{{ date('Y-m-d') }}">Today ({{ date('M j') }})</option>
+                                                <option value="{{ date('Y-m-d', strtotime('+1 day')) }}">Tomorrow ({{ date('M j', strtotime('+1 day')) }})</option>
+                                                <option value="{{ date('Y-m-d', strtotime('+2 days')) }}">{{ date('M j', strtotime('+2 days')) }}</option>
+                                                <option value="{{ date('Y-m-d', strtotime('+3 days')) }}">{{ date('M j', strtotime('+3 days')) }})</option>
+                                                <option value="custom">Custom Date...</option>
+                                            </select>
+                                            <button class="btn btn-outline-secondary" type="button" id="editCustomDateBtn">
+                                                <i class="bi bi-calendar"></i> Custom
+                                            </button>
+                                        </div>
+                                        <input type="date" class="form-control mt-2" id="editCustomDate" name="custom_date" style="display: none;">
+                                    </div>
                                     <div class="col-md-6">
-                                        <label for="pollDeadlineTime" class="form-label">Response Deadline</label>
-                                        <select class="form-select" id="pollDeadlineTime" name="deadline_time">
+                                        <label for="editDeadlineTime" class="form-label">Deadline Time</label>
+                                        <select class="form-select" id="editDeadlineTime" name="deadline_time">
                                             <option value="9:00 AM">9:00 AM</option>
                                             <option value="10:00 AM">10:00 AM</option>
                                             <option value="11:00 AM">11:00 AM</option>
@@ -270,88 +111,250 @@
                                             <option value="6:00 PM">6:00 PM</option>
                                             <option value="7:00 PM">7:00 PM</option>
                                             <option value="8:00 PM">8:00 PM</option>
-                                            <option value="9:00 PM" selected>9:00 PM</option>
+                                            <option value="9:00 PM">9:00 PM</option>
                                             <option value="10:00 PM">10:00 PM</option>
                                             <option value="11:00 PM">11:00 PM</option>
                                             <option value="custom">Custom Time</option>
                                         </select>
-                                        <div class="mt-2" id="customDeadlineContainer" style="display: none;">
-                                            <input type="time" class="form-control" id="customDeadline" name="custom_deadline" placeholder="Custom deadline time">
-                                        </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">&nbsp;</label>
-                                        <button type="submit" class="btn btn-primary d-block w-100" id="createPollBtn">
-                                            <i class="bi bi-plus"></i> Create Poll
-                                        </button>
-                                    </div>
+                                </div>
+                                <div class="mb-3" id="editCustomTimeContainer" style="display: none;">
+                                    <label for="editCustomDeadlineTime" class="form-label">Custom Deadline Time</label>
+                                    <input type="time" class="form-control" id="editCustomDeadlineTime" name="custom_deadline">
                                 </div>
                             </form>
                         </div>
-                    </div>
-
-                    <!-- Active Polls Management -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <label for="dateFilter" class="form-label">Filter by Date</label>
-                            <select class="form-select" id="dateFilter">
-                                <option value="">All Dates</option>
-                                <option value="{{ date('Y-m-d') }}">Today ({{ date('M j') }})</option>
-                                <option value="{{ date('Y-m-d', strtotime('+1 day')) }}">Tomorrow ({{ date('M j', strtotime('+1 day')) }})</option>
-                                <option value="custom">Custom Date...</option>
-                            </select>
-                            <input type="date" class="form-control mt-2" id="customDateFilter" style="display: none;">
-                        </div>
-                        <div class="col-md-3">
-                            <label for="mealTypeFilter" class="form-label">Filter by Meal Type</label>
-                            <select class="form-select" id="mealTypeFilter">
-                                <option value="">All Meal Types</option>
-                                <option value="breakfast">Breakfast</option>
-                                <option value="lunch">Lunch</option>
-                                <option value="dinner">Dinner</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="urgencyFilter" class="form-label">Filter by Urgency</label>
-                            <select class="form-select" id="urgencyFilter">
-                                <option value="">All Polls</option>
-                                <option value="urgent">🔴 Urgent (Deadline < 2 hours)</option>
-                                <option value="soon">🟡 Soon (Deadline < 6 hours)</option>
-                                <option value="normal">🟢 Normal (Deadline > 6 hours)</option>
-                            </select>
+                        <div class="modal-footer d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary rounded-pill px-4" id="savePollDeadlineBtn">
+                                <i class="bi bi-check-circle"></i> Update Deadline
+                            </button>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Menu Polls Table -->
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="35%">Meal Details</th>
-                                    <th width="15%">Date & Type</th>
-                                    <th width="15%">Poll Status</th>
-                                    <th width="15%">Responses</th>
-                                    <th width="20%">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="preOrdersTableBody">
-                                <!-- Dynamic content will be loaded here -->
-                            </tbody>
-                        </table>
-                    </div>
+            <!-- Weekly Meal Selection Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card main-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title">Menu Polling for Students</h5>
+                            @if(!isset($waitingForCook) || !$waitingForCook)
+                           
+                            @endif
+                        </div>
+                        <div class="card-body">
+                            @if(isset($waitingForCook) && $waitingForCook)
+                                <!-- No Meals Created Yet -->
+                                <div class="text-center py-5">
+                                    <div class="mb-4">
+                                        <i class="bi bi-chef-hat display-1 text-muted"></i>
+                                    </div>
+                                    <h4 class="text-muted">No Meals Created Yet</h4>
+                                    <p class="text-muted">
+                                        No meals have been created in the system yet.<br>
+                                        The system starts completely empty - no pre-populated data.
+                                    </p>
+                                    <div class="alert alert-info mt-3">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <strong>Getting Started:</strong> The cook needs to create meals for different days and week cycles first. Once meals are created, you can create polls for students.
+                                    </div>
+                                    <div class="alert alert-warning mt-3">
+                                        <i class="bi bi-lightbulb me-2"></i>
+                                        <strong>How it works:</strong>
+                                        <ol class="text-start mt-2 mb-0">
+                                            <li><strong>Cook creates meals</strong> for each day and week cycle</li>
+                                            <li><strong>Kitchen creates polls</strong> from those meals</li>
+                                            <li><strong>Students respond</strong> to polls</li>
+                                            <li><strong>Kitchen prepares</strong> based on responses</li>
+                                        </ol>
+                                    </div>
+                                    <div class="mt-3">
+                                        <button class="btn btn-outline-primary" onclick="window.location.reload()">
+                                            <i class="bi bi-arrow-clockwise"></i> Check Again
+                                        </button>
+                                        <a href="{{ route('cook.menu.index') }}" class="btn btn-outline-success ms-2">
+                                            <i class="bi bi-plus-circle"></i> Create Meals (Cook Interface)
+                                        </a>
+                                    </div>
+                                </div>
+                            @elseif(isset($noMenuForToday) && $noMenuForToday)
+                                <!-- No Menu for Today's Cycle -->
+                                <div class="text-center py-5">
+                                    <div class="mb-4">
+                                        <i class="bi bi-chef-hat display-1 text-muted"></i>
+                                    </div>
+                                    <h4 class="text-muted">No Menu for Today's Cycle</h4>
+                                    <p class="text-muted">
+                                        No meals have been created for <strong>{{ ucfirst($currentDay ?? 'today') }}</strong> in <strong>Week {{ $currentWeekCycle ?? 'current' }}</strong> yet.
+                                    </p>
+                                    <div class="alert alert-info mt-3">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <strong>Next Steps:</strong> The cook needs to create meals for today's menu cycle first. Once meals are created, you can create polls for students.
+                                    </div>
+                                    <div class="alert alert-warning mt-3">
+                                        <i class="bi bi-lightbulb me-2"></i>
+                                        <strong>How it works:</strong>
+                                        <ol class="text-start mt-2 mb-0">
+                                            <li><strong>Cook creates meals</strong> for each day and week cycle</li>
+                                            <li><strong>Kitchen creates polls</strong> from those meals</li>
+                                            <li><strong>Students respond</strong> to polls</li>
+                                            <li><strong>Kitchen prepares</strong> based on responses</li>
+                                        </ol>
+                                    </div>
+                                    <div class="mt-3">
+                                        <button class="btn btn-outline-primary" onclick="window.location.reload()">
+                                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                                        </button>
+                                      
+                                    </div>
+                                </div>
+                            @else
+                               
+                          
 
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
-                        <button type="button" class="btn btn-outline-secondary me-2" onclick="loadPolls()">
-                            <i class="bi bi-arrow-clockwise me-1"></i> Refresh
-                        </button>
-                        <button type="button" class="btn btn-success" onclick="sendAllActivePolls()">
-                            <i class="bi bi-send me-1"></i> Send All Polls (Same Time)
-                        </button>
+
+                            <!-- Create Poll from Cook's Menu -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6 class="card-title mb-0">
+                                        <i class="bi bi-calendar-plus me-2"></i>Create Poll from Cook's Menu
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                   
+                                    <form id="createPollForm">
+                                       
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label for="pollMealType" class="form-label">Meal Type</label>
+                                                <select class="form-select" id="pollMealType" name="meal_type" required>
+                                                    <option value="">Select Meal Type</option>
+                                                    <option value="breakfast">Breakfast</option>
+                                                    <option value="lunch">Lunch</option>
+                                                    <option value="dinner">Dinner</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="pollDate" class="form-label">Poll Date</label>
+                                                <select class="form-select" id="pollDate" name="poll_date" required>
+                                                    <option value="today">Today</option>
+                                                    <option value="tomorrow">Tomorrow</option>
+                                                    <option value="custom">Custom Date...</option>
+                                                </select>
+                                                <input type="date" class="form-control mt-2" id="customPollDate" name="custom_poll_date" style="display: none;">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <!-- Manual Meal Input (Always visible) -->
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <label for="manualMealName" class="form-label">Meal Name *</label>
+                                                        <input type="text" class="form-control" id="manualMealName" placeholder="e.g., Chicken Adobo" required>
+                                                    </div>
+                                                    <!-- Remove the ingredients input field below -->
+                                                    <!--
+                                                    <div class="col-md-6">
+                                                        <label for="manualMealIngredients" class="form-label">Ingredients</label>
+                                                        <input type="text" class="form-control" id="manualMealIngredients" placeholder="e.g., Chicken, soy sauce, vinegar">
+                                                    </div>
+                                                    -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-6">
+                                                <label for="pollDeadlineTime" class="form-label">Response Deadline</label>
+                                                <select class="form-select" id="pollDeadlineTime" name="deadline_time">
+                                                    <option value="9:00 AM">9:00 AM</option>
+                                                    <option value="10:00 AM">10:00 AM</option>
+                                                    <option value="11:00 AM">11:00 AM</option>
+                                                    <option value="12:00 PM">12:00 PM (Noon)</option>
+                                                    <option value="1:00 PM">1:00 PM</option>
+                                                    <option value="2:00 PM">2:00 PM</option>
+                                                    <option value="3:00 PM">3:00 PM</option>
+                                                    <option value="4:00 PM">4:00 PM</option>
+                                                    <option value="5:00 PM">5:00 PM</option>
+                                                    <option value="6:00 PM">6:00 PM</option>
+                                                    <option value="7:00 PM">7:00 PM</option>
+                                                    <option value="8:00 PM">8:00 PM</option>
+                                                    <option value="9:00 PM" selected>9:00 PM</option>
+                                                    <option value="10:00 PM">10:00 PM</option>
+                                                    <option value="11:00 PM">11:00 PM</option>
+                                                    <option value="custom">Custom Time</option>
+                                                </select>
+                                                <div class="mt-2" id="customDeadlineContainer" style="display: none;">
+                                                    <input type="time" class="form-control" id="customDeadline" name="custom_deadline" placeholder="Custom deadline time">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">&nbsp;</label>
+                                                <button type="submit" class="btn btn-primary d-block w-100" id="createPollBtn">
+                                                    <i class="bi bi-plus"></i> Create Poll
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Active Polls Management -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="dateFilter" class="form-label">Filter by Date</label>
+                                    <select class="form-select" id="dateFilter">
+                                        <option value="">All Dates</option>
+                                        <option value="{{ date('Y-m-d') }}">Today ({{ date('M j') }})</option>
+                                        <option value="{{ date('Y-m-d', strtotime('+1 day')) }}">Tomorrow ({{ date('M j', strtotime('+1 day')) }})</option>
+                                        <option value="custom">Custom Date...</option>
+                                    </select>
+                                    <input type="date" class="form-control mt-2" id="customDateFilter" style="display: none;">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="mealTypeFilter" class="form-label">Filter by Meal Type</label>
+                                    <select class="form-select" id="mealTypeFilter">
+                                        <option value="">All Meal Types</option>
+                                        <option value="breakfast">Breakfast</option>
+                                        <option value="lunch">Lunch</option>
+                                        <option value="dinner">Dinner</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="urgencyFilter" class="form-label">Filter by Urgency</label>
+                                    <select class="form-select" id="urgencyFilter">
+                                        <option value="">All Polls</option>
+                                        <option value="urgent">🔴 Urgent (Deadline < 2 hours)</option>
+                                        <option value="soon">🟡 Soon (Deadline < 6 hours)</option>
+                                        <option value="normal">🟢 Normal (Deadline > 6 hours)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Polls Display with Expiry Design -->
+                            <div id="pollsContainer">
+                                <div class="text-center py-3">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading polls...</span>
+                                    </div>
+                                    <p class="mt-2 text-muted">Loading polls...</p>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="loadPolls()">
+                                    <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                                </button>
+                                <button type="button" class="btn btn-success" onclick="sendAllActivePolls()">
+                                    <i class="bi bi-send me-1"></i> Send All Polls
+                                </button>
+                            </div>
+                            @endif
+                        </div>
                     </div>
-                    @endif
                 </div>
             </div>
         </div>
+
     </div>
 
 @endsection
@@ -364,6 +367,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize date/time display
     updateDateTime();
     setInterval(updateDateTime, 1000);
+
+    // Check for expired polls on page load
+    checkExpiredPolls();
 
     // Initialize poll creation form
     initializePollForm();
@@ -443,7 +449,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Utility function to clean up any stuck modal backdrops
     cleanupStuckBackdrops();
 
-    let lastDateString = '';
     function updateDateTimeHeader() {
         const now = new Date();
         const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
@@ -452,9 +457,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const dateString = now.toLocaleDateString('en-US', dateOptions);
         const dateEl = document.getElementById('currentDate');
         const timeEl = document.getElementById('currentTime');
-        if (dateEl && lastDateString !== dateString) {
+        if (dateEl) {
             dateEl.textContent = dateString;
-            lastDateString = dateString;
         }
         if (timeEl) timeEl.textContent = timeString;
         console.log('DateTime script running:', dateString, timeString);
@@ -520,7 +524,7 @@ function formatDeadlineTime(deadline, pollDate) {
         return 'Not set';
     }
 
-    console.log('� SIMPLE 12H FORMAT - Deadline:', deadline);
+    console.log(' SIMPLE 12H FORMAT - Deadline:', deadline);
 
     try {
         let timeString, dateString;
@@ -1005,58 +1009,17 @@ function createNewPoll() {
     const form = document.getElementById('createPollForm');
     const formData = new FormData(form);
 
-    // Get form values
-    const mealType = formData.get('meal_type');
-    const pollDate = formData.get('poll_date');
-    const customPollDate = formData.get('custom_poll_date');
-    const mealName = document.getElementById('manualMealName').value.trim();
-    // const mealIngredients = document.getElementById('manualMealIngredients').value.trim(); // REMOVE THIS LINE
-    const deadlineTime = formData.get('deadline_time');
-    const customDeadline = formData.get('custom_deadline');
-
-    console.log(' Form data collected:', {
-        mealType,
-        pollDate,
-        customPollDate,
-        mealName,
-        // mealIngredients, // REMOVE THIS LINE
-        deadlineTime,
-        customDeadline
-    });
-
-    // Determine the actual poll date
-    let actualPollDate;
-    if (pollDate === 'today') {
-        actualPollDate = new Date().toISOString().split('T')[0];
-    } else if (pollDate === 'tomorrow') {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        actualPollDate = tomorrow.toISOString().split('T')[0];
-    } else if (pollDate === 'custom') {
-        actualPollDate = customPollDate;
-    }
-
-    // Get final deadline time
-    const finalTime = deadlineTime === 'custom' ? customDeadline : deadlineTime;
-
-    console.log('📅 Processed data:', {
-        actualPollDate,
-        finalTime
-    });
-
     const pollData = {
-        meal_type: mealType,
-        poll_date: actualPollDate,
-        deadline: finalTime,
-        manual_meal: {
-            name: mealName
-            // ingredients: mealIngredients // REMOVE THIS LINE
-        }
+        meal_type: formData.get('meal_type'),
+        poll_date: formData.get('poll_date'),
+        custom_poll_date: formData.get('custom_poll_date'),
+        deadline_time: formData.get('deadline_time'),
+        custom_deadline: formData.get('custom_deadline'),
+        manual_meal_name: document.getElementById('manualMealName').value.trim(),
     };
 
     console.log('🚀 Poll data to send:', pollData);
 
-    // Check CSRF token
     const csrfToken = document.querySelector('meta[name="csrf-token"]');
 
     fetch('/kitchen/pre-orders/create-poll', {
@@ -1174,86 +1137,152 @@ function loadPolls() {
 }
 
 function updatePreOrdersTable(polls) {
-    const tableBody = document.getElementById('preOrdersTableBody');
-    if (!tableBody) return;
+    const container = document.getElementById('pollsContainer');
+    if (!container) return;
 
-    console.log('=== UPDATE TABLE DEBUG ===');
+    console.log('=== UPDATE POLLS DISPLAY DEBUG ===');
     console.log('Polls received:', polls);
 
     if (!polls || polls.length === 0) {
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="5" class="text-center py-4">
-                    <i class="bi bi-inbox display-4 text-muted"></i>
-                    <p class="text-muted mt-2">No menu polls found. Create a new poll to get started.</p>
-                </td>
-            </tr>
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-inbox display-4 text-muted"></i>
+                <p class="text-muted mt-2">No menu polls found. Create a new poll to get started.</p>
+            </div>
         `;
         return;
     }
 
-    let html = '';
-    polls.forEach((poll, index) => {
-        console.log(`Poll ${index}:`, {
-            id: poll.id,
-            meal_name: poll.meal_name,
-            deadline: poll.deadline,
-            poll_date: poll.poll_date
-        });
+    // Split polls into active, expired, finished, and draft sections
+    const now = new Date();
+    const active = [];
+    const expired = [];
+    const finished = [];
+    const draft = [];
 
+    polls.forEach(poll => {
+        if (poll.status === 'draft') {
+            draft.push(poll);
+        } else if (poll.status === 'finished') {
+            finished.push(poll);
+        } else if (poll.status === 'expired') {
+            expired.push(poll);
+        } else if (poll.deadline) {
+            const deadline = new Date(poll.deadline);
+            if (deadline < now && (poll.status === 'active' || poll.status === 'sent')) {
+                // Mark as expired if deadline passed but status is still active
+                expired.push(poll);
+            } else {
+                active.push(poll);
+            }
+        } else {
+            active.push(poll); // No deadline set, consider active
+        }
+    });
+
+    let html = '';
+    
+    // Active Polls Section
+    html += `<h5 class="mb-3 text-success"><i class="bi bi-clock me-2"></i>Active Polls</h5>`;
+    html += renderPollSection(active, 'No active polls!');
+
+    // Draft Polls Section
+    html += `<h5 class="mb-3 text-warning mt-4"><i class="bi bi-pencil me-2"></i>Draft Polls</h5>`;
+    html += renderPollSection(draft, 'No draft polls!');
+
+    // Finished Polls Section
+    html += `<h5 class="mb-3 text-info mt-4"><i class="bi bi-check-circle me-2"></i>Finished Polls</h5>`;
+    html += renderPollSection(finished, 'No finished polls!');
+
+    // Expired Polls Section
+    html += `<h5 class="mb-3 text-danger mt-4"><i class="bi bi-x-octagon me-2"></i>Expired Polls</h5>`;
+    html += renderPollSection(expired, 'No expired polls!');
+
+    container.innerHTML = html;
+}
+
+function renderPollSection(polls, emptyMsg) {
+    if (!polls || polls.length === 0) {
+        return `<div class='text-center text-muted mb-4'><i class='bi bi-inbox'></i> ${emptyMsg}</div>`;
+    }
+    
+    let html = '<div class="row">';
+    polls.forEach(poll => {
+        const formattedDeadline = formatDeadlineTime(poll.deadline, poll.poll_date);
         const statusBadge = getStatusBadge(poll.status);
         const responseCount = poll.responses_count || 0;
         const totalStudents = poll.total_students || 0;
-
-        const formattedDeadline = formatDeadlineTime(poll.deadline, poll.poll_date);
-        console.log(`Formatted deadline for poll ${poll.id}:`, formattedDeadline);
-
+        
         html += `
-            <tr class="poll-item"
-                data-poll-created="${poll.created_at || new Date().toISOString()}"
-                data-poll-id="${poll.id}"
-                data-poll-status="${poll.status}"
-                data-response-count="${responseCount}">
-                <td>
-                    <div class="fw-bold">${poll.meal_name || 'Unknown Meal'}</div>
-                    <small class="text-muted">${Array.isArray(poll.ingredients) ? poll.ingredients.join(', ') : (poll.ingredients || 'No ingredients listed')}</small>
-                    <div class="mt-1">
-                        <small class="text-info">
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100 ${poll.status === 'draft' ? 'border-warning' : (poll.deadline && new Date(poll.deadline) < new Date() ? 'border-danger' : 'border-success')}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="card-title text-primary">${poll.meal_name || 'Unknown Meal'}</h6>
+                            ${statusBadge}
+                        </div>
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-calendar"></i> ${formatPollDate(poll.poll_date)}
+                            <span class="badge bg-secondary ms-1">${poll.meal_type || 'Unknown'}</span>
+                        </p>
+                        <p class="text-warning small mb-2">
                             <i class="bi bi-clock"></i> Deadline: ${formattedDeadline}
-                        </small>
-                        ${poll.urgency_badge ? `
-                            <div class="mt-1">
-                                <span class="badge ${poll.urgency_badge} badge-sm">${poll.urgency_text}</span>
-                                <small class="text-muted ms-1">(${poll.hours_until_deadline})</small>
-                            </div>
-                        ` : ''}
+                        </p>
+                        <p class="text-info small mb-3">
+                            <i class="bi bi-people"></i> Responses: ${responseCount}/${totalStudents}
+                        </p>
+                        ${getPollActionButtons(poll)}
                     </div>
-                </td>
-                <td class="text-center">
-                    <div class="fw-bold">${formatPollDate(poll.poll_date)}</div>
-                    <small class="text-muted text-capitalize">${poll.meal_type || 'Unknown'}</small>
-                </td>
-                <td class="text-center">
-                    ${statusBadge}
-                </td>
-                <td class="text-center">
-                    <div class="fw-bold text-primary">${responseCount}/${totalStudents}</div>
-                    <small class="text-muted">responses</small>
-                </td>
-                <td class="text-center">
-                    <div class="btn-group-vertical" role="group">
-                        <button type="button" class="btn btn-sm btn-outline-primary mb-1"
-                                onclick="editPollDeadline('${poll.id}', '${poll.meal_name}', '${poll.deadline}')">
-                            <i class="bi bi-clock"></i> Edit Deadline
-                        </button>
-                        ${getPollActionButton(poll)}
-                    </div>
-                </td>
-            </tr>
+                </div>
+            </div>
         `;
     });
+    html += '</div>';
+    return html;
+}
 
-    tableBody.innerHTML = html;
+function getPollActionButtons(poll) {
+    let buttons = '';
+
+    // View Results button is available for all except drafts
+    if (poll.status !== 'draft') {
+        buttons += `
+            <button type="button" class="btn btn-sm btn-outline-info mb-2"
+                    onclick="viewPollResults('${poll.id}', '${poll.meal_name}')">
+                <i class="bi bi-graph-up"></i> View Results
+            </button>
+        `;
+    }
+
+    // Edit Deadline button is available for drafts and active polls
+    if (poll.status === 'draft' || poll.status === 'active' || poll.status === 'sent') {
+        buttons += `
+            <button type="button" class="btn btn-sm btn-outline-primary mb-2"
+                    onclick="editPollDeadline('${poll.id}', '${poll.meal_name}', '${poll.poll_date}', '${poll.meal_type}', '${poll.ingredients}', '${poll.deadline}')">
+                <i class="bi bi-clock"></i> Edit Deadline
+            </button>
+        `;
+    }
+    
+    // Send button is only for drafts
+    if (poll.status === 'draft') {
+        buttons += `
+            <button type="button" class="btn btn-sm btn-success mb-2"
+                    onclick="sendPollToStudents('${poll.id}', '${poll.meal_name}')">
+                <i class="bi bi-send"></i> Send to Students
+            </button>
+        `;
+    }
+
+    // Delete button is available for all statuses
+    buttons += `
+        <button type="button" class="btn btn-sm btn-outline-danger"
+                onclick="deletePoll('${poll.id}', '${poll.meal_name}')">
+            <i class="bi bi-trash"></i> Delete
+        </button>
+    `;
+
+    return `<div class="d-grid gap-2">${buttons}</div>`;
 }
 
 function getStatusBadge(status) {
@@ -1301,10 +1330,41 @@ function getPollActionButton(poll) {
                             title="See how many students will eat this meal">
                         <i class="bi bi-bar-chart"></i> View Results
                     </button>
+                    <button type="button" class="btn btn-sm btn-outline-success"
+                            onclick="finishPoll('${poll.id}', '${poll.meal_name}')"
+                            title="Mark this poll as finished">
+                        <i class="bi bi-check-square"></i> Finish
+                    </button>
                     <button type="button" class="btn btn-sm btn-outline-danger"
                             onclick="deletePoll('${poll.id}', '${poll.meal_name}')"
                             title="Delete this poll and all student responses">
                         <i class="bi bi-trash"></i> Delete
+                    </button>
+                </div>
+            `;
+        case 'finished':
+            return `
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-info"
+                            onclick="viewPollResults('${poll.id}', '${poll.meal_name}')"
+                            title="See poll results">
+                        <i class="bi bi-bar-chart"></i> View Results
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled>
+                        <i class="bi bi-check-circle"></i> Finished
+                    </button>
+                </div>
+            `;
+        case 'expired':
+            return `
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-info"
+                            onclick="viewPollResults('${poll.id}', '${poll.meal_name}')"
+                            title="See poll results">
+                        <i class="bi bi-bar-chart"></i> View Results
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning" disabled>
+                        <i class="bi bi-clock-history"></i> Expired
                     </button>
                 </div>
             `;
@@ -1361,6 +1421,56 @@ function sendPollToStudents(pollId, mealName) {
     .catch(error => {
         console.error('Error:', error);
         showToast('Error sending poll to students', 'error');
+    });
+}
+
+function finishPoll(pollId, mealName) {
+    if (!confirm(`Mark poll for "${mealName}" as finished?\n\nThis will close the poll and prevent further student responses.`)) {
+        return;
+    }
+
+    fetch('/kitchen/pre-orders/finish-poll', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            poll_id: pollId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`Poll for "${mealName}" marked as finished`, 'success');
+            loadPolls(); // Reload the table to update poll status
+        } else {
+            showToast(data.message || 'Failed to finish poll', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error finishing poll', 'error');
+    });
+}
+
+function checkExpiredPolls() {
+    fetch('/kitchen/pre-orders/check-expired-polls', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.expired_count > 0) {
+            console.log(`Updated ${data.expired_count} expired polls`);
+            loadPolls(); // Reload polls to show updated statuses
+        }
+    })
+    .catch(error => {
+        console.error('Error checking expired polls:', error);
     });
 }
 
@@ -1435,10 +1545,7 @@ function showResultsModal(pollId, mealName, results, isLoading) {
                                 <p class="mt-2">Loading poll results...</p>
                             </div>
                         ` : `
-                            <div class="alert alert-info">
-                                <i class="bi bi-info-circle me-2"></i>
-                                <strong>Purpose:</strong> This shows how many students plan to eat this meal, helping you prepare the right amount of food.
-                            </div>
+                           
 
                             ${results ? `
                                 <div class="row">
@@ -1482,7 +1589,7 @@ function showResultsModal(pollId, mealName, results, isLoading) {
                             `}
                         `}
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer poll-results-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         ${!isLoading && results ? `
                             <button type="button" class="btn btn-primary" onclick="refreshPollResults('${pollId}', '${mealName}')">
@@ -1624,32 +1731,36 @@ function closeAllModals() {
 }
 
 function deletePoll(pollId, mealName) {
-    // Show confirmation dialog with warning about student responses
-    if (!confirm(`Are you sure you want to delete the poll for "${mealName}"?\n\n⚠️ WARNING: This will also delete all student responses to this poll.\n\nThis action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete the poll for "${mealName}"? This action cannot be undone.`)) {
         return;
     }
 
-    console.log('Deleting poll:', pollId, mealName);
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
 
     fetch(`/kitchen/pre-orders/delete-poll/${pollId}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            'X-CSRF-TOKEN': csrfToken ? csrfToken.content : ''
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (response.ok) {
+            return response.json().catch(() => ({ success: true, message: 'Poll deleted successfully.' }));
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
-            showToast(`Poll for "${mealName}" deleted successfully`, 'success');
-            loadPolls(); // Reload the polls table
+            showToast(data.message || 'Poll deleted successfully!', 'success');
+            loadPolls();
         } else {
-            showToast(data.message || 'Failed to delete poll', 'error');
+            showToast(data.message || 'Failed to delete poll.', 'error');
         }
     })
     .catch(error => {
         console.error('Error deleting poll:', error);
-        showToast('Error deleting poll: ' + error.message, 'error');
+        showToast('An error occurred while deleting the poll.', 'error');
     });
 }
 
@@ -1983,7 +2094,7 @@ function updateDailyMenuStatusDisplay(menuUpdates) {
         container.innerHTML = `
             <div class="col-12 text-center">
                 <p class="text-muted">No menu items for today. Cook needs to create today's menu first.</p>
-            </div>
+
         `;
         return;
     }
@@ -1994,8 +2105,7 @@ function updateDailyMenuStatusDisplay(menuUpdates) {
         html += `
             <div class="col-md-4 mb-3">
                 <div class="card border-${statusColor}">
-                    <div class="card-body">
-                        <h6 class="card-title text-capitalize">${item.meal_type}</h6>
+                            <div id="pollHistoryContent">
                         <p class="card-text">
                             <strong>${item.meal_name}</strong><br>
                             <small class="text-muted">${Array.isArray(item.ingredients) ? item.ingredients.join(', ') : (item.ingredients || 'No ingredients listed')}</small>
@@ -2330,9 +2440,8 @@ function updateDateTimeHeader() {
     const dateString = now.toLocaleDateString('en-US', dateOptions);
     const dateEl = document.getElementById('currentDate');
     const timeEl = document.getElementById('currentTime');
-    if (dateEl && lastDateString !== dateString) {
+    if (dateEl) {
         dateEl.textContent = dateString;
-        lastDateString = dateString;
     }
     if (timeEl) timeEl.textContent = timeString;
 }
@@ -2354,19 +2463,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
 @push('styles')
 <style>
-    /* Force modals and backdrops to always be above the header */
-    .modal-backdrop {
-        z-index: 99998 !important;
+    /* Force modals and backdrops to always be above any other content */
+    .modal-backdrop.show {
+        z-index: 1050 !important;
     }
-    .modal {
-        z-index: 99999 !important;
+    #pollResultsModal.show {
+        z-index: 1060 !important;
     }
+
     /* Match modal header/footer style to poll results modal */
     .modal-header.bg-info {
         background: #22bbea !important;
         color: #fff !important;
         border-top-left-radius: 0.5rem;
         border-top-right-radius: 0.5rem;
+        z-index: 99999 !important;
     }
     .modal-footer {
         background: #f8f9fa;
@@ -2409,5 +2520,12 @@ document.addEventListener('DOMContentLoaded', function() {
     .date-time-block { text-align: center; }
     .date-line { font-size: 1.15rem; font-weight: 500; }
     .time-line { font-size: 1rem; font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace; }
+    .poll-results-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
 </style>
 @endpush
+

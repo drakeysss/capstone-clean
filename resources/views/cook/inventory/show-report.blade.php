@@ -33,13 +33,13 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <p><strong>Report ID:</strong> #{{ $report->id }}</p>
+                           
                             <p><strong>Submitted by:</strong> {{ $report->user->name ?? 'Kitchen Staff' }}</p>
                             <p><strong>Submission Date:</strong> {{ $report->created_at->format('M d, Y \a\t g:i A') }}</p>
                         </div>
                         <div class="col-md-6">
                             <p><strong>Total Items:</strong> {{ $report->items->count() }}</p>
-                            <p><strong>Items Needing Restock:</strong> {{ $report->items->where('needs_restock', true)->count() }}</p>
+                            
                             <p><strong>Status:</strong>
                                 @if($report->approved_at)
                                     <span class="badge bg-success">Approved</span>
@@ -62,22 +62,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Quick Stats</h5>
-                </div>
-                <div class="card-body text-center">
-                    <div class="row">
-                        <div class="col-6">
-                            <h3 class="text-success">{{ $report->items->where('needs_restock', false)->count() }}</h3>
-                            <small class="text-muted">In Stock</small>
-                        </div>
-                        <div class="col-6">
-                            <h3 class="text-warning">{{ $report->items->where('needs_restock', true)->count() }}</h3>
-                            <small class="text-muted">Need Restock</small>
-                        </div>
-                    </div>
+      
                 </div>
             </div>
         </div>
@@ -190,8 +175,8 @@
                                     <th>Item Name</th>
                                     <th>Current Stock</th>
                                     <th>Status</th>
-                                    <th>Notes</th>
-                                    <th>Actions</th>
+                                    
+                                   
                                 </tr>
                             </thead>
                             <tbody>
@@ -221,19 +206,10 @@
                                         @endif
                                     </td>
                                     <td>
-                                        @if($item->notes)
-                                            <span class="text-muted">{{ $item->notes }}</span>
-                                        @else
-                                            <span class="text-muted">No notes</span>
-                                        @endif
+                                       
                                     </td>
                                     <td>
-                                        @if($item->ingredient)
-                                            <button type="button" class="btn btn-sm btn-outline-primary"
-                                                    onclick="updateInventory({{ $item->ingredient->id }}, '{{ $item->ingredient->name }}', {{ $item->current_stock }})">
-                                                <i class="bi bi-pencil me-1"></i>Update Inventory
-                                            </button>
-                                        @endif
+                                       
                                     </td>
                                 </tr>
                                 @empty
@@ -253,41 +229,6 @@
     </div>
 </div>
 
-<!-- Update Inventory Modal -->
-<div class="modal fade" id="updateInventoryModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Update Inventory Item</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST" id="updateInventoryForm">
-                @csrf
-                @method('PUT')
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="update_item_name" class="form-label">Item Name</label>
-                        <input type="text" class="form-control" id="update_item_name" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label for="update_quantity" class="form-label">New Quantity *</label>
-                        <input type="number" step="0.01" class="form-control" id="update_quantity" name="quantity" required>
-                        <small class="text-muted">Enter the corrected quantity based on kitchen report</small>
-                    </div>
-                    <div class="mb-3">
-                        <label for="update_reorder_point" class="form-label">Reorder Point</label>
-                        <input type="number" step="0.01" class="form-control" id="update_reorder_point" name="reorder_point">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update Inventory</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <script>
 function updateInventory(itemId, itemName, currentStock) {
     document.getElementById('updateInventoryForm').action = `/cook/inventory/${itemId}`;
@@ -298,5 +239,20 @@ function updateInventory(itemId, itemName, currentStock) {
     modal.show();
 }
 </script>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const approvedAlert = document.querySelector('.alert-success');
+    if (approvedAlert) {
+        setTimeout(() => {
+            approvedAlert.style.transition = 'opacity 0.5s';
+            approvedAlert.style.opacity = '0';
+            setTimeout(() => approvedAlert.remove(), 500);
+        }, 3000);
+    }
+});
+</script>
+@endpush
 
 @endsection

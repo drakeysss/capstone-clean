@@ -2,17 +2,23 @@
 
 @section('content')
 <div class="container-fluid p-4">
-    <!-- Header Section -->
+    <!-- Enhanced Header Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="welcome-card">
-                <div class="welcome-content">
-                    <h2>Post Assessment</h2>
-                    <p class="text-muted" style="color: white;">Track and analyze leftover food to improve meal planning efficiency</p>
-                </div>
-                <div class="current-time">
-                    <i class="bi bi-clock"></i>
-                    <span id="currentDateTime"></span>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #22bbea, #1a9bd1);">
+                    <div>
+                        <h3 class="mb-1 fw-bold">
+                            <i class="bi bi-clipboard-data me-2"></i>Post-Meal Report
+                        </h3>
+                        <p class="mb-0 opacity-75">Track and analyze leftover food to improve meal planning efficiency</p>
+                    </div>
+                    <div class="text-end">
+                        <div id="currentDateTimeBlock" class="date-time-block">
+                            <div id="currentDate" class="date-line"></div>
+                            <div id="currentTime" class="time-line"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -46,7 +52,7 @@
                                     <i class="bi bi-funnel"></i> Filter
                                 </button>
                                 <a href="{{ route('cook.post-assessment') }}" class="btn btn-outline-secondary">
-                                    <i class="bi bi-arrow-clockwise"></i> Reset
+                                    <i class="bi bi-arrow-clockwise"></i> Clear
                                 </a>
                             </div>
                         </div>
@@ -56,173 +62,140 @@
         </div>
     </div>
 
-        <div class="col-12 mb-4">
-            <div class="card main-card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="card-title mb-1">
-                                <i class="bi bi-clipboard-data me-2"></i>
-                                Kitchen Leftover Reports
-                            </h5>
-                            <p class="text-muted mb-0">Reports submitted by kitchen team</p>
-                        </div>
-                        <div id="bulk-actions" style="display: none;">
-                            <button type="button" class="btn btn-danger btn-sm" id="bulk-delete-btn">
-                                <i class="bi bi-trash me-1"></i>
-                                Delete Selected (<span id="selected-count">0</span>)
-                            </button>
-                        </div>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div></div>
+    
+    </div>
+    <div class="col-12 mb-4">
+        <div class="card main-card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-1">
+                            <i class="bi bi-clipboard-data me-2"></i>
+                            Kitchen Leftover Reports
+                        </h5>
+                        <p class="text-muted mb-0">Reports submitted by kitchen team</p>
+                    </div>
+                    @if($assessments->count() > 0)
+            <button id="delete-all-btn" class="btn btn-danger">
+                <i class="bi bi-trash"></i> Delete All
+            </button>
+        @endif
+                    <div id="bulk-actions" style="display: none;">
                     </div>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="50">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="select-all-assessments">
-                                            <label class="form-check-label" for="select-all-assessments"></label>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Meal Type</th>
+                                <th>Food Items</th>
+                                <th>Submitted By</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($assessments as $assessment)
+                            <tr class="assessment-item"
+                                data-assessment-created="{{ $assessment->completed_at ? $assessment->completed_at->toISOString() : $assessment->created_at->toISOString() }}"
+                                data-assessment-id="{{ $assessment->id }}"
+                                data-meal-type="{{ $assessment->meal_type }}">
+                                <td>
+                                    <strong>{{ $assessment->date->format('M d, Y') }}</strong>
+                                    <br>
+                                    <span class="text-muted">{{ $assessment->completed_at ? $assessment->completed_at->format('g:i A') : $assessment->created_at->format('g:i A') }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge
+                                        @if($assessment->meal_type === 'breakfast') bg-warning
+                                        @elseif($assessment->meal_type === 'lunch') bg-primary
+                                        @else bg-info
+                                        @endif">
+                                        {{ ucfirst($assessment->meal_type) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @if($assessment->items && count($assessment->items) > 0)
+                                        <div class="d-flex flex-wrap gap-1">
+                                            @foreach(array_slice($assessment->items, 0, 3) as $item)
+                                                <span class="badge bg-light text-dark border">{{ $item['name'] ?? 'Unnamed' }}</span>
+                                            @endforeach
+                                            @if(count($assessment->items) > 3)
+                                                <span class="badge bg-secondary">+{{ count($assessment->items) - 3 }} more</span>
+                                            @endif
                                         </div>
-                                    </th>
-                                    <th>Date</th>
-                                    <th>Meal Type</th>
-                                    <th>Prepared</th>
-                                    <th>Leftover</th>
-                                    <th>Waste %</th>
-                                    <th>Submitted By</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($assessments as $assessment)
-                                <tr class="assessment-item"
-                                    data-assessment-created="{{ $assessment->completed_at ? $assessment->completed_at->toISOString() : $assessment->created_at->toISOString() }}"
-                                    data-assessment-id="{{ $assessment->id }}"
-                                    data-meal-type="{{ $assessment->meal_type }}"
-                                    data-waste-percentage="{{ $assessment->planned_portions > 0 ? round(($assessment->leftover_portions / $assessment->planned_portions) * 100, 1) : 0 }}">
-                                    <td>
-                                        <div class="form-check">
-                                            <input class="form-check-input assessment-checkbox" type="checkbox"
-                                                   value="{{ $assessment->id }}"
-                                                   id="assessment-{{ $assessment->id }}">
-                                            <label class="form-check-label" for="assessment-{{ $assessment->id }}"></label>
+                                    @else
+                                        <span class="text-muted">No items specified</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-person-circle me-2 text-muted"></i>
+                                        <div>
+                                            <strong>{{ $assessment->assessedBy->name ?? 'Kitchen Team' }}</strong>
                                         </div>
-                                    </td>
-                                    <td>
-                                        <strong>{{ $assessment->date->format('M d, Y') }}</strong>
-                                        <br>
-                                        <small class="text-muted">{{ $assessment->date->format('l') }}</small>
-                                    </td>
-                                    <td>
-                                        <span class="badge
-                                            @if($assessment->meal_type === 'breakfast') bg-warning
-                                            @elseif($assessment->meal_type === 'lunch') bg-primary
-                                            @else bg-info
-                                            @endif">
-                                            {{ ucfirst($assessment->meal_type) }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <strong>{{ number_format($assessment->planned_portions, 1) }}</strong>
-                                        <small class="text-muted">servings</small>
-                                    </td>
-                                    <td>
-                                        <strong>{{ number_format($assessment->leftover_portions, 1) }}</strong>
-                                        <small class="text-muted">servings</small>
-                                    </td>
-                                    <td>
-                                        @php
-                                            $wastePercentage = $assessment->planned_portions > 0
-                                                ? round(($assessment->leftover_portions / $assessment->planned_portions) * 100, 1)
-                                                : 0;
-                                        @endphp
-                                        <span class="badge
-                                            @if($wastePercentage < 10) bg-success
-                                            @elseif($wastePercentage < 20) bg-warning
-                                            @else bg-danger
-                                            @endif">
-                                            {{ $wastePercentage }}%
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-person-circle me-2 text-muted"></i>
-                                            <div>
-                                                <strong>{{ $assessment->assessedBy->name ?? 'Kitchen Team' }}</strong>
-                                                <br>
-                                                <small class="text-muted">{{ $assessment->completed_at->format('g:i A') }}</small>
-                                            </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-outline-primary view-report-btn"
+                                            data-id="{{ $assessment->id }}"
+                                            data-date="{{ $assessment->date->format('Y-m-d') }}"
+                                            data-meal-type="{{ $assessment->meal_type }}"
+                                            data-notes="{{ $assessment->notes }}"
+                                            data-image-path="{{ $assessment->image_path }}"
+                                            data-items="{{ $assessment->items ? json_encode($assessment->items) : '[]' }}"
+                                            data-submitted-by="{{ $assessment->assessedBy->name ?? 'Kitchen Team' }}"
+                                            data-submitted-at="{{ $assessment->completed_at->format('M d, Y g:i A') }}">
+                                            <i class="bi bi-eye"></i> View
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger delete-assessment-btn"
+                                            data-id="{{ $assessment->id }}"
+                                            data-date="{{ $assessment->date->format('Y-m-d') }}"
+                                            data-meal-type="{{ $assessment->meal_type }}"
+                                            data-submitted-by="{{ $assessment->assessedBy->name ?? 'Kitchen Team' }}">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <div class="mb-4">
+                                            <i class="bi bi-hourglass-split fs-1 text-muted"></i>
                                         </div>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <button type="button" class="btn btn-sm btn-outline-primary view-report-btn"
-                                                data-id="{{ $assessment->id }}"
-                                                data-date="{{ $assessment->date->format('Y-m-d') }}"
-                                                data-meal-type="{{ $assessment->meal_type }}"
-                                                data-prepared="{{ $assessment->planned_portions }}"
-                                                data-leftover="{{ $assessment->leftover_portions }}"
-                                                data-waste-percentage="{{ $wastePercentage }}"
-                                                data-notes="{{ $assessment->notes }}"
-                                                data-image-path="{{ $assessment->image_path }}"
-                                                data-submitted-by="{{ $assessment->assessedBy->name ?? 'Kitchen Team' }}"
-                                                data-submitted-at="{{ $assessment->completed_at->format('M d, Y g:i A') }}">
-                                                <i class="bi bi-eye"></i> View
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-warning edit-assessment-btn"
-                                                data-id="{{ $assessment->id }}"
-                                                data-date="{{ $assessment->date->format('Y-m-d') }}"
-                                                data-meal-type="{{ $assessment->meal_type }}"
-                                                data-total-prepared="{{ $assessment->planned_portions }}"
-                                                data-total-leftover="{{ $assessment->leftover_portions }}"
-                                                data-total-consumed="{{ $assessment->actual_portions_served }}"
-                                                data-notes="{{ $assessment->notes }}"
-                                                data-image-path="{{ $assessment->image_path }}"
-                                                title="Edit this assessment report">
-                                                <i class="bi bi-pencil"></i> Edit
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-danger delete-assessment-btn"
-                                                data-id="{{ $assessment->id }}"
-                                                data-date="{{ $assessment->date->format('M d, Y') }}"
-                                                data-meal-type="{{ ucfirst($assessment->meal_type) }}"
-                                                data-submitted-by="{{ $assessment->assessedBy->name ?? 'Kitchen Team' }}"
-                                                title="Delete this assessment report">
-                                                <i class="bi bi-trash"></i> Delete
-                                            </button>
+                                        <h4 class="text-muted">Waiting for Kitchen Reports</h4>
+                                        <p class="text-muted mb-4">
+                                            The kitchen team hasn't submitted any post-assessment reports yet.<br>
+                                            Reports will appear here once kitchen staff complete their assessments.
+                                        </p>
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle me-2"></i>
+                                            <strong>How it works:</strong>
+                                            <ol class="text-start mt-2 mb-0">
+                                                <li>Kitchen staff prepares meals</li>
+                                                <li>Kitchen assesses leftover food after service</li>
+                                                <li>Kitchen submits post-assessment reports</li>
+                                                <li>Cook reviews reports to optimize portions</li>
+                                            </ol>
                                         </div>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="8" class="text-center py-5">
-                                        <div class="text-muted">
-                                            <div class="mb-4">
-                                                <i class="bi bi-hourglass-split fs-1 text-muted"></i>
-                                            </div>
-                                            <h4 class="text-muted">Waiting for Kitchen Reports</h4>
-                                            <p class="text-muted mb-4">
-                                                The kitchen team hasn't submitted any post-assessment reports yet.<br>
-                                                Reports will appear here once kitchen staff complete their assessments.
-                                            </p>
-                                            <div class="alert alert-info">
-                                                <i class="bi bi-info-circle me-2"></i>
-                                                <strong>How it works:</strong>
-                                                <ol class="text-start mt-2 mb-0">
-                                                    <li>Kitchen staff prepares meals</li>
-                                                    <li>Kitchen assesses leftover food after service</li>
-                                                    <li>Kitchen submits post-assessment reports</li>
-                                                    <li>Cook reviews reports to optimize portions</li>
-                                                </ol>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <div id="bulk-actions" style="display: none; margin-bottom: 1rem;">
+                    <button id="bulk-delete-btn" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Delete Selected (<span id="selected-count">0</span>)
+                    </button>
                 </div>
             </div>
         </div>
@@ -248,84 +221,10 @@
     @endif
 </div>
 
-<!-- Edit Assessment Modal (For Kitchen Staff) -->
-<div class="modal fade" id="editAssessmentModal" tabindex="-1" aria-labelledby="editAssessmentModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editAssessmentModalLabel">Edit Post Assessment</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editAssessmentForm" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    @method('PUT')
-                    <input type="hidden" id="edit_assessment_id" name="id">
-                    <div class="mb-3">
-                        <label for="edit_date" class="form-label">Date</label>
-                        <input type="date" class="form-control" id="edit_date" name="date" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_meal_type" class="form-label">Meal Type</label>
-                        <select class="form-select" id="edit_meal_type" name="meal_type" required>
-                            <option value="">Select meal type</option>
-                            <option value="breakfast">Breakfast</option>
-                            <option value="lunch">Lunch</option>
-                            <option value="dinner">Dinner</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_total_prepared" class="form-label">Total Food Prepared (kg)</label>
-                        <input type="number" class="form-control" id="edit_total_prepared" name="total_prepared" step="0.01" min="0" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_total_leftover" class="form-label">Total Food Leftover (kg)</label>
-                        <input type="number" class="form-control" id="edit_total_leftover" name="total_leftover" step="0.01" min="0" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_total_consumed" class="form-label">Total Food Consumed (kg)</label>
-                        <input type="number" class="form-control" id="edit_total_consumed" name="total_consumed" step="0.01" min="0" readonly>
-                        <small class="text-muted">Automatically calculated (Prepared - Leftover)</small>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_notes" class="form-label">Notes</label>
-                        <textarea class="form-control" id="edit_notes" name="notes" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_report_image" class="form-label">
-                            <i class="bi bi-camera me-2"></i>Update Photo (Optional)
-                        </label>
-                        <input type="file" class="form-control" id="edit_report_image" name="report_image" accept="image/*">
-                        <div class="form-text">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Upload a new photo to replace the existing one. Supported formats: JPEG, PNG, GIF (Max: 5MB)
-                        </div>
-                        <div id="edit_image_preview" class="mt-3" style="display: none;">
-                            <img id="edit_preview_img" src="" alt="Image Preview" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
-                            <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="edit_remove_image">
-                                <i class="bi bi-trash"></i> Remove
-                            </button>
-                        </div>
-                        <div id="current_image_display" class="mt-3" style="display: none;">
-                            <label class="form-label fw-bold">Current Photo:</label>
-                            <div class="border rounded p-2 bg-light">
-                                <img id="current_image_preview" src="" alt="Current Photo" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="updateAssessmentBtn">Update Assessment</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- View Report Modal (For Cook) -->
-<div class="modal fade" id="viewReportModal" tabindex="-1" aria-labelledby="viewReportModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+                <div class="modal fade" id="viewReportModal" tabindex="-1" aria-labelledby="viewReportModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" style="margin-top: 100px;">
+
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="viewReportModalLabel">
@@ -334,7 +233,9 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            
+          
+            <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
@@ -356,34 +257,28 @@
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Total Prepared</label>
-                            <p id="view_report_prepared" class="form-control-static"></p>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Total Leftover</label>
-                            <p id="view_report_leftover" class="form-control-static"></p>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Total Consumed</label>
-                            <p id="view_report_consumed" class="form-control-static"></p>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Waste Percentage</label>
-                            <p id="view_report_waste_percentage" class="form-control-static"></p>
+                            <label class="form-label fw-bold">Kitchen Notes</label>
+                            <div id="view_report_notes" class="border rounded p-3 bg-light" style="min-height: 150px;"></div>
                         </div>
                     </div>
                 </div>
-                <div class="row">
+
+                <!-- Food Items Section -->
+                <div class="row mt-4">
                     <div class="col-12">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Kitchen Notes</label>
-                            <div id="view_report_notes" class="border rounded p-3 bg-light"></div>
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-list-ul me-2"></i>Food Items Reported
+                            </label>
+                            <div id="view_report_items" class="border rounded p-3 bg-light">
+                                <!-- Items will be populated by JavaScript -->
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Image Section -->
-                <div class="row mt-4" id="report_image_section" style="display: none;">
+                <div class="row mt-4" id="report_image_section">
                     <div class="col-12">
                         <div class="mb-3">
                             <label class="form-label fw-bold">
@@ -401,6 +296,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="bi bi-x-circle me-1"></i> Close
@@ -412,7 +308,7 @@
 
 <!-- Full Size Image Modal -->
 <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered image-modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="imageModalLabel">
@@ -420,14 +316,17 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body text-center">
-                <img id="fullSizeImage" src="" alt="Full Size Report Photo" class="img-fluid rounded">
+            <div class="modal-body d-flex justify-content-center align-items-center" style="min-height: 400px;">
+                <img id="fullSizeImage" src="" alt="Full Size Report Photo" class="img-fluid rounded shadow" style="max-width: 80vw; max-height: 60vh; object-fit: contain; display: block; margin: 0 auto;">
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <a id="downloadImageBtn" href="" download class="btn btn-primary">
-                    <i class="bi bi-download me-1"></i>Download Image
-                </a>
+            <div class="modal-footer justify-content-between">
+                <span class="text-muted">Click image to view full size</span>
+                <div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a id="downloadImageBtn" href="" download class="btn btn-primary">
+                        <i class="bi bi-download me-1"></i>Download Image
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -439,17 +338,16 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title" id="deleteConfirmModalLabel">
-                    <i class="bi bi-exclamation-triangle me-2"></i>
-                    Confirm Delete Assessment
+                    <i class="bi bi-exclamation-triangle me-2"></i>Confirm Delete
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="text-center mb-3">
-                    <i class="bi bi-trash display-4 text-danger"></i>
+                    <i class="bi bi-trash text-danger" style="font-size: 3rem;"></i>
                 </div>
-                <h6 class="text-center mb-3">Are you sure you want to delete this assessment report?</h6>
-                <div class="alert alert-warning">
+                <p class="text-center mb-3">Are you sure you want to delete this post-assessment report?</p>
+                <div class="bg-light p-3 rounded">
                     <div class="row">
                         <div class="col-sm-4"><strong>Date:</strong></div>
                         <div class="col-sm-8" id="delete_confirm_date"></div>
@@ -463,55 +361,17 @@
                         <div class="col-sm-8" id="delete_confirm_submitted_by"></div>
                     </div>
                 </div>
-                <div class="alert alert-danger">
+                <div class="alert alert-warning mt-3 mb-0">
                     <i class="bi bi-exclamation-triangle me-2"></i>
-                    <strong>Warning:</strong> This action cannot be undone. The assessment data and any attached images will be permanently deleted.
+                    <strong>Warning:</strong> This action cannot be undone.
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-1"></i> Cancel
+                    <i class="bi bi-x-circle me-1"></i>Cancel
                 </button>
                 <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-                    <i class="bi bi-trash me-1"></i> Delete Assessment
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Bulk Delete Confirmation Modal -->
-<div class="modal fade" id="bulkDeleteConfirmModal" tabindex="-1" aria-labelledby="bulkDeleteConfirmModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="bulkDeleteConfirmModalLabel">
-                    <i class="bi bi-exclamation-triangle me-2"></i>
-                    Confirm Bulk Delete
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center mb-3">
-                    <i class="bi bi-trash display-4 text-danger"></i>
-                </div>
-                <h6 class="text-center mb-3">Are you sure you want to delete <span id="bulk_delete_count" class="fw-bold text-danger"></span> assessment reports?</h6>
-                <div class="alert alert-danger">
-                    <i class="bi bi-exclamation-triangle me-2"></i>
-                    <strong>Warning:</strong> This action cannot be undone. All selected assessment data and any attached images will be permanently deleted.
-                </div>
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle me-2"></i>
-                    <strong>Selected Reports:</strong>
-                    <ul id="bulk_delete_list" class="mb-0 mt-2"></ul>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-1"></i> Cancel
-                </button>
-                <button type="button" class="btn btn-danger" id="confirmBulkDeleteBtn">
-                    <i class="bi bi-trash me-1"></i> Delete All Selected
+                    <i class="bi bi-trash me-1"></i>Delete Report
                 </button>
             </div>
         </div>
@@ -641,17 +501,17 @@
     }
 
     /* Ensure all modals are clickable */
-    #editAssessmentModal, #viewReportModal, #imageModal, #deleteConfirmModal, #bulkDeleteConfirmModal {
+    #viewReportModal, #imageModal, #deleteConfirmModal, #bulkDeleteConfirmModal {
         z-index: 999999 !important;
         pointer-events: auto !important;
     }
 
-    #editAssessmentModal .modal-dialog, #viewReportModal .modal-dialog, #imageModal .modal-dialog,
+    #viewReportModal .modal-dialog, #imageModal .modal-dialog,
     #deleteConfirmModal .modal-dialog, #bulkDeleteConfirmModal .modal-dialog {
         pointer-events: auto !important;
     }
 
-    #editAssessmentModal .modal-content, #viewReportModal .modal-content, #imageModal .modal-content,
+    #viewReportModal .modal-content, #imageModal .modal-content,
     #deleteConfirmModal .modal-content, #bulkDeleteConfirmModal .modal-content {
         pointer-events: auto !important;
     }
@@ -762,352 +622,80 @@
         transform: translateY(-1px);
         box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
     }
+
+    /* Add margin to the modal so it doesn't overlap the header */
+    .image-modal-xl {
+        margin-top: 48px !important;
+        margin-bottom: 48px !important;
+    }
+    @media (max-width: 1200px) {
+        .image-modal-xl {
+            margin-top: 24px !important;
+            margin-bottom: 24px !important;
+        }
+    }
 </style>
 @endpush
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Real-time date and time display
-    function updateDateTime() {
-        const now = new Date();
-        const dateOptions = {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        };
-        const timeOptions = {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: true
-        };
-
-        const dateString = now.toLocaleDateString('en-US', dateOptions);
-        const timeString = now.toLocaleTimeString('en-US', timeOptions);
-
-        document.getElementById('currentDateTime').innerHTML = `${dateString}<br><small>${timeString}</small>`;
-    }
-    
-    updateDateTime();
-    setInterval(updateDateTime, 1000); // Update every second for real-time display
-    
-    // Add event listeners only if elements exist (for forms that have these fields)
-    const totalPreparedEl = document.getElementById('total_prepared');
-    const totalLeftoverEl = document.getElementById('total_leftover');
-
-    if (totalPreparedEl && totalLeftoverEl) {
-        totalPreparedEl.addEventListener('input', calculateConsumed);
-        totalLeftoverEl.addEventListener('input', calculateConsumed);
-    }
-
-    // Calculate consumed food in the main form
-    function calculateConsumed() {
-        const totalPrepared = parseFloat(document.getElementById('total_prepared').value) || 0;
-        const totalLeftover = parseFloat(document.getElementById('total_leftover').value) || 0;
-
-        if (totalPrepared >= totalLeftover) {
-            const totalConsumed = totalPrepared - totalLeftover;
-            document.getElementById('total_consumed').value = totalConsumed.toFixed(2);
-        } else {
-            // If leftover is greater than prepared (invalid input), clear the consumed field
-            document.getElementById('total_consumed').value = '';
-        }
-    }
-
-    // Period and meal filtering (only if filter elements exist)
-    function filterAssessments() {
-        const periodFilter = document.getElementById('periodFilter');
-        const mealFilter = document.getElementById('mealFilter');
-
-        if (!periodFilter || !mealFilter) return;
-
-        const assessmentItems = document.querySelectorAll('.assessment-item');
-
-        const today = new Date();
-        const weekStart = new Date(today);
-        weekStart.setDate(today.getDate() - today.getDay());
-        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-
-        assessmentItems.forEach(item => {
-            const itemDate = new Date(item.dataset.assessmentCreated);
-            const itemMeal = item.dataset.mealType;
-
-            let periodMatch = true;
-            if (periodFilter.value === 'week') {
-                periodMatch = itemDate >= weekStart;
-            } else if (periodFilter.value === 'month') {
-                periodMatch = itemDate >= monthStart;
-            }
-            // For 'all', show all dates
-
-            const mealMatch = mealFilter.value === 'all' || itemMeal === mealFilter.value;
-
-            if (periodMatch && mealMatch) {
-                item.classList.remove('hidden');
-            } else {
-                item.classList.add('hidden');
-            }
-        });
-    }
-
-    // Add event listeners only if filter elements exist
-    const periodFilterEl = document.getElementById('periodFilter');
-    const mealFilterEl = document.getElementById('mealFilter');
-
-    if (periodFilterEl) periodFilterEl.addEventListener('change', filterAssessments);
-    if (mealFilterEl) mealFilterEl.addEventListener('change', filterAssessments);
-    
-    // Edit assessment modal (for kitchen staff)
-    document.querySelectorAll('.edit-assessment-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const id = this.dataset.id;
-            const date = this.dataset.date;
-            const mealType = this.dataset.mealType;
-            const totalPrepared = this.dataset.totalPrepared;
-            // Handle both old and new data structure
-            const totalLeftover = this.dataset.totalLeftover || this.dataset.totalWasted;
-            const totalConsumed = this.dataset.totalConsumed || (totalPrepared - totalLeftover);
-            const notes = this.dataset.notes;
-            
-            document.getElementById('edit_assessment_id').value = id;
-            document.getElementById('edit_date').value = date;
-            document.getElementById('edit_meal_type').value = mealType;
-            document.getElementById('edit_total_prepared').value = totalPrepared;
-            document.getElementById('edit_total_leftover').value = totalLeftover;
-            document.getElementById('edit_total_consumed').value = totalConsumed;
-            document.getElementById('edit_notes').value = notes;
-            
-            // Add event listeners to calculate consumed automatically
-            document.getElementById('edit_total_prepared').addEventListener('input', calculateEditConsumed);
-            document.getElementById('edit_total_leftover').addEventListener('input', calculateEditConsumed);
-
-            // Handle current image display
-            const imagePath = this.dataset.imagePath;
-            const currentImageDisplay = document.getElementById('current_image_display');
-            const currentImagePreview = document.getElementById('current_image_preview');
-
-            if (imagePath && imagePath !== 'null' && imagePath !== '' && imagePath !== 'undefined') {
-                const imageSrc = imagePath.startsWith('http') ? imagePath :
-                               imagePath.startsWith('/') ? imagePath : '/' + imagePath;
-                currentImagePreview.src = imageSrc;
-                currentImageDisplay.style.display = 'block';
-            } else {
-                currentImageDisplay.style.display = 'none';
-            }
-
-            // Reset image upload fields
-            document.getElementById('edit_report_image').value = '';
-            document.getElementById('edit_image_preview').style.display = 'none';
-
-            showModalSimple('editAssessmentModal');
-        });
-    });
-
-    // Image upload functionality for edit modal
-    document.addEventListener('DOMContentLoaded', function() {
-        const editImageInput = document.getElementById('edit_report_image');
-        const editImagePreview = document.getElementById('edit_image_preview');
-        const editPreviewImg = document.getElementById('edit_preview_img');
-        const editRemoveImageBtn = document.getElementById('edit_remove_image');
-
-        if (editImageInput) {
-            editImageInput.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-
-                if (file) {
-                    // Validate file size (5MB max)
-                    if (file.size > 5 * 1024 * 1024) {
-                        alert('File size must be less than 5MB');
-                        editImageInput.value = '';
-                        return;
-                    }
-
-                    // Validate file type
-                    if (!file.type.startsWith('image/')) {
-                        alert('Please select a valid image file');
-                        editImageInput.value = '';
-                        return;
-                    }
-
-                    // Show preview
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        editPreviewImg.src = e.target.result;
-                        editImagePreview.style.display = 'block';
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    editImagePreview.style.display = 'none';
-                }
-            });
-
-            // Remove image functionality
-            if (editRemoveImageBtn) {
-                editRemoveImageBtn.addEventListener('click', function() {
-                    editImageInput.value = '';
-                    editImagePreview.style.display = 'none';
-                    editPreviewImg.src = '';
-                });
-            }
-        }
-    });
-    
-    // Calculate consumed food in edit modal
-    function calculateEditConsumed() {
-        const totalPrepared = parseFloat(document.getElementById('edit_total_prepared').value) || 0;
-        const totalLeftover = parseFloat(document.getElementById('edit_total_leftover').value) || 0;
-        
-        if (totalPrepared >= totalLeftover) {
-            const totalConsumed = totalPrepared - totalLeftover;
-            document.getElementById('edit_total_consumed').value = totalConsumed.toFixed(2);
-        } else {
-            document.getElementById('edit_total_consumed').value = '';
-        }
-    }
-    
-    // Update assessment button handler
-    document.getElementById('updateAssessmentBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        const form = document.getElementById('editAssessmentForm');
-        const id = document.getElementById('edit_assessment_id').value;
-        const formData = new FormData(form);
-        const updateBtn = this;
-        updateBtn.disabled = true;
-        updateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
-        // Add method override for PUT request
-        formData.append('_method', 'PUT');
-
-        // Debug: Log form data being sent
-        console.log('📝 Sending assessment update data:');
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
-        }
-
-        fetch(`/cook/post-assessment/${id}`, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-            }
-        })
-        .then(response => {
-            console.log('📊 Response status:', response.status);
-            return response.json();
-        })
-        .then(data => {
-            console.log('📋 Response data:', data);
-            if (data.success) {
-                alert('Assessment updated successfully!');
-                // Close modal and refresh data
-                hideModalSimple('editAssessmentModal');
-                location.reload();
-            } else {
-                console.error('❌ Update failed:', data);
-                let errorMessage = data.message || 'Failed to update assessment';
-
-                // Show validation errors if available
-                if (data.errors) {
-                    console.error('🔍 Validation errors:', data.errors);
-                    errorMessage += '\n\nValidation errors:';
-                    Object.keys(data.errors).forEach(field => {
-                        errorMessage += `\n• ${field}: ${data.errors[field].join(', ')}`;
-                    });
-                }
-
-                alert(errorMessage);
-            }
-        })
-        .catch(error => {
-            console.error('💥 Fetch error:', error);
-            alert('An error occurred while updating assessment: ' + error.message);
-        })
-        .finally(() => {
-            updateBtn.disabled = false;
-            updateBtn.innerHTML = 'Update Assessment';
-        });
-    });
-    
     // View report modal (for cook)
     document.querySelectorAll('.view-report-btn').forEach(button => {
         button.addEventListener('click', function() {
             const date = this.dataset.date;
             const mealType = this.dataset.mealType;
-            const prepared = parseFloat(this.dataset.prepared);
-            const leftover = parseFloat(this.dataset.leftover);
-            const consumed = prepared - leftover;
-            const wastePercentage = this.dataset.wastePercentage;
             const notes = this.dataset.notes || 'No notes provided';
             const imagePath = this.dataset.imagePath;
+            const items = this.dataset.items ? JSON.parse(this.dataset.items) : [];
             const submittedBy = this.dataset.submittedBy;
             const submittedAt = this.dataset.submittedAt;
 
-            // Format date
-            const formattedDate = new Date(date).toLocaleDateString('en-US', {
+            // Populate modal fields
+            document.getElementById('view_report_date').textContent = new Date(date).toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
             });
-
-            // Populate modal
-            document.getElementById('view_report_date').textContent = formattedDate;
-            document.getElementById('view_report_meal_type').innerHTML = `<span class="badge ${
-                mealType === 'breakfast' ? 'bg-warning' :
-                mealType === 'lunch' ? 'bg-primary' : 'bg-info'
-            }">${mealType.charAt(0).toUpperCase() + mealType.slice(1)}</span>`;
+            document.getElementById('view_report_meal_type').textContent = mealType.charAt(0).toUpperCase() + mealType.slice(1);
             document.getElementById('view_report_submitted_by').textContent = submittedBy;
             document.getElementById('view_report_submitted_at').textContent = submittedAt;
-            document.getElementById('view_report_prepared').innerHTML = `<strong>${prepared.toFixed(1)}</strong> <small class="text-muted">servings</small>`;
-            document.getElementById('view_report_leftover').innerHTML = `<strong>${leftover.toFixed(1)}</strong> <small class="text-muted">servings</small>`;
-            document.getElementById('view_report_consumed').innerHTML = `<strong>${consumed.toFixed(1)}</strong> <small class="text-muted">servings</small>`;
-            document.getElementById('view_report_waste_percentage').innerHTML = `<span class="badge ${
-                wastePercentage < 10 ? 'bg-success' :
-                wastePercentage < 20 ? 'bg-warning' : 'bg-danger'
-            }">${wastePercentage}%</span>`;
             document.getElementById('view_report_notes').textContent = notes;
+
+            // Populate food items
+            const itemsContainer = document.getElementById('view_report_items');
+            if (items && items.length > 0) {
+                let itemsHtml = '<div class="row">';
+                items.forEach((item, index) => {
+                    itemsHtml += `
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center p-2 bg-white rounded border">
+                                <i class="bi bi-circle-fill text-primary me-2" style="font-size: 8px;"></i>
+                                <span class="fw-medium">${item.name || 'Unnamed Item'}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                itemsHtml += '</div>';
+                itemsContainer.innerHTML = itemsHtml;
+            } else {
+                itemsContainer.innerHTML = '<p class="text-muted mb-0"><i class="bi bi-info-circle me-2"></i>No food items specified in this report.</p>';
+            }
 
             // Handle image display
             const imageSection = document.getElementById('report_image_section');
             const reportImage = document.getElementById('view_report_image');
-
+            
             if (imagePath && imagePath !== 'null' && imagePath !== '' && imagePath !== 'undefined') {
-                // Add loading state
-                reportImage.classList.add('image-loading');
-
-                // Handle both absolute and relative paths
                 const imageSrc = imagePath.startsWith('http') ? imagePath :
-                                imagePath.startsWith('/') ? imagePath : '/' + imagePath;
-
-                // Create a new image to test if it loads
-                const testImage = new Image();
-                testImage.onload = function() {
-                    reportImage.src = imageSrc;
-                    reportImage.classList.remove('image-loading');
-                    imageSection.style.display = 'block';
-                };
-
-                testImage.onerror = function() {
-                    console.log('Image failed to load:', imageSrc);
-                    reportImage.classList.remove('image-loading');
-                    imageSection.style.display = 'none';
-
-                    // Show a message that image is not available
-                    const noImageDiv = document.createElement('div');
-                    noImageDiv.className = 'alert alert-info';
-                    noImageDiv.innerHTML = '<i class="bi bi-image me-2"></i>Image attachment is not available or could not be loaded.';
-                    imageSection.appendChild(noImageDiv);
-                    imageSection.style.display = 'block';
-                };
-
-                testImage.src = imageSrc;
+                               imagePath.startsWith('/') ? imagePath : '/' + imagePath;
+                reportImage.src = imageSrc;
+                imageSection.style.display = 'block';
             } else {
                 imageSection.style.display = 'none';
             }
 
-            // Show modal
             showModalSimple('viewReportModal');
         });
     });
@@ -1217,9 +805,16 @@
         const now = new Date();
         const oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000)); // 1 hour ago
 
+        // Use localStorage to track seen assessments
+        let seenAssessments = JSON.parse(localStorage.getItem('seenAssessments') || '{}');
+        let updated = false;
+
         assessmentItems.forEach(item => {
+            const id = item.dataset.assessmentId;
             const createdAt = new Date(item.dataset.assessmentCreated);
-            if (createdAt > oneHourAgo) {
+            const isNew = createdAt > oneHourAgo && !seenAssessments[id];
+
+            if (isNew) {
                 // Highlight new assessments
                 item.style.backgroundColor = '#fff3cd';
                 item.style.borderLeft = '4px solid #ff9933';
@@ -1233,25 +828,22 @@
                     newBadge.style.fontSize = '0.7rem';
                     firstCell.appendChild(newBadge);
                 }
+
+                // Mark as seen for next time
+                seenAssessments[id] = true;
+                updated = true;
+            } else {
+                // Remove highlight and badge if already seen
+                item.style.backgroundColor = '';
+                item.style.borderLeft = '';
+                const badge = item.querySelector('.new-badge');
+                if (badge) badge.remove();
             }
         });
 
-        // Debug: Log current page info
-        console.log('Cook Post-Assessment page loaded');
-        console.log('Total assessments found:', assessmentItems.length);
-
-        // Check if uploads directory is accessible
-        fetch('/uploads/post-assessments/', {method: 'HEAD'})
-            .then(response => {
-                if (response.ok) {
-                    console.log('✅ Uploads directory is accessible');
-                } else {
-                    console.warn('⚠️ Uploads directory may not be accessible');
-                }
-            })
-            .catch(error => {
-                console.warn('⚠️ Could not check uploads directory accessibility');
-            });
+        if (updated) {
+            localStorage.setItem('seenAssessments', JSON.stringify(seenAssessments));
+        }
     });
 
     // Delete assessment functionality
@@ -1318,7 +910,7 @@
                         if (tableBody && tableBody.children.length === 0) {
                             tableBody.innerHTML = `
                                 <tr>
-                                    <td colspan="8" class="text-center py-4">
+                                    <td colspan="5" class="text-center py-4">
                                         <div class="text-muted">
                                             <i class="bi bi-inbox display-4 d-block mb-2"></i>
                                             <p class="mb-0">No leftover reports found</p>
@@ -1350,154 +942,38 @@
         });
     });
 
-    // Bulk delete functionality
-    const selectAllCheckbox = document.getElementById('select-all-assessments');
-    const assessmentCheckboxes = document.querySelectorAll('.assessment-checkbox');
-    const bulkActionsDiv = document.getElementById('bulk-actions');
-    const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
-    const selectedCountSpan = document.getElementById('selected-count');
-
-    // Handle select all checkbox
-    if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', function() {
-            assessmentCheckboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
-            });
-            updateBulkActions();
-        });
-    }
-
-    // Handle individual checkboxes
-    assessmentCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            updateBulkActions();
-
-            // Update select all checkbox state
-            if (selectAllCheckbox) {
-                const checkedCount = document.querySelectorAll('.assessment-checkbox:checked').length;
-                const totalCount = assessmentCheckboxes.length;
-
-                selectAllCheckbox.checked = checkedCount === totalCount;
-                selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < totalCount;
-            }
-        });
-    });
-
-    // Update bulk actions visibility and count
-    function updateBulkActions() {
-        const checkedBoxes = document.querySelectorAll('.assessment-checkbox:checked');
-        const count = checkedBoxes.length;
-
-        if (count > 0) {
-            bulkActionsDiv.style.display = 'block';
-            selectedCountSpan.textContent = count;
-        } else {
-            bulkActionsDiv.style.display = 'none';
-        }
-    }
-
-    // Handle bulk delete button
-    if (bulkDeleteBtn) {
-        bulkDeleteBtn.addEventListener('click', function() {
-            const checkedBoxes = document.querySelectorAll('.assessment-checkbox:checked');
-            const selectedAssessments = Array.from(checkedBoxes).map(checkbox => {
-                const row = checkbox.closest('tr');
-                return {
-                    id: checkbox.value,
-                    date: row.querySelector('td:nth-child(2) strong').textContent,
-                    mealType: row.querySelector('td:nth-child(3) .badge').textContent,
-                    submittedBy: row.querySelector('td:nth-child(7) strong').textContent
-                };
-            });
-
-            if (selectedAssessments.length === 0) return;
-
-            // Populate bulk delete modal
-            document.getElementById('bulk_delete_count').textContent = selectedAssessments.length;
-            const listElement = document.getElementById('bulk_delete_list');
-            listElement.innerHTML = selectedAssessments.map(assessment =>
-                `<li>${assessment.date} - ${assessment.mealType} (by ${assessment.submittedBy})</li>`
-            ).join('');
-
-            // Show bulk delete modal
-            showModalSimple('bulkDeleteConfirmModal');
-        });
-    }
-
-    // Handle confirm bulk delete
-    document.getElementById('confirmBulkDeleteBtn').addEventListener('click', function() {
-        const checkedBoxes = document.querySelectorAll('.assessment-checkbox:checked');
-        const selectedIds = Array.from(checkedBoxes).map(checkbox => checkbox.value);
-
-        if (selectedIds.length === 0) return;
-
-        const confirmBtn = this;
-        const originalText = confirmBtn.innerHTML;
-
-        // Show loading state
-        confirmBtn.disabled = true;
-        confirmBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Deleting All...';
-
-        // Delete assessments one by one
-        let deletedCount = 0;
-        let failedCount = 0;
-
-        const deletePromises = selectedIds.map(id =>
-            fetch(`/cook/post-assessment/${id}`, {
+    // Delete All button functionality
+    const deleteAllBtn = document.getElementById('delete-all-btn');
+    if (deleteAllBtn) {
+        deleteAllBtn.addEventListener('click', function() {
+            if (!confirm('Are you sure you want to delete ALL post-assessment reports? This action cannot be undone.')) return;
+            deleteAllBtn.disabled = true;
+            deleteAllBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Deleting...';
+            // Gather all assessment IDs
+            const ids = Array.from(document.querySelectorAll('.assessment-item')).map(row => row.dataset.assessmentId);
+            fetch('/cook/post-assessment/bulk-delete', {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
-                }
+                },
+                body: JSON.stringify({ ids })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    deletedCount++;
-                    // Remove the row
-                    const row = document.querySelector(`tr[data-assessment-id="${id}"]`);
-                    if (row) {
-                        row.style.transition = 'all 0.3s ease';
-                        row.style.opacity = '0';
-                        row.style.transform = 'translateX(-100%)';
-                        setTimeout(() => row.remove(), 300);
-                    }
-                } else {
-                    failedCount++;
-                }
-            })
-            .catch(error => {
-                console.error('Delete error for ID', id, ':', error);
-                failedCount++;
-            })
-        );
-
-        Promise.all(deletePromises).then(() => {
-            // Show results
-            if (deletedCount > 0) {
-                showToast(`Successfully deleted ${deletedCount} assessment(s)`, 'success');
-            }
-            if (failedCount > 0) {
-                showToast(`Failed to delete ${failedCount} assessment(s)`, 'error');
-            }
-
-            // Reset UI
-            if (selectAllCheckbox) {
-                selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = false;
-            }
-            updateBulkActions();
-
-            // Check if table is empty
-            setTimeout(() => {
-                const remainingRows = document.querySelectorAll('.assessment-item');
-                if (remainingRows.length === 0) {
+                    // Remove all rows
+                    document.querySelectorAll('.assessment-item').forEach(row => row.remove());
+                    showToast(data.message || 'All assessments deleted successfully!', 'success');
+                    // Remove the button
+                    deleteAllBtn.remove();
+                    // Show empty message
                     const tableBody = document.querySelector('tbody');
                     if (tableBody) {
                         tableBody.innerHTML = `
                             <tr>
-                                <td colspan="8" class="text-center py-4">
+                                <td colspan="5" class="text-center py-4">
                                     <div class="text-muted">
                                         <i class="bi bi-inbox display-4 d-block mb-2"></i>
                                         <p class="mb-0">No leftover reports found</p>
@@ -1507,17 +983,20 @@
                             </tr>
                         `;
                     }
+                } else {
+                    showToast(data.message || 'Failed to delete all assessments', 'error');
                 }
-            }, 500);
-
-            // Close modal
-            hideModalSimple('bulkDeleteConfirmModal');
-        }).finally(() => {
-            // Reset button state
-            confirmBtn.disabled = false;
-            confirmBtn.innerHTML = originalText;
+            })
+            .catch(error => {
+                console.error('Delete all error:', error);
+                showToast('An error occurred while deleting all assessments', 'error');
+            })
+            .finally(() => {
+                deleteAllBtn.disabled = false;
+                deleteAllBtn.innerHTML = '<i class="bi bi-trash"></i> Delete All';
+            });
         });
-    });
+    }
 
     // Toast notification function
     function showToast(message, type = 'info') {

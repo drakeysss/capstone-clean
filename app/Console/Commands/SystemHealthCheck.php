@@ -275,6 +275,7 @@ class SystemHealthCheck extends Command
                         $table->integer('rating');
                         $table->json('food_quality');
                         $table->text('comments')->nullable();
+                        $table->text('suggestions')->nullable();
                         $table->json('dietary_concerns')->nullable();
                         $table->boolean('is_anonymous')->default(false);
                         $table->string('meal_name')->nullable();

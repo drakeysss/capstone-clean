@@ -22,76 +22,108 @@
 
     <!-- Key Features Overview Section -->
     <div class="row mb-4">
-        <!-- Today's Menu Overview (Moved to appear first) -->
+        <!-- Recent Post Meal Reports -->
         <div class="col-md-6 mb-4">
             <div class="card main-card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title">Today's Menu <span class="badge bg-primary ms-2" id="todayDayBadge"></span></h5>
-                    <a href="{{ route('cook.menu.index') }}" class="btn btn-sm btn-outline-primary">View Weekly Plan</a>
+                    <h5 class="card-title">Recent Post Meal Reports</h5>
+                    <a href="{{ route('cook.post-assessment') }}" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
-                <div class="card-body">
-                    <!-- Week cycle indicator -->
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <span class="text-muted">Week Cycle:</span>
-                            <span class="badge bg-info ms-2" id="weekCycleBadge">Week 1 & 3</span>
-                        </div>
-                        <div>
-                            <span class="text-muted">Date:</span>
-                            <span class="ms-2" id="todayDateDisplay"></span>
-                        </div>
-                    </div>
-                    
-                    <!-- Today's meals -->
-                    <div class="row">
-                        <!-- Breakfast -->
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100 border-0 shadow-sm">
-                                <div class="card-header bg-light text-center">
-                                    <h6 class="mb-0">Breakfast</h6>
-                                </div>
-                                <div class="card-body text-center">
-                                    <p class="text-muted">Loading...</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Lunch -->
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100 border-0 shadow-sm">
-                                <div class="card-header bg-light text-center">
-                                    <h6 class="mb-0">Lunch</h6>
-                                </div>
-                                <div class="card-body text-center">
-                                    <p class="text-muted">Loading...</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Dinner -->
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100 border-0 shadow-sm">
-                                <div class="card-header bg-light text-center">
-                                    <h6 class="mb-0">Dinner</h6>
-                                </div>
-                                <div class="card-body text-center">
-                                    <p class="text-muted">Loading...</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Meal Type</th>
+                                <th>Submitted By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recentPostMealReports as $report)
+                                <tr>
+                                    <td>{{ $report->date->format('M d, Y') }}</td>
+                                    <td>{{ ucfirst($report->meal_type) }}</td>
+                                    <td>{{ $report->assessedBy->name ?? 'N/A' }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="3" class="text-center">No recent reports</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- Student Feedback Overview -->
-       
+        <!-- Recent Student Feedback -->
+        <div class="col-md-6 mb-4">
+            <div class="card main-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title">Recent Student Feedback</h5>
+                    <a href="{{ route('cook.feedback') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Student</th>
+                                <th>Rating</th>
+                                <th>Comment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recentFeedback as $fb)
+                                <tr>
+                                    <td>{{ $fb->created_at->format('M d, Y') }}</td>
+                                    <td>{{ $fb->student->name ?? 'Anonymous' }}</td>
+                                    <td>{{ $fb->rating }}★</td>
+                                    <td>{{ Str::limit($fb->comment, 30) }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="4" class="text-center">No recent feedback</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <!-- Menu & Inventory Overview Section -->
-   
+    <div class="row mb-4">
+        <!-- Recent Inventory Reports -->
+        <div class="col-md-6 mb-4">
+            <div class="card main-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title">Recent Inventory Reports</h5>
+                    <a href="{{ route('cook.inventory.reports') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Submitted By</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recentInventoryReports as $inv)
+                                <tr>
+                                    <td>{{ $inv->created_at->format('M d, Y') }}</td>
+                                    <td>{{ $inv->user->name ?? 'N/A' }}</td>
+                                    <td>{{ ucfirst($inv->status ?? 'N/A') }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="3" class="text-center">No recent inventory reports</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
         <!-- Inventory Overview -->
-        <div class="col-xl-6 mb-4">
+        <div class="col-md-6 mb-4">
             <div class="card main-card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title">Inventory Overview</h5>
@@ -145,9 +177,8 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        
-                       
 @endsection
 
 @push('styles')
@@ -477,7 +508,18 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    console.log('🚀 Dashboard script starting...');
+
     {!! \App\Services\WeekCycleService::getJavaScriptFunction() !!}
+
+    console.log('📅 Week cycle function loaded');
+
+    // Define week-related variables for menu logic
+    const weekInfo = getCurrentWeekCycle();
+    const isWeek1or3 = weekInfo.weekCycle === 1; // true for Week 1 & 3, false for Week 2 & 4
+    const dayOfWeek = new Date().getDay(); // 0 = Sunday, 1 = Monday, ...
+
+
 
     // UNIFIED: Real-time date and time display
     function updateDateTime() {
@@ -485,181 +527,66 @@
 
         document.getElementById('currentDateTime').innerHTML = `${weekInfo.displayDate}<br><small>${weekInfo.timeString}</small>`;
 
-        // Also update today's menu information in real-time
-        updateTodayMenu();
+        // Note: Menu update is handled separately to avoid constant API calls
     }
 
     updateDateTime();
     setInterval(updateDateTime, 1000); // Update every second for real-time display
     
     document.addEventListener('DOMContentLoaded', function() {
-        // Leftover Chart
-        const leftoverCtx = document.getElementById('leftoverChart').getContext('2d');
-        
-        // Sample data for leftover chart
-        const leftoverData = {
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-            datasets: [{
-                label: 'Leftover (kg)',
-                data: [{{ $dailyLeftoverKg[0] ?? 0 }}, {{ $dailyLeftoverKg[1] ?? 0 }}, {{ $dailyLeftoverKg[2] ?? 0 }}, {{ $dailyLeftoverKg[3] ?? 0 }}, {{ $dailyLeftoverKg[4] ?? 0 }}, {{ $dailyLeftoverKg[5] ?? 0 }}, {{ $dailyLeftoverKg[6] ?? 0 }}],
-                backgroundColor: 'rgba(78, 115, 223, 0.2)',
-                borderColor: 'rgba(78, 115, 223, 1)',
-                borderWidth: 2,
-                pointBackgroundColor: '#4e73df',
-                pointBorderColor: '#fff',
-                pointHoverRadius: 5,
-                pointHoverBackgroundColor: '#2e59d9',
-                pointHoverBorderColor: '#fff',
-                pointHitRadius: 10,
-                fill: true
-            }]
-        };
-        
-        new Chart(leftoverCtx, {
-            type: 'line',
-            data: leftoverData,
-            options: {
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 10,
-                        ticks: {
-                            callback: function(value) {
-                                return value + ' kg';
+        // Check if leftover chart element exists before initializing
+        const leftoverChartElement = document.getElementById('leftoverChart');
+        if (leftoverChartElement) {
+            const leftoverCtx = leftoverChartElement.getContext('2d');
+
+            // Sample data for leftover chart
+            const leftoverData = {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Leftover (kg)',
+                    data: [0, 0, 0, 0, 0, 0, 0], // Default values since chart element doesn't exist
+                    backgroundColor: 'rgba(78, 115, 223, 0.2)',
+                    borderColor: 'rgba(78, 115, 223, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#4e73df',
+                    pointBorderColor: '#fff',
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: '#2e59d9',
+                    pointHoverBorderColor: '#fff',
+                    pointHitRadius: 10,
+                    fill: true
+                }]
+            };
+
+            new Chart(leftoverCtx, {
+                type: 'line',
+                data: leftoverData,
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' kg';
+                                }
                             }
                         }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
+
+
     });
-    
-    // UNIFIED: Update today's menu based on current day
-    function updateTodayMenu() {
-        const weekInfo = getCurrentWeekCycle();
 
-        // Set the day badge
-        const todayDayBadge = document.getElementById('todayDayBadge');
-        if (todayDayBadge) {
-            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            const todayName = dayNames[new Date().getDay()];
-            todayDayBadge.textContent = todayName;
-        }
 
-        // Format and set the date
-        const todayDateDisplay = document.getElementById('todayDateDisplay');
-        if (todayDateDisplay) {
-            todayDateDisplay.textContent = weekInfo.displayDate.split(', ').slice(1).join(', '); // Remove day name
-        }
-
-        // ENHANCED: Set dynamic week cycle badge
-        const weekCycleBadge = document.getElementById('weekCycleBadge');
-        if (weekCycleBadge) {
-            weekCycleBadge.textContent = `${weekInfo.weekName} - ${weekInfo.cycleDescription}`;
-        }
-        
-        // Set the menu items based on day and week cycle
-        let breakfast, lunch, dinner;
-        
-        if (isWeek1or3) {
-            // Week 1 & 3 menu
-            switch(dayOfWeek) {
-                case 1: // Monday
-                    breakfast = { name: 'Chicken Loaf with Energen', ingredients: 'Chicken Loaf, Energen, Water' };
-                    lunch = { name: 'Fried Fish', ingredients: 'Fish, Oil, Salt' };
-                    dinner = { name: 'Ginisang Cabbage', ingredients: 'Cabbage, Garlic, Onion, Oil, Salt' };
-                    break;
-                case 2: // Tuesday
-                    breakfast = { name: 'Odong with Sardines', ingredients: 'Odong Noodles, Sardines, Water' };
-                    lunch = { name: 'Fried Chicken', ingredients: 'Chicken, Oil, Salt, Pepper' };
-                    dinner = { name: 'Baguio Beans', ingredients: 'Baguio Beans, Garlic, Onion, Oil, Salt' };
-                    break;
-                case 3: // Wednesday
-                    breakfast = { name: 'Hotdogs', ingredients: 'Hotdogs, Oil' };
-                    lunch = { name: 'Porkchop Guisado', ingredients: 'Porkchop, Garlic, Onion, Oil, Salt' };
-                    dinner = { name: 'Eggplant with Eggs', ingredients: 'Eggplant, Eggs, Garlic, Onion, Oil, Salt' };
-                    break;
-                case 4: // Thursday
-                    breakfast = { name: 'Boiled Eggs with Energen', ingredients: 'Eggs, Energen, Water' };
-                    lunch = { name: 'Groundpork', ingredients: 'Ground Pork, Garlic, Onion, Oil, Salt' };
-                    dinner = { name: 'Chopsuey', ingredients: 'Mixed Vegetables, Garlic, Onion, Oil, Salt' };
-                    break;
-                case 5: // Friday
-                    breakfast = { name: 'Ham', ingredients: 'Ham, Oil' };
-                    lunch = { name: 'Fried Chicken', ingredients: 'Chicken, Oil, Salt, Pepper' };
-                    dinner = { name: 'Monggo Beans', ingredients: 'Monggo Beans, Garlic, Onion, Oil, Salt' };
-                    break;
-                case 6: // Saturday
-                    breakfast = { name: 'Sardines with Eggs', ingredients: 'Sardines, Eggs, Oil' };
-                    lunch = { name: 'Burger Steak', ingredients: 'Burger Patty, Garlic, Onion, Oil, Salt' };
-                    dinner = { name: 'Utan Bisaya with Buwad', ingredients: 'Mixed Vegetables, Buwad, Garlic, Onion, Oil, Salt' };
-                    break;
-                case 0: // Sunday
-                    breakfast = { name: 'Tomato with Eggs', ingredients: 'Tomatoes, Eggs, Garlic, Onion, Oil, Salt' };
-                    lunch = { name: 'Fried Fish', ingredients: 'Fish, Oil, Salt' };
-                    dinner = { name: 'Sari-Sari', ingredients: 'Mixed Vegetables, Garlic, Onion, Oil, Salt' };
-                    break;
-            }
-        } else {
-            // Week 2 & 4 menu
-            switch(dayOfWeek) {
-                case 1: // Monday
-                    breakfast = { name: 'Chorizo', ingredients: 'Chorizo, Oil' };
-                    lunch = { name: 'Chicken Adobo', ingredients: 'Chicken, Soy Sauce, Vinegar, Garlic, Onion' };
-                    dinner = { name: 'String Beans Guisado', ingredients: 'String Beans, Garlic, Onion, Oil, Salt' };
-                    break;
-                case 2: // Tuesday
-                    breakfast = { name: 'Scrambled Eggs with Energen', ingredients: 'Eggs, Energen, Water' };
-                    lunch = { name: 'Fried Fish', ingredients: 'Fish, Oil, Salt' };
-                    dinner = { name: 'Talong with Eggs', ingredients: 'Eggplant, Eggs, Garlic, Onion, Oil, Salt' };
-                    break;
-                case 3: // Wednesday
-                    breakfast = { name: 'Sardines with Eggs', ingredients: 'Sardines, Eggs, Oil' };
-                    lunch = { name: 'Groundpork', ingredients: 'Ground Pork, Garlic, Onion, Oil, Salt' };
-                    dinner = { name: 'Tinun-ang Kalabasa with Buwad', ingredients: 'Kalabasa, Buwad, Garlic, Onion, Oil, Salt' };
-                    break;
-                case 4: // Thursday
-                    breakfast = { name: 'Luncheon Meat', ingredients: 'Luncheon Meat, Oil' };
-                    lunch = { name: 'Fried Chicken', ingredients: 'Chicken, Oil, Salt, Pepper' };
-                    dinner = { name: 'Chopsuey', ingredients: 'Mixed Vegetables, Garlic, Onion, Oil, Salt' };
-                    break;
-                case 5: // Friday
-                    breakfast = { name: 'Sotanghon Guisado', ingredients: 'Sotanghon, Garlic, Onion, Oil, Salt' };
-                    lunch = { name: 'Pork Menudo', ingredients: 'Pork, Carrots, Potatoes, Garlic, Onion, Oil, Salt' };
-                    dinner = { name: 'Monggo Beans', ingredients: 'Monggo Beans, Garlic, Onion, Oil, Salt' };
-                    break;
-                case 6: // Saturday
-                    breakfast = { name: 'Hotdogs', ingredients: 'Hotdogs, Oil' };
-                    lunch = { name: 'Meatballs', ingredients: 'Meatballs, Garlic, Onion, Oil, Salt' };
-                    dinner = { name: 'Utan Bisaya with Buwad', ingredients: 'Mixed Vegetables, Buwad, Garlic, Onion, Oil, Salt' };
-                    break;
-                case 0: // Sunday
-                    breakfast = { name: 'Ampalaya with Eggs with Energen', ingredients: 'Ampalaya, Eggs, Energen, Water' };
-                    lunch = { name: 'Fried Fish', ingredients: 'Fish, Oil, Salt' };
-                    dinner = { name: 'Pakbit', ingredients: 'Pakbit, Garlic, Onion, Oil, Salt' };
-                    break;
-            }
-        }
-        
-        // Update the menu display
-        document.getElementById('breakfastName').textContent = breakfast.name;
-        document.getElementById('breakfastIngredients').textContent = breakfast.ingredients;
-        
-        document.getElementById('lunchName').textContent = lunch.name;
-        document.getElementById('lunchIngredients').textContent = lunch.ingredients;
-        
-        document.getElementById('dinnerName').textContent = dinner.name;
-        document.getElementById('dinnerIngredients').textContent = dinner.ingredients;
-    }
-    
-    // Call the function to update the menu when the page loads
-    updateTodayMenu();
     
     // Order filtering
     document.querySelectorAll('.dropdown-item[data-filter]').forEach(item => {

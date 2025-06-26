@@ -28,11 +28,6 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title">Today's Menu <span class="badge bg-primary ms-2" id="todayDayBadge">{{ now()->format('l') }}</span></h5>
                     <div>
-                        <span class="text-muted me-2" id="weekOfMonthDisplay">Week {{ $weekOfMonth ?? now()->weekOfMonth }} of {{ now()->format('F') }}:</span>
-                        <span class="badge bg-info" id="weekCycleBadge">Week {{ $weekCycle ?? 1 }}</span>
-                        <span class="badge bg-success ms-2" id="currentWeekIndicator">
-                            <i class="bi bi-calendar-check"></i> Current Week
-                        </span>
                      
                     </div>
                 </div>
@@ -220,71 +215,75 @@
 @push('styles')
 <style>
     .meal-item {
-        margin-bottom: 10px;
+        margin-bottom: 4px;
+        line-height: 1.3;
     }
-    
+
     .meal-time {
-        margin-top: 10px;
+        margin-top: 4px;
+    }
+
+    .meal-name {
+        margin-bottom: 2px;
+        line-height: 1.2;
+    }
+
+    .meal-ingredients {
+        line-height: 1.1;
+        margin-bottom: 0;
     }
     
     .table td {
-        vertical-align: middle;
+        vertical-align: top;
+        padding: 8px 12px;
+        line-height: 1.2;
     }
     
-    /* UNIFIED: Current Day and Week Highlighting */
+    /* UNIFIED: Current Day and Week Highlighting - Match Cook Menu Style */
     .menu-row.today,
-    tr.today {
-        background: rgba(255, 153, 51, 0.15) !important;
-        border-left: 4px solid #ff9933;
-        animation: currentDayPulse 2s ease-in-out infinite;
+    tr.today,
+    .current-day {
+        background-color: #f8f9fa !important;
+        border-left: 3px solid #6c757d;
     }
 
     .menu-row.today:hover,
-    tr.today:hover {
-        background: rgba(255, 153, 51, 0.25) !important;
+    tr.today:hover,
+    .current-day:hover {
+        background-color: #e9ecef !important;
     }
 
     .current-week-row {
-        background: rgba(34, 187, 234, 0.08) !important;
-        border-left: 2px solid #22bbea;
+        background-color: #f8f9fa !important;
+        border-left: 2px solid #adb5bd;
     }
 
     .current-week-row:hover {
-        background: rgba(34, 187, 234, 0.15) !important;
+        background-color: #e9ecef !important;
     }
 
-    /* UNIFIED: Badge System */
+    /* UNIFIED: Badge System - Match Cook Menu Style */
     .today-indicator,
     .today-badge {
-        background: #ff9933;
+        background-color: #6c757d;
         color: white;
         padding: 0.2rem 0.5rem;
-        border-radius: 10px;
+        border-radius: 4px;
         font-size: 0.7rem;
         font-weight: 600;
         margin: 0.25rem 0;
         display: inline-block;
-        animation: badgePulse 2s ease-in-out infinite;
     }
 
     .week-badge {
-        background: #22bbea;
+        background-color: #adb5bd;
         color: white;
         padding: 0.2rem 0.5rem;
-        border-radius: 10px;
+        border-radius: 4px;
         font-size: 0.7rem;
         font-weight: 600;
         margin: 0.25rem 0;
         display: inline-block;
-    }
-
-    @keyframes badgePulse {
-        0%, 100% {
-            transform: scale(1);
-        }
-        50% {
-            transform: scale(1.05);
-        }
     }
 
     @keyframes currentDayPulse {
@@ -313,15 +312,35 @@
         100% { transform: rotate(360deg); }
     }
 
+    /* Meal Item Styling - Compact Design */
     .meal-item {
-        transition: all 0.3s ease;
+        position: relative;
+        padding: 4px 6px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+        line-height: 1.2;
     }
 
     .meal-item:hover {
-        background-color: rgba(0, 0, 0, 0.02);
+        background-color: #f8f9fa;
         border-radius: 4px;
-        padding: 4px;
     }
+
+    /* Current Day Meal Items - Match Cook Menu */
+    .today .meal-item,
+    .current-day .meal-item {
+        border: 1px solid #dee2e6;
+        background-color: white;
+    }
+
+    .today .meal-item:hover,
+    .current-day .meal-item:hover {
+        border-color: #6c757d;
+        background-color: #f8f9fa;
+    }
+
+
     
     @media (max-width: 767.98px) {
         .table-responsive {
@@ -891,20 +910,17 @@
                 const currentWeekInfo = getCurrentWeekCycle();
                 const selectedWeekCycle = parseInt(weekCycleSelect.value);
 
-                // Remove all existing today highlights and week indicators
+                // Remove all existing today highlights
                 document.querySelectorAll('tr.today').forEach(row => {
-                    row.classList.remove('today');
-                });
-                document.querySelectorAll('.today-indicator').forEach(indicator => {
-                    indicator.remove();
+                    row.classList.remove('today', 'table-warning', 'current-day');
                 });
 
-                // UNIFIED: Add week highlighting - highlight current week differently (NO GRADIENT)
+                // UNIFIED: Subtle header highlighting - match cook menu style
                 const weekCycleHeader = document.querySelector('.card-header');
                 if (weekCycleHeader) {
                     const highlighting = getMenuHighlighting('monday', selectedWeekCycle); // Use any day to get week status
                     if (highlighting.isCurrentWeek) {
-                        weekCycleHeader.style.background = '#22bbea';
+                        weekCycleHeader.style.background = 'linear-gradient(135deg, #22bbea, #1a9bd1)';
                         weekCycleHeader.style.color = 'white';
                     } else {
                         weekCycleHeader.style.background = '#f8f9fa';
@@ -919,20 +935,11 @@
                     const highlighting = getMenuHighlighting(day, selectedWeekCycle);
 
                     // Remove existing classes
-                    row.classList.remove('today', 'current-week-row');
+                    row.classList.remove('today', 'current-week-row', 'table-warning', 'current-day');
 
-                    // Apply unified highlighting
+                    // Apply unified highlighting (match cook menu style with yellow background)
                     if (highlighting.isToday) {
-                        row.classList.add('today');
-
-                        // Add today indicator
-                        const dayCell = row.querySelector('td:first-child');
-                        if (dayCell && !dayCell.querySelector('.today-indicator')) {
-                            const todayIndicator = document.createElement('span');
-                            todayIndicator.className = 'badge bg-warning ms-2 today-indicator';
-                            todayIndicator.innerHTML = '<i class="bi bi-star-fill"></i> Today';
-                            dayCell.appendChild(todayIndicator);
-                        }
+                        row.classList.add('today', 'table-warning', 'current-day');
                     } else if (highlighting.isCurrentWeek) {
                         row.classList.add('current-week-row');
                     }

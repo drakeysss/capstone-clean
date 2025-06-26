@@ -24,6 +24,7 @@ class PostAssessment extends Model
         'notes',
         'improvements',
         'image_path',
+        'items',
         'is_completed',
         'assessed_by',
         'completed_at',
@@ -40,6 +41,7 @@ class PostAssessment extends Model
         'student_satisfaction_avg' => 'integer',
         'is_completed' => 'boolean',
         'completed_at' => 'datetime',
+        'items' => 'array',
     ];
 
     /**

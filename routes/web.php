@@ -66,6 +66,8 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     // Feedback
     Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback');
     Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
+    Route::delete('/feedback/{id}', [FeedbackController::class, 'destroy'])->name('feedback.destroy');
+    Route::delete('/feedback/delete-all', [FeedbackController::class, 'destroyAll'])->name('feedback.destroyAll');
     
     // Poll Responses
     Route::post('/poll-response', [StudentDashboardController::class, 'storePollResponse'])->name('poll-response.store');
@@ -93,6 +95,7 @@ Route::middleware(['auth', 'role:cook'])->prefix('cook')->name('cook.')->group(f
     Route::get('/menu/{weekCycle}', [MenuController::class, 'getMenu'])->name('menu.get');
     Route::get('/menu/{weekCycle}/{day}/{mealType}', [MenuController::class, 'getMeal'])->name('menu.meal');
     Route::get('/menu/kitchen/status', [MenuController::class, 'getKitchenStatus'])->name('menu.kitchen-status');
+
     
     // Weekly Menu Management
     Route::get('/weekly-menu', [\App\Http\Controllers\Cook\WeeklyMenuController::class, 'index'])->name('weekly-menu');
@@ -124,7 +127,7 @@ Route::middleware(['auth', 'role:cook'])->prefix('cook')->name('cook.')->group(f
     // Post Assessment
     Route::get('/post-assessment', [PostAssessmentController::class, 'index'])->name('post-assessment');
     Route::post('/post-assessment', [PostAssessmentController::class, 'store'])->name('post-assessment.store');
-    Route::put('/post-assessment/{id}', [PostAssessmentController::class, 'update'])->name('post-assessment.update');
+    Route::delete('/post-assessment/bulk-delete', [PostAssessmentController::class, 'deleteAll'])->name('post-assessment.bulk-delete');
     Route::delete('/post-assessment/{id}', [PostAssessmentController::class, 'destroy'])->name('post-assessment.destroy');
     
     // Student Feedback & Communication
@@ -227,6 +230,8 @@ Route::middleware(['auth', 'role:kitchen'])->prefix('kitchen')->name('kitchen.')
     Route::post('/pre-orders/update-poll-deadline', [App\Http\Controllers\Kitchen\PreOrderController::class, 'updatePollDeadline'])->name('pre-orders.update-poll-deadline');
     Route::delete('/pre-orders/delete-poll/{pollId}', [App\Http\Controllers\Kitchen\PreOrderController::class, 'deletePoll'])->name('pre-orders.delete-poll');
     Route::get('/pre-orders/poll-results/{pollId}', [App\Http\Controllers\Kitchen\PreOrderController::class, 'getPollResults'])->name('pre-orders.poll-results');
+    Route::post('/pre-orders/finish-poll', [App\Http\Controllers\Kitchen\PreOrderController::class, 'finishPoll'])->name('pre-orders.finish-poll');
+    Route::post('/pre-orders/check-expired-polls', [App\Http\Controllers\Kitchen\PreOrderController::class, 'checkExpiredPolls'])->name('pre-orders.check-expired-polls');
 
     // Test route for debugging
     Route::get('/pre-orders/test', function() {
@@ -346,29 +351,43 @@ Route::middleware(['auth'])->group(function () {
 
 // Error logging endpoint for JavaScript errors (available to all authenticated users)
 Route::middleware(['auth'])->post('/api/log-error', function (Request $request) {
-    \Log::error('Frontend Error', [
-        'type' => $request->input('type', 'unknown'),
-        'message' => $request->input('message'),
-        'filename' => $request->input('filename'),
-        'line' => $request->input('line'),
-        'column' => $request->input('column'),
-        'stack' => $request->input('stack'),
-        'url' => $request->input('url'),
-        'user_agent' => $request->input('user_agent'),
-        'user_id' => auth()->id(),
-        'user_role' => auth()->user()->role ?? 'unknown',
-        'timestamp' => now()
-    ]);
+    try {
+        \Log::error('Frontend Error', [
+            'type' => $request->input('type', 'unknown'),
+            'message' => $request->input('message'),
+            'filename' => $request->input('filename'),
+            'line' => $request->input('line'),
+            'column' => $request->input('column'),
+            'stack' => $request->input('stack'),
+            'url' => $request->input('url'),
+            'user_agent' => $request->input('user_agent'),
+            'user_id' => auth()->id(),
+            'user_role' => auth()->user()->role ?? 'unknown',
+            'timestamp' => now()
+        ]);
 
-    return response()->json(['success' => true]);
+        return response()->json(['success' => true]);
+    } catch (\Exception $e) {
+        // Silently fail to avoid infinite error loops
+        return response()->json(['success' => false], 500);
+    }
 });
 
 // System health check endpoint
 Route::middleware(['auth'])->get('/api/system-health', function () {
-    $health = \App\Services\ErrorPreventionService::systemHealthCheck();
-    return response()->json([
-        'success' => true,
-        'health' => $health,
-        'timestamp' => now()
-    ]);
+    try {
+        $health = \App\Services\ErrorPreventionService::systemHealthCheck();
+        return response()->json([
+            'success' => true,
+            'health' => $health,
+            'timestamp' => now()
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('System health check failed', ['error' => $e->getMessage()]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Health check failed',
+            'timestamp' => now()
+        ], 500);
+    }
 });

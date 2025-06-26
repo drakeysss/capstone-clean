@@ -30,21 +30,9 @@
     <div class="row mb-4">
         <div class="col-md-12">
             <div class="card border-warning">
-                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-0"><i class="bi bi-clipboard-check me-2"></i>Kitchen Menu Polls</h5>
-                        <small class="text-muted" id="lastRefreshTime">Last updated: Loading...</small>
-                    </div>
-                    <button class="btn btn-sm btn-outline-dark" id="refreshPollsBtn" onclick="refreshKitchenPolls()">
-                        <i class="bi bi-arrow-clockwise" id="refreshIcon"></i> Refresh
-                    </button>
-                </div>
+               
                 <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle me-2"></i>
-                        <strong>Respond to kitchen polls to help plan meal preparation!</strong>
-                        The kitchen team creates polls to know how many students will eat specific meals.
-                    </div>
+                   
                     <div id="kitchenPollsContainer">
                         <div class="text-center py-3">
                             <div class="spinner-border text-warning" role="status">
@@ -343,7 +331,8 @@ function displayKitchenPolls(polls) {
     const expired = [];
     polls.forEach(poll => {
         const deadline = new Date(poll.deadline);
-        if (deadline < now) {
+        // Check backend status first, then deadline
+        if (poll.status === 'expired' || poll.status === 'finished' || deadline < now) {
             expired.push(poll);
         } else if (poll.has_responded) {
             finished.push(poll);
@@ -385,9 +374,6 @@ function renderPollSection(polls, emptyMsg) {
                         <p class="text-muted small mb-2">
                             <i class="bi bi-calendar"></i> ${formatKitchenPollDate(poll.poll_date)}
                             <span class="badge bg-secondary ms-1">${poll.meal_type}</span>
-                        </p>
-                        <p class="text-muted small mb-2">
-                            <i class="bi bi-list-ul"></i> ${poll.ingredients || 'No ingredients listed'}
                         </p>
                         <p class="text-warning small mb-3">
                             <i class="bi bi-clock"></i> Deadline: ${deadlineFormatted}
@@ -437,7 +423,6 @@ function openKitchenPollModal(pollId) {
         <div class="alert alert-info">
             <h6><i class="bi bi-info-circle"></i> ${poll.meal_name}</h6>
             <p class="mb-1"><strong>Date:</strong> ${formatKitchenPollDate(poll.poll_date)} (${poll.meal_type})</p>
-            <p class="mb-1"><strong>Ingredients:</strong> ${poll.ingredients || 'Not specified'}</p>
             <p class="mb-0"><strong>Deadline:</strong> ${formatKitchenPollDeadline(poll.deadline)}</p>
         </div>
     `;

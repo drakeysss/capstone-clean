@@ -335,7 +335,6 @@ class PreOrderController extends Controller
             $activePolls = KitchenMenuPoll::where('status', 'active')
                 ->orWhere('status', 'sent')
                 ->where('poll_date', '>=', now()->format('Y-m-d'))
-                ->orderBy('poll_date', 'asc')
                 ->orderBy('created_at', 'desc')
                 ->get();
 

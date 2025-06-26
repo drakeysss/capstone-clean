@@ -33,28 +33,13 @@
                 <div class="card-body">
                     <form method="GET" action="{{ route('cook.inventory.reports') }}">
                         <div class="row">
-                            <div class="col-md-3">
-                                <label for="date_from" class="form-label">From Date</label>
-                                <input type="date" class="form-control" id="date_from" name="date_from" value="{{ request('date_from') }}">
+                            <div class="col-md-4">
+                                <label for="date" class="form-label">Date</label>
+                                <input type="date" class="form-control" id="date" name="date" value="{{ request('date') }}">
                             </div>
-                            <div class="col-md-3">
-                                <label for="date_to" class="form-label">To Date</label>
-                                <input type="date" class="form-control" id="date_to" name="date_to" value="{{ request('date_to') }}">
-                            </div>
-                            <div class="col-md-3">
-                                <label for="staff_id" class="form-label">Kitchen Staff</label>
-                                <select class="form-control" id="staff_id" name="staff_id">
-                                    <option value="">All Staff</option>
-                                    @foreach($kitchenStaff as $staff)
-                                        <option value="{{ $staff->id }}" {{ request('staff_id') == $staff->id ? 'selected' : '' }}>
-                                            {{ $staff->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-3 d-flex align-items-end">
+                            <div class="col-md-4 d-flex align-items-end">
                                 <button type="submit" class="btn btn-primary me-2">
-                                    <i class="bi bi-search me-1"></i>Filter
+                                    <i class="bi bi-search me-1"></i>Search
                                 </button>
                                 <a href="{{ route('cook.inventory.reports') }}" class="btn btn-outline-secondary">
                                     <i class="bi bi-arrow-clockwise me-1"></i>Clear
@@ -134,33 +119,6 @@
                                     </div>
                                 </div>
                             </div>
-                            
-                            <!-- Quick Preview of Items -->
-                            @if($report->items->count() > 0)
-                                <div class="mt-3">
-                                    <h6 class="text-muted mb-2">Items in this report:</h6>
-                                    <div class="row">
-                                        @foreach($report->items->take(6) as $item)
-                                            <div class="col-md-2 mb-2">
-                                                <div class="small border rounded p-2 {{ $item->needs_restock ? 'border-warning bg-warning bg-opacity-10' : '' }}">
-                                                    <strong>{{ $item->ingredient->name ?? 'Unknown Item' }}</strong><br>
-                                                    <span class="text-muted">{{ $item->current_stock }} units</span>
-                                                    @if($item->needs_restock)
-                                                        <br><span class="badge bg-warning">Restock</span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                        @if($report->items->count() > 6)
-                                            <div class="col-md-2 mb-2">
-                                                <div class="small border rounded p-2 text-center text-muted">
-                                                    +{{ $report->items->count() - 6 }} more items
-                                                </div>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-                            @endif
                         </div>
                     @empty
                         <div class="p-5 text-center">

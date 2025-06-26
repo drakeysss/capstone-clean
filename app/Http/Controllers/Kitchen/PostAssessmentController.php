@@ -100,8 +100,6 @@ class PostAssessmentController extends Controller
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.name' => 'required|string',
-            'items.*.prepared_quantity' => 'required|numeric|min:0',
-            'items.*.leftover_quantity' => 'required|numeric|min:0',
         ];
 
         // Only validate image if it's present and valid
@@ -164,23 +162,23 @@ class PostAssessmentController extends Controller
             }
 
             // Process each food item
-            $totalPrepared = 0;
-            $totalLeftover = 0;
             $itemsData = [];
 
             foreach ($request->items as $item) {
-                $totalPrepared += $item['prepared_quantity'];
-                $totalLeftover += $item['leftover_quantity'];
-
                 $itemsData[] = [
                     'name' => $item['name'],
-                    'prepared_quantity' => $item['prepared_quantity'],
-                    'leftover_quantity' => $item['leftover_quantity']
+                    'prepared_quantity' => 0,
+                    'leftover_quantity' => 0
                 ];
             }
 
+            \Log::info('🍽️ Kitchen Post-Assessment Items Data', [
+                'items_count' => count($itemsData),
+                'items_data' => $itemsData
+            ]);
+
             // Calculate wastage percentage
-            $wastagePercentage = $totalPrepared > 0 ? ($totalLeftover / $totalPrepared) * 100 : 0;
+            $wastagePercentage = 0;
 
             // Handle image upload
             $imagePath = null;
@@ -212,42 +210,39 @@ class PostAssessmentController extends Controller
                 }
             }
 
-            // Create the assessment record
+            // Find the menu for this date and meal type
+            $menu = Menu::where('date', $request->date)
+                ->where('meal_type', $request->meal_type)
+                ->first();
+
+            // Create the PostAssessment record
             $assessment = PostAssessment::create([
                 'date' => $request->date,
                 'meal_type' => $request->meal_type,
-                'planned_portions' => $totalPrepared,
-                'actual_portions_served' => $totalPrepared - $totalLeftover,
-                'leftover_portions' => $totalLeftover,
-                'food_waste_kg' => $totalLeftover, // Using leftover_portions as kg for now
+                'menu_id' => $menu ? $menu->id : null,
                 'notes' => $request->notes,
                 'image_path' => $imagePath,
+                'items' => $itemsData,
                 'assessed_by' => Auth::id(),
                 'is_completed' => true,
                 'completed_at' => now(),
             ]);
 
-            // Send notification to cook about post-meal report
-            $notificationService = new NotificationService();
-            $notificationService->postMealReportSubmitted([
+            // Notify the cook
+            app(NotificationService::class)->postMealReportSubmitted([
                 'assessment_id' => $assessment->id,
                 'meal_type' => $request->meal_type,
                 'date' => $request->date,
-                'wastage_percentage' => round($wastagePercentage, 1),
-                'total_prepared' => $totalPrepared,
-                'total_leftover' => $totalLeftover,
                 'items_count' => count($itemsData),
-                'items' => $itemsData
+                'items' => $itemsData,
+                'submitted_by' => Auth::user()->name,
             ]);
-
-            DB::commit();
 
             \Log::info('✅ Kitchen Post-Assessment Created Successfully', [
                 'assessment_id' => $assessment->id,
-                'total_prepared' => $totalPrepared,
-                'total_leftover' => $totalLeftover,
-                'wastage_percentage' => round($wastagePercentage, 1)
             ]);
+
+            DB::commit();
 
             if ($request->expectsJson()) {
                 return response()->json([
