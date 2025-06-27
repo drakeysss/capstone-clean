@@ -6,10 +6,13 @@ use App\Http\Controllers\Dashboard\BaseDashboardController;
 use Illuminate\Http\Request;
 use App\Models\Report;
 use App\Models\Menu;
+use App\Models\Meal;
 use App\Models\PreOrder;
 use App\Models\Announcement;
 use App\Models\Poll;
 use App\Models\PollResponse;
+use App\Services\DashboardViewService;
+use App\Services\WeekCycleService;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -125,57 +128,79 @@ class StudentDashboardController extends BaseDashboardController
         $today = Carbon::today()->format('Y-m-d');
         $weekStart = Carbon::today()->startOfWeek();
         $weekEnd = Carbon::today()->endOfWeek();
-        
-        // Get today's menu items
-        $todayMenu = Menu::where('date', $today)
-            ->orderBy('meal_type')
+
+        // Get today's menu items using the same approach as kitchen/cook dashboards
+        $currentDay = strtolower(now()->format('l'));
+        $weekInfo = WeekCycleService::getWeekInfo();
+        $weekCycle = $weekInfo['week_cycle'];
+
+        // Get today's menu from cook's meal planning (using Meal model)
+        $todayMenu = Meal::forWeekCycle($weekCycle)
+            ->forDay($currentDay)
             ->get()
             ->groupBy('meal_type');
+
+        // Debug log to verify menu retrieval
+        \Log::info('Student Dashboard - Today\'s Menu Retrieved', [
+            'current_day' => $currentDay,
+            'week_cycle' => $weekCycle,
+            'menu_count' => $todayMenu->count(),
+            'meal_types' => $todayMenu->keys()->toArray()
+        ]);
         
-        // Get student's pre-orders for today
-        $studentPreOrders = PreOrder::where('user_id', Auth::id())
+        // Get student's recent pre-orders (for dashboard display) - with "show once" logic
+        $studentPreOrders = DashboardViewService::processDashboardData(
+            PreOrder::where('user_id', Auth::id())->orderBy('date', 'desc')->take(3),
+            'student_recent_preorders'
+        );
+
+        // Get student's pre-orders for today (for meal attendance)
+        $todayPreOrders = PreOrder::where('user_id', Auth::id())
             ->where('date', $today)
             ->get()
             ->keyBy('meal_type');
-        
-        // Get active announcements
-        $announcements = Announcement::where('is_active', true)
-            ->where('expiry_date', '>=', $today)
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
-        
-        // Get active meal polls
-        $activeMealPolls = Announcement::where('is_active', true)
-            ->orderBy('created_at', 'desc')
-            ->get();
+
+        // Get active announcements - with "show once" logic
+        $announcements = DashboardViewService::processDashboardData(
+            Announcement::where('is_active', true)
+                ->where('expiry_date', '>=', $today)
+                ->orderBy('created_at', 'desc')
+                ->take(5),
+            'active_announcements'
+        );
+
+        // Get active meal polls - with "show once" logic
+        $activeMealPolls = DashboardViewService::processDashboardData(
+            Announcement::where('is_active', true)->orderBy('created_at', 'desc'),
+            'active_meal_polls'
+        );
             
-        // Get weekly menu for Week 1 and Week 2
-        // Week 1 Menu (Current Week)
-        $week1Menu = Menu::whereBetween('date', [$weekStart->format('Y-m-d'), $weekEnd->format('Y-m-d')])
-            ->orderBy('date')
+        // Get weekly menu for Week 1 and Week 2 using the same approach as kitchen/cook
+        // Week 1 Menu (Week Cycle 1)
+        $week1Menu = Meal::forWeekCycle(1)
+            ->orderBy('day_of_week')
             ->orderBy('meal_type')
             ->get()
-            ->groupBy(function($item) {
-                return Carbon::parse($item->date)->format('l'); // Group by day of week
+            ->groupBy('day_of_week')
+            ->map(function($dayMeals) {
+                return $dayMeals->groupBy('meal_type');
             });
-            
-        // Week 2 Menu (Next Week)
-        $nextWeekStart = (clone $weekStart)->addWeek();
-        $nextWeekEnd = (clone $weekEnd)->addWeek();
-        $week2Menu = Menu::whereBetween('date', [$nextWeekStart->format('Y-m-d'), $nextWeekEnd->format('Y-m-d')])
-            ->orderBy('date')
+
+        // Week 2 Menu (Week Cycle 2)
+        $week2Menu = Meal::forWeekCycle(2)
+            ->orderBy('day_of_week')
             ->orderBy('meal_type')
             ->get()
-            ->groupBy(function($item) {
-                return Carbon::parse($item->date)->format('l'); // Group by day of week
+            ->groupBy('day_of_week')
+            ->map(function($dayMeals) {
+                return $dayMeals->groupBy('meal_type');
             });
             
         // Get meal types for display
         $mealTypes = ['breakfast', 'lunch', 'dinner'];
         
-        // Get days of the week for display
-        $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        // Get days of the week for display (matching Meal model format)
+        $daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
         
         // Get cutoff times for each meal type
         $cutoffTimes = [
@@ -269,67 +294,20 @@ class StudentDashboardController extends BaseDashboardController
             $today = Carbon::tomorrow()->format('Y-m-d');
         }
         
-        // Calculate budget tracking data
-        $monthStart = Carbon::now()->startOfMonth()->format('Y-m-d');
-        $monthEnd = Carbon::now()->endOfMonth()->format('Y-m-d');
+
         
-        // Define meal costs
-        $monthlyMealCosts = [
-            'breakfast' => 3.50,
-            'lunch' => 5.00,
-            'dinner' => 6.50
-        ];
-        
-        // Get all pre-orders for the current month
-        $monthlyPreOrders = PreOrder::where('user_id', Auth::id())
-            ->whereBetween('date', [$monthStart, $monthEnd])
-            ->where('is_attending', true)
-            ->with('menu')
-            ->get();
-        
-        // Calculate total spent this month
-        $spentThisMonth = 0;
-        $breakfastTotal = 0;
-        $lunchTotal = 0;
-        $dinnerTotal = 0;
-        
-        foreach ($monthlyPreOrders as $preOrder) {
-            $mealCost = $mealCosts[$preOrder->meal_type] ?? 5.00;
-            $spentThisMonth += $mealCost;
-            
-            if ($preOrder->meal_type === 'breakfast') {
-                $breakfastTotal += $mealCost;
-            } elseif ($preOrder->meal_type === 'lunch') {
-                $lunchTotal += $mealCost;
-            } elseif ($preOrder->meal_type === 'dinner') {
-                $dinnerTotal += $mealCost;
-            }
-        }
-        
-        // Calculate remaining budget (assuming monthly budget of $150)
-        $monthlyBudget = 150.00;
-        $remainingBudget = $monthlyBudget - $spentThisMonth;
-        
-        // Calculate daily average
-        $daysInMonth = Carbon::now()->daysInMonth;
-        $daysElapsed = Carbon::now()->day;
-        $dailyAverage = $daysElapsed > 0 ? $spentThisMonth / $daysElapsed : 0;
+
 
         return view('student.dashboard', compact(
             'todayMenu',
             'studentPreOrders',
+            'todayPreOrders',
             'announcements',
             'activeMealPolls',
             'pollResponses',
             'mealTimes',
             'nextMeal',
             'today',
-            'spentThisMonth',
-            'remainingBudget',
-            'dailyAverage',
-            'breakfastTotal',
-            'lunchTotal',
-            'dinnerTotal',
             'mealCosts',
             'wasteStats',
             'week1Menu',

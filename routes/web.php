@@ -22,9 +22,10 @@ use App\Http\Controllers\Kitchen\PostAssessmentController as KitchenPostAssessme
 use App\Http\Controllers\Kitchen\FeedbackController as KitchenFeedbackController;
 use App\Http\Controllers\Kitchen\AnnouncementController;
 use App\Http\Controllers\Kitchen\PollController;
+use App\Http\Controllers\Kitchen\MenuController as KitchenMenuController;
 use App\Http\Controllers\Student\StudentDashboardController;
 use App\Http\Controllers\Student\StudentHistoryController;
-use App\Http\Controllers\Student\StudentMenuController;
+use App\Http\Controllers\Student\MenuController as StudentMenuController;
 use App\Http\Controllers\Student\PreOrderController as StudentPreOrderController;
 use App\Http\Controllers\Student\FeedbackController;
 use App\Http\Controllers\Kitchen\PollController as KitchenPollController;
@@ -168,6 +169,10 @@ Route::middleware(['auth', 'role:kitchen'])->prefix('kitchen')->name('kitchen.')
     Route::get('/dashboard', [KitchenDashboardController::class, 'dashboard'])->name('dashboard');
     Route::get('/settings', [KitchenDashboardController::class, 'settings'])->name('settings');
 
+    // Daily Menu
+    Route::get('/daily-menu', [KitchenMenuController::class, 'index'])->name('daily-menu');
+    Route::get('/menu/{weekCycle}', [KitchenMenuController::class, 'getMenu'])->name('menu.get');
+
     // Pre-Orders
     Route::get('/pre-orders', [App\Http\Controllers\Kitchen\PreOrderController::class, 'index'])->name('pre-orders');
     Route::post('/pre-orders/mark-prepared', [App\Http\Controllers\Kitchen\PreOrderController::class, 'markMenuItemsPrepared'])->name('pre-orders.mark-prepared');
@@ -298,7 +303,7 @@ Route::middleware(['auth', 'role:kitchen'])->prefix('kitchen')->group(function (
             'message' => 'API is working',
             'weekCycle' => $weekCycle,
             'user' => auth()->user()->name ?? 'Unknown',
-            'role' => auth()->user()->role ?? 'Unknown',
+            'role' => auth()->user()->user_role ?? 'Unknown',
             'timestamp' => now()->toDateTimeString()
         ]);
     });

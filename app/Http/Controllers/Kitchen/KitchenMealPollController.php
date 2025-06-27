@@ -20,8 +20,7 @@ class KitchenMealPollController extends Controller
         try {
             \Log::info('🔄 Kitchen KitchenMealPollController: Getting active polls');
             
-            $activePolls = KitchenMenuPoll::where('status', 'active')
-                ->orWhere('status', 'sent')
+            $activePolls = KitchenMenuPoll::where('is_active', true)
                 ->where('poll_date', '>=', now()->format('Y-m-d'))
                 ->orderBy('poll_date', 'asc')
                 ->orderBy('created_at', 'desc')
@@ -58,13 +57,16 @@ class KitchenMealPollController extends Controller
             ]);
 
             $poll = KitchenMenuPoll::create([
-                'meal_name' => $request->meal_name,
-                'ingredients' => $request->ingredients,
                 'poll_date' => $request->poll_date,
                 'meal_type' => $request->meal_type,
+                'menu_options' => [
+                    'meal_name' => $request->meal_name,
+                    'ingredients' => $request->ingredients
+                ],
+                'instructions' => 'Please respond if you will be eating this meal.',
                 'deadline' => $request->deadline,
-                'status' => 'draft',
-                'created_by' => Auth::id()
+                'is_active' => false, // Start as draft
+                'created_by' => Auth::user()->user_id // Use the actual user_id primary key
             ]);
 
             return response()->json([
@@ -104,8 +106,7 @@ class KitchenMealPollController extends Controller
 
             // Update poll status
             $poll->update([
-                'status' => 'active',
-                'sent_at' => now()
+                'is_active' => true
             ]);
 
             // Send notifications to students
@@ -117,7 +118,7 @@ class KitchenMealPollController extends Controller
                 'meal_type' => $poll->meal_type
             ]);
 
-            $studentCount = User::where('role', 'student')->count();
+            $studentCount = User::where('user_role', 'student')->count();
 
             return response()->json([
                 'success' => true,
@@ -142,7 +143,7 @@ class KitchenMealPollController extends Controller
     {
         try {
             $poll = KitchenMenuPoll::with(['responses'])->findOrFail($pollId);
-            $totalStudents = User::where('role', 'student')->count();
+            $totalStudents = User::where('user_role', 'student')->count();
 
             $yesCount = $poll->responses()->where('will_eat', true)->count();
             $noCount = $poll->responses()->where('will_eat', false)->count();

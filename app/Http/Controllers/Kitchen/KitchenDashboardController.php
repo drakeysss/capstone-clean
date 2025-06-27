@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Menu;
 use App\Models\PreOrder;
 use App\Services\WeekCycleService;
+use App\Services\DashboardViewService;
 use Carbon\Carbon;
 
 class KitchenDashboardController extends BaseDashboardController
@@ -29,9 +30,9 @@ class KitchenDashboardController extends BaseDashboardController
         $weekOfMonth = $weekInfo['week_of_month'];
         $weekCycle = $weekInfo['week_cycle'];
         
-        // Get today's menu items from cook's planning
-        $todayMenus = Menu::where('day', ucfirst($currentDay))
-            ->where('week_cycle', $weekCycle)
+        // Get today's menu items from cook's planning (using Meal model)
+        $todayMenus = \App\Models\Meal::forWeekCycle($weekCycle)
+            ->forDay($currentDay)
             ->get()
             ->groupBy('meal_type');
         
@@ -59,11 +60,46 @@ class KitchenDashboardController extends BaseDashboardController
         $data['inventoryItems'] = $inventoryItems;
         $data['mealAttendance'] = $mealAttendance;
 
-        // Get recent pre-orders instead of orders
-        $data['recentOrders'] = PreOrder::with(['user', 'menu'])
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
+        // Get recent pre-orders instead of orders - with "show once" logic
+        $data['recentOrders'] = DashboardViewService::processDashboardData(
+            PreOrder::with(['user', 'menu'])->orderBy('created_at', 'desc')->take(5),
+            'recent_orders'
+        );
+
+        // Get recent post meal reports - with "show once" logic
+        $data['recentPostMealReports'] = DashboardViewService::processDashboardData(
+            \App\Models\PostAssessment::with(['assessedBy'])->orderBy('created_at', 'desc')->take(3),
+            'recent_post_meal_reports'
+        );
+
+        // Get recent student feedback - with "show once" logic
+        $data['recentFeedback'] = DashboardViewService::processDashboardData(
+            \App\Models\Feedback::with(['student', 'meal'])->orderBy('created_at', 'desc')->take(3),
+            'recent_feedback'
+        );
+
+        // Get recent inventory reports (using InventoryHistory) - with "show once" logic
+        $data['recentInventoryReports'] = DashboardViewService::processDashboardData(
+            \App\Models\InventoryHistory::with(['user', 'item'])->orderBy('created_at', 'desc')->take(3),
+            'recent_inventory_reports'
+        );
+
+        // Get today's menu for display
+        $data['todaysMenu'] = collect();
+        foreach ($todayMenus as $mealType => $meals) {
+            foreach ($meals as $meal) {
+                $data['todaysMenu']->push((object)[
+                    'meal_type' => $mealType,
+                    'meal_name' => $meal->name ?? 'No meal planned',
+                    'ingredients' => is_array($meal->ingredients) ? implode(', ', $meal->ingredients) : ($meal->ingredients ?? 'No ingredients listed')
+                ]);
+            }
+        }
+
+        // Add week cycle information for display
+        $data['weekCycle'] = $weekCycle;
+        $data['currentDay'] = ucfirst($currentDay);
+        $data['today'] = $today;
 
         return $data;
     }

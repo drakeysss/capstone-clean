@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\PreOrder;
 use App\Models\Menu;
+use App\Services\DashboardViewService;
 
 class AdminController extends Controller
 {
@@ -19,10 +20,12 @@ class AdminController extends Controller
     {
         $totalOrders = PreOrder::count();
         $totalMenuItems = Menu::count();
-        $recentOrders = PreOrder::with('user')
-            ->latest()
-            ->take(10)
-            ->get();
+
+        // Get recent orders with "show once" logic
+        $recentOrders = DashboardViewService::processDashboardData(
+            PreOrder::with('user')->latest()->take(10),
+            'recent_orders'
+        );
 
         return view('admin.dashboard', compact(
             'totalOrders',

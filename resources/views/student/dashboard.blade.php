@@ -1,59 +1,157 @@
 @extends('layouts.app')
 
-@section('title', "Today's Menu - Student Dashboard")
+@section('title', "Student Dashboard")
 
 @section('content')
-<div class="container-fluid">
-    <!-- Enhanced Header Section -->
+<div class="container-fluid p-4">
+    <!-- Welcome Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #22bbea, #1a9bd1);">
-                    <div>
-                        <h3 class="mb-1 fw-bold">
-                            <i class="bi bi-house-door me-2"></i>Today's Menu
-                        </h3>
-                        <p class="mb-0 opacity-75">Welcome, {{ Auth::user()->name ?? 'Student' }}!</p>
-                    </div>
-                    <div class="text-end">
-                        <div id="currentDateTimeBlock" class="date-time-block">
-                            <div id="currentDate" class="date-line">Date</div>
-                            <div id="currentTime" class="time-line">Time</div>
-                        </div>
-                    </div>
+            <div class="welcome-card">
+                <div class="welcome-content">
+                    <h2>Welcome, {{ Auth::user()->name }}!</h2>
+                    <p class="text-muted" style="color: white;">Your meal planning and feedback dashboard</p>
+                </div>
+                <div class="current-time">
+                    <i class="bi bi-clock"></i>
+                    <span id="currentDateTime"></span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Quick Actions Section -->
+    <!-- Student Dashboard Overview Section -->
     <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-lightning-fill me-2"></i>Quick Actions</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 mb-2">
-                            <a href="/student/pre-order" class="btn btn-primary w-100">
-                                <i class="bi bi-clipboard-check me-2"></i>Pre-Orders & Polls
-                            </a>
-                        </div>
-                        <div class="col-md-4 mb-2">
-                            <a href="/student/menu" class="btn btn-outline-primary w-100">
-                                <i class="bi bi-calendar-week me-2"></i>View Menu
-                            </a>
-                        </div>
-                        <div class="col-md-4 mb-2">
-                            <a href="/student/feedback" class="btn btn-outline-secondary w-100">
-                                <i class="bi bi-chat-dots me-2"></i>Give Feedback
-                            </a>
-                        </div>
+        <!-- Today's Menu -->
+        <div class="col-md-6 mb-4">
+            <div class="card main-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-1">Today's Menu</h5>
+                        <small class="text-muted">
+                            {{ now()->format('l, F j, Y') }}
+                        </small>
                     </div>
+                    <a href="{{ route('student.menu') }}" class="btn btn-sm btn-outline-primary">View Full Menu</a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Meal Type</th>
+                                <th>Menu Item</th>
+                                <th>Ingredients</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($todayMenu ?? [] as $mealType => $menus)
+                                @foreach($menus as $menu)
+                                <tr>
+                                    <td>{{ ucfirst($mealType) }}</td>
+                                    <td>{{ $menu->name ?? 'No meal planned' }}</td>
+                                    <td>
+                                        <small class="text-muted">
+                                            @if(is_array($menu->ingredients))
+                                                {{ implode(', ', $menu->ingredients) }}
+                                            @else
+                                                {{ $menu->ingredients ?? 'No ingredients listed' }}
+                                            @endif
+                                        </small>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            @empty
+                            <tr>
+                                <td colspan="3" class="text-center">No menu available for today</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
+
+        <!-- My Feedback History -->
+        <div class="col-md-6 mb-4">
+            <div class="card main-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title">My Recent Feedback</h5>
+                    <a href="{{ route('student.feedback') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Meal</th>
+                                <th>Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php
+                                $recentFeedback = \App\Models\Feedback::where('student_id', Auth::id())
+                                    ->orderBy('created_at', 'desc')
+                                    ->take(3)
+                                    ->get();
+                            @endphp
+                            @forelse($recentFeedback as $feedback)
+                                <tr>
+                                    <td>{{ $feedback->created_at->format('M d, Y') }}</td>
+                                    <td>{{ $feedback->meal_name ?? ucfirst($feedback->meal_type) }}</td>
+                                    <td>
+                                        @for($i = 1; $i <= 5; $i++)
+                                            <i class="bi {{ $i <= $feedback->rating ? 'bi-star-fill' : 'bi-star' }}" style="color: #ff9933; font-size: 0.8rem;"></i>
+                                        @endfor
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="3" class="text-center">No feedback submitted yet</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Recent Pre-Orders -->
+        <div class="col-md-6 mb-4">
+            <div class="card main-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title">Recent Pre-Orders</h5>
+                    <a href="{{ route('student.pre-order') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Meal</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($studentPreOrders ?? [] as $preOrder)
+                                <tr>
+                                    <td>{{ $preOrder->date->format('M d, Y') }}</td>
+                                    <td>{{ ucfirst($preOrder->meal_type) }}</td>
+                                    <td>
+                                        <span class="status-badge {{ $preOrder->is_attending ? 'active' : 'cancelled' }}">
+                                            {{ $preOrder->is_attending ? 'Attending' : 'Not Attending' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="3" class="text-center">No recent pre-orders</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
     </div>
 
     <!-- Meal Attendance Polls Section -->
@@ -184,117 +282,195 @@
 
 @push('styles')
 <style>
-    #currentTime {
-        font-size: 1.5rem;
-        font-weight: bold;
+    /* General Styles */
+    .container-fluid {
+        background-color: #f8f9fc;
     }
 
-    #currentDate {
-        font-size: 1rem;
+    /* Welcome Card */
+    .welcome-card {
+        background: #22bbea;
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
-    .card {
-        border: none;
+    .current-time {
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Main Cards */
+    .main-card {
+        background: white;
+        border-radius: 1rem;
         box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-        margin-bottom: 1.5rem;
+        border: none;
         transition: all 0.3s ease;
     }
 
-    .card:hover {
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    .main-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.25rem 2rem 0 rgba(58, 59, 69, 0.25);
     }
 
-    /* Food Waste Prevention Styles */
-    .impact-stat {
-        padding: 15px;
+    .card-header {
+        background: none;
+        border-bottom: 1px solid #e3e6f0;
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-title {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #ff9933;
+    }
+
+    /* Table Styles */
+    .table {
+        margin: 0;
+    }
+
+    .table th {
+        font-weight: 600;
+        color: #6c757d;
+        border-top: none;
+        font-size: 0.875rem;
+    }
+
+    .table td {
+        vertical-align: middle;
+        font-size: 0.875rem;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        padding: 0.35rem 0.65rem;
+        border-radius: 0.35rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-badge.pending {
+        background-color: #f6c23e;
+        color: white;
+    }
+
+    .status-badge.completed {
+        background-color: #1cc88a;
+        color: white;
+    }
+
+    .status-badge.cancelled {
+        background-color: #e74a3b;
+        color: white;
+    }
+
+    .status-badge.active {
+        background-color: #1cc88a;
+        color: white;
+    }
+
+    /* Spending Stats */
+    .spending-stat {
+        padding: 10px;
         border-radius: 8px;
         background-color: #f8f9fa;
         transition: all 0.3s ease;
     }
 
-    /* Meal Menu Styles */
-    .meal-item {
-        padding: 10px;
-        border-radius: 5px;
-        transition: all 0.2s ease;
-    }
-
-    .meal-item:hover {
-        background-color: #f8f9fa;
-    }
-
-    .week-menu {
-        transition: all 0.3s ease;
-    }
-
-    .badge {
-        font-size: 0.7rem;
-        font-weight: normal;
-        padding: 0.3rem 0.5rem;
-    }
-
-    .impact-stat:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-
-    .impact-value {
-        font-size: 2rem;
+    .spending-value {
+        font-size: 1.5rem;
         font-weight: 700;
         color: #2e7d32;
         margin-bottom: 5px;
     }
 
-    .impact-label {
-        font-size: 0.9rem;
-        color: #555;
+    .spending-label {
+        font-size: 0.8rem;
+        color: #6c757d;
     }
 
-    .card:hover {
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    /* Responsive Styles */
+    @media (max-width: 768px) {
+        .welcome-card {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+            padding: 15px;
+        }
+
+        .current-time {
+            font-size: 1rem;
+            justify-content: center;
+        }
+
+        .card-header {
+            padding: 0.75rem 1rem;
+        }
+
+        .card-title {
+            font-size: 1rem;
+        }
+
+        .table th,
+        .table td {
+            padding: 0.5rem 0.25rem;
+            font-size: 0.8rem;
+        }
+
+        .spending-value {
+            font-size: 1.2rem;
+        }
+
+        .spending-label {
+            font-size: 0.75rem;
+        }
     }
 
-    .date-time-block { text-align: center; }
-    .date-line { font-size: 1.15rem; font-weight: 500; }
-    .time-line { font-size: 1rem; font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace; }
+    @media (max-width: 576px) {
+        .container-fluid {
+            padding: 0.5rem !important;
+        }
+
+        .welcome-card {
+            padding: 10px;
+        }
+
+        .spending-stat {
+            padding: 8px;
+        }
+    }
 </style>
 @endpush
 
 @push('scripts')
 <script>
-    function updateDateTimeHeader() {
-        const now = new Date();
-        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const timeString = now.toLocaleTimeString('en-US', timeOptions);
-        const dateString = now.toLocaleDateString('en-US', dateOptions);
-        const el = document.getElementById('currentDateTime');
-        if (el) el.textContent = `${dateString} ${timeString}`;
+    console.log('🚀 Student Dashboard script starting...');
+
+    {!! \App\Services\WeekCycleService::getJavaScriptFunction() !!}
+
+    console.log('📅 Week cycle function loaded');
+
+    // UNIFIED: Real-time date and time display
+    function updateDateTime() {
+        const weekInfo = getCurrentWeekCycle();
+        document.getElementById('currentDateTime').innerHTML = `${weekInfo.displayDate}<br><small>${weekInfo.timeString}</small>`;
     }
-    updateDateTimeHeader();
-    setInterval(updateDateTimeHeader, 1000);
 
-    // Week cycle toggle functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        const weekCycleSelect = document.getElementById('weekCycleSelect');
-        const week1Menu = document.getElementById('week1Menu');
-        const week2Menu = document.getElementById('week2Menu');
+    updateDateTime();
+    setInterval(updateDateTime, 1000); // Update every second for real-time display
 
-        if (weekCycleSelect && week1Menu && week2Menu) {
-            weekCycleSelect.addEventListener('change', function() {
-                const selectedCycle = this.value;
-
-                if (selectedCycle === '1') {
-                    week1Menu.style.display = 'block';
-                    week2Menu.style.display = 'none';
-                } else {
-                    week1Menu.style.display = 'none';
-                    week2Menu.style.display = 'block';
-                }
-            });
-        }
-    });
-
+    // Poll response handling
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('form[action*="poll-response"]').forEach(function(form) {
             form.addEventListener('submit', function(e) {
@@ -315,6 +491,7 @@
                     if (data.success) {
                         alert('Response submitted successfully!');
                         form.reset();
+                        location.reload(); // Refresh to show updated data
                     } else {
                         alert(data.message || 'Failed to submit response');
                     }
@@ -328,18 +505,8 @@
                 });
             });
         });
-    });
 
-    document.addEventListener('DOMContentLoaded', function() {
-        function updateDateTimeBlock() {
-            const now = new Date();
-            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
-            document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
-        }
-        updateDateTimeBlock();
-        setInterval(updateDateTimeBlock, 1000);
+        console.log('✅ Student Dashboard loaded successfully');
     });
 </script>
 @endpush

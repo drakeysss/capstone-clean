@@ -16,7 +16,8 @@ return new class extends Migration
             Schema::create('inventory_history', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('inventory_item_id')->constrained('inventory')->onDelete('cascade');
-                $table->foreignId('user_id')->constrained('users');
+                $table->string('user_id');
+                $table->foreign('user_id')->references('user_id')->on('pnph_users');
                 $table->string('action_type')->comment('add, remove, adjust, report');
                 $table->decimal('quantity_change', 10, 2);
                 $table->decimal('previous_quantity', 10, 2);

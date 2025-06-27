@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::table('inventory_checks', function (Blueprint $table) {
             $table->timestamp('approved_at')->nullable();
-            $table->unsignedBigInteger('approved_by')->nullable();
+            $table->string('approved_by')->nullable();
             $table->text('approval_notes')->nullable();
 
-            $table->foreign('approved_by')->references('id')->on('users');
+            $table->foreign('approved_by')->references('user_id')->on('pnph_users');
         });
     }
 

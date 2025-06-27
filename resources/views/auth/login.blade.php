@@ -32,11 +32,11 @@
                             <span class="input-group-text bg-white">
                                 <i class="bi bi-envelope text-primary"></i>
                             </span>
-                            <input type="email" 
-                                   class="form-control @error('email') is-invalid @enderror" 
-                                   id="email" name="email" 
-                                   value="{{ old('email') }}" 
-                                   required autocomplete="email" autofocus 
+                            <input type="text"
+                                   class="form-control @error('email') is-invalid @enderror"
+                                   id="email" name="email"
+                                   value="{{ old('email') }}"
+                                   required autocomplete="email" autofocus
                                    placeholder="Enter your email">
                             @error('email')
                                 <div class="invalid-feedback">{{ $message }}</div>

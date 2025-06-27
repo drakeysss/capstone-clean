@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\PreOrder;
 use App\Models\Menu;
 use App\Models\Inventory;
+use App\Services\DashboardViewService;
 
 class CookDashboardController extends BaseDashboardController
 {
@@ -37,11 +38,11 @@ class CookDashboardController extends BaseDashboardController
             ->take(3)
             ->get();
 
-        // Get recent pre-orders (replacing old orders)
-        $recentOrders = PreOrder::with(['user', 'menu'])
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
+        // Get recent pre-orders (replacing old orders) - with "show once" logic
+        $recentOrders = DashboardViewService::processDashboardData(
+            PreOrder::with(['user', 'menu'])->orderBy('created_at', 'desc')->take(5),
+            'recent_orders'
+        );
             
         // Get meal attendance data for food waste prevention
         $today = now()->format('Y-m-d');
@@ -96,7 +97,7 @@ class CookDashboardController extends BaseDashboardController
         $lowestAttendancePercentage = 100;
         
         foreach ($tomorrowMeals as $meal) {
-            $totalStudents = \App\Models\User::where('role', 'student')->count();
+            $totalStudents = \App\Models\User::where('user_role', 'student')->count();
             $attendingStudents = \App\Models\PreOrder::where('date', $tomorrow)
                 ->where('meal_type', $meal->meal_type)
                 ->where('is_attending', true)
@@ -133,24 +134,30 @@ class CookDashboardController extends BaseDashboardController
             'meal_type' => ucfirst($lowestAttendanceMeal)
         ];
 
-        // Recent post meal reports
-        $recentPostMealReports = \App\Models\PostAssessment::with(['assessedBy', 'menu'])
-            ->where('is_completed', true)
-            ->orderBy('date', 'desc')
-            ->take(3)
-            ->get();
+        // Recent post meal reports - with "show once" logic
+        $recentPostMealReports = DashboardViewService::processDashboardData(
+            \App\Models\PostAssessment::with(['assessedBy', 'menu'])
+                ->where('is_completed', true)
+                ->orderBy('date', 'desc')
+                ->take(3),
+            'recent_post_meal_reports'
+        );
 
-        // Recent inventory reports
-        $recentInventoryReports = \App\Models\InventoryCheck::with(['user', 'items'])
-            ->orderBy('created_at', 'desc')
-            ->take(3)
-            ->get();
+        // Recent inventory reports - with "show once" logic
+        $recentInventoryReports = DashboardViewService::processDashboardData(
+            \App\Models\InventoryCheck::with(['user', 'items'])
+                ->orderBy('created_at', 'desc')
+                ->take(3),
+            'recent_inventory_reports'
+        );
 
-        // Recent student feedback
-        $recentFeedback = \App\Models\Feedback::with(['student', 'meal'])
-            ->orderBy('created_at', 'desc')
-            ->take(3)
-            ->get();
+        // Recent student feedback - with "show once" logic
+        $recentFeedback = DashboardViewService::processDashboardData(
+            \App\Models\Feedback::with(['student', 'meal'])
+                ->orderBy('created_at', 'desc')
+                ->take(3),
+            'recent_feedback'
+        );
 
         return compact(
             'pendingPreOrders',

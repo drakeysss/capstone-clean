@@ -9,20 +9,21 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class KitchenMenuPoll extends Model
 {
     protected $fillable = [
-        'meal_name',
-        'ingredients',
         'poll_date',
         'meal_type',
+        'menu_options',
+        'instructions',
         'deadline',
-        'status',
+        'is_active',
         'created_by',
-        'sent_at'
+        'meal_id'
     ];
 
     protected $casts = [
         'poll_date' => 'date',
         'deadline' => 'datetime',
-        'sent_at' => 'datetime'
+        'menu_options' => 'array',
+        'is_active' => 'boolean'
     ];
 
     // Relationships
@@ -36,10 +37,15 @@ class KitchenMenuPoll extends Model
         return $this->hasMany(KitchenPollResponse::class, 'poll_id');
     }
 
+    public function meal(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Meal::class, 'meal_id');
+    }
+
     // Scopes
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->where('is_active', true);
     }
 
     /**
@@ -47,12 +53,12 @@ class KitchenMenuPoll extends Model
      */
     public function isActive()
     {
-        return $this->status === 'active' || $this->status === 'sent';
+        return $this->is_active === true;
     }
 
     public function scopeDraft($query)
     {
-        return $query->where('status', 'draft');
+        return $query->where('is_active', false);
     }
 
     public function scopeForDate($query, $date)
@@ -83,33 +89,79 @@ class KitchenMenuPoll extends Model
 
     public function getResponseRateAttribute()
     {
-        $totalStudents = User::where('role', 'student')->count();
+        $totalStudents = User::where('user_role', 'student')->count();
         return $totalStudents > 0 ? ($this->total_responses / $totalStudents) * 100 : 0;
     }
 
     public function getParticipationRateAttribute()
     {
-        $totalStudents = User::where('role', 'student')->count();
+        $totalStudents = User::where('user_role', 'student')->count();
         return $totalStudents > 0 ? ($this->yes_count / $totalStudents) * 100 : 0;
+    }
+
+    /**
+     * Get meal name from related meal or menu_options
+     */
+    public function getMealNameAttribute()
+    {
+        if ($this->meal) {
+            return $this->meal->name;
+        }
+
+        if ($this->menu_options && is_array($this->menu_options) && isset($this->menu_options['meal_name'])) {
+            return $this->menu_options['meal_name'];
+        }
+
+        return 'Unknown Meal';
+    }
+
+    /**
+     * Get ingredients from related meal or menu_options
+     */
+    public function getIngredientsAttribute()
+    {
+        if ($this->meal) {
+            return is_array($this->meal->ingredients) ? implode(', ', $this->meal->ingredients) : $this->meal->ingredients;
+        }
+
+        if ($this->menu_options && is_array($this->menu_options) && isset($this->menu_options['ingredients'])) {
+            return $this->menu_options['ingredients'];
+        }
+
+        return null;
+    }
+
+    /**
+     * Get status based on is_active and deadline
+     */
+    public function getStatusAttribute()
+    {
+        if (!$this->is_active) {
+            return 'draft';
+        }
+
+        if ($this->isExpired()) {
+            return 'expired';
+        }
+
+        return 'active';
     }
 
     public function canBeEdited()
     {
-        // Allow editing for both draft and active polls
-        // Kitchen staff should be able to update deadlines for active polls
-        return in_array($this->status, ['draft', 'active']);
+        // Allow editing for active polls
+        return $this->is_active === true;
     }
 
     public function canBeSent()
     {
-        return $this->status === 'draft';
+        return $this->is_active === false;
     }
 
     public function markAsSent()
     {
         $this->update([
-            'status' => 'active',
-            'sent_at' => now()
+            'is_active' => true
         ]);
     }
 
@@ -164,7 +216,7 @@ class KitchenMenuPoll extends Model
      */
     public function scopeExpired($query)
     {
-        return $query->where('status', 'expired');
+        return $query->where('is_active', false)->where('deadline', '<', now());
     }
 
     /**

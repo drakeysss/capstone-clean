@@ -32,10 +32,18 @@ class InventoryCheckItem extends Model
     }
 
     /**
-     * Get the ingredient for this check item.
+     * Get the inventory item for this check item.
      */
     public function ingredient(): BelongsTo
     {
-        return $this->belongsTo(Ingredient::class);
+        return $this->belongsTo(Inventory::class, 'ingredient_id');
+    }
+
+    /**
+     * Alias for ingredient() to maintain backward compatibility
+     */
+    public function inventoryItem(): BelongsTo
+    {
+        return $this->belongsTo(Inventory::class, 'ingredient_id');
     }
 }

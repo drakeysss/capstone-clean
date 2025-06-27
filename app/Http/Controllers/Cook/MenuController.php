@@ -316,9 +316,9 @@ class MenuController extends BaseController
         try {
             // Get connected users count
             $connectedUsers = [
-                'kitchen_staff' => User::where('role', 'kitchen')->count(),
-                'students' => User::where('role', 'student')->count(),
-                'total_users' => User::whereIn('role', ['kitchen', 'student'])->count()
+                'kitchen_staff' => User::where('user_role', 'kitchen')->count(),
+                'students' => User::where('user_role', 'student')->count(),
+                'total_users' => User::whereIn('user_role', ['kitchen', 'student'])->count()
             ];
 
             // Get kitchen status for today's meals
@@ -343,16 +343,15 @@ class MenuController extends BaseController
             }
 
             // Get active polls
-            $activePolls = KitchenMenuPoll::where('status', 'active')
-                ->orWhere('status', 'sent')
+            $activePolls = KitchenMenuPoll::where('is_active', true)
                 ->get()
                 ->map(function ($poll) {
                     return [
                         'id' => $poll->id,
-                        'meal_name' => $poll->meal_name,
+                        'meal_name' => $poll->meal_name, // Uses accessor
                         'poll_date' => $poll->poll_date->format('Y-m-d'),
                         'meal_type' => $poll->meal_type,
-                        'status' => $poll->status,
+                        'status' => $poll->status, // Uses accessor
                         'responses_count' => $poll->total_responses
                     ];
                 });

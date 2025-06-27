@@ -38,32 +38,30 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'email' => ['required'],
             'password' => ['required'],
         ]);
-        
-        // Log the attempt for debugging
-        \Log::info('Login attempt for: ' . $request->email);
-        
-        // Check if user exists
-        $user = User::where('email', $request->email)->first();
+
+
+
+        // Check if user exists using new schema
+        $user = User::where('user_email', $request->email)->first();
         if (!$user) {
-            \Log::warning('User not found: ' . $request->email);
             return back()->withErrors([
                 'email' => 'No user found with this email address.',
             ])->onlyInput('email');
         }
-        
-        // Attempt authentication
-        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-            \Log::info('Login successful for: ' . $request->email);
+
+        // Verify password manually since we use custom column names
+        if (\Hash::check($request->password, $user->user_password)) {
+            // Manually log the user in
+            Auth::login($user);
             $request->session()->regenerate();
-            
+
             // Get the dashboard route based on user role
             return redirect()->route($user->getDashboardRoute());
         }
-        
-        \Log::warning('Invalid credentials for: ' . $request->email);
+
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
         ])->onlyInput('email');

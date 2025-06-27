@@ -26,7 +26,7 @@ class InventoryHistory extends Model
 
     public function item()
     {
-        return $this->belongsTo(InventoryItem::class, 'inventory_item_id');
+        return $this->belongsTo(Inventory::class, 'inventory_item_id');
     }
 
     public function user()

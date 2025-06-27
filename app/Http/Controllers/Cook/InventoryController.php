@@ -90,7 +90,7 @@ class InventoryController extends Controller
         $reports = $query->orderBy('created_at', 'desc')->paginate(15)->appends($request->query());
 
         // Get kitchen staff for filter
-        $kitchenStaff = User::where('role', 'kitchen')->get();
+        $kitchenStaff = User::where('user_role', 'kitchen')->get();
 
         return view('cook.inventory.reports', compact('reports', 'kitchenStaff'));
     }

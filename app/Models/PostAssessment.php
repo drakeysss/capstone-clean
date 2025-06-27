@@ -49,7 +49,7 @@ class PostAssessment extends Model
      */
     public function assessedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'assessed_by');
+        return $this->belongsTo(User::class, 'assessed_by', 'user_id');
     }
 
     /**

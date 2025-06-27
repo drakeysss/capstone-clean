@@ -23,7 +23,8 @@ return new class extends Migration
             $table->enum('status', ['planned', 'preparing', 'ready', 'served'])->default('planned');
             $table->integer('estimated_portions')->default(0);
             $table->integer('actual_portions')->default(0);
-            $table->foreignId('updated_by')->constrained('users')->onDelete('cascade');
+            $table->string('updated_by');
+            $table->foreign('updated_by')->references('user_id')->on('pnph_users')->onDelete('cascade');
             $table->timestamps();
 
             // Unique constraint for daily meals

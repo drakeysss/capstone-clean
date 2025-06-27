@@ -23,14 +23,14 @@ return new class extends Migration
                 $table->decimal('price', 8, 2)->default(0);
                 $table->string('image')->nullable();
                 $table->boolean('is_available')->default(true);
-                $table->unsignedBigInteger('created_by');
-                $table->unsignedBigInteger('updated_by')->nullable();
+                $table->string('created_by');
+                $table->string('updated_by')->nullable();
                 $table->integer('week_cycle')->default(1);
                 $table->string('day')->nullable();
                 $table->timestamps();
 
-                $table->foreign('created_by')->references('id')->on('users');
-                $table->foreign('updated_by')->references('id')->on('users');
+                $table->foreign('created_by')->references('user_id')->on('pnph_users');
+                $table->foreign('updated_by')->references('user_id')->on('pnph_users');
             });
         }
 
@@ -45,10 +45,10 @@ return new class extends Migration
                 $table->integer('week_cycle')->default(1);
                 $table->decimal('price', 8, 2)->default(0);
                 $table->boolean('is_available')->default(true);
-                $table->unsignedBigInteger('created_by');
+                $table->string('created_by');
                 $table->timestamps();
 
-                $table->foreign('created_by')->references('id')->on('users');
+                $table->foreign('created_by')->references('user_id')->on('pnph_users');
             });
         }
 
@@ -102,13 +102,13 @@ return new class extends Migration
             Schema::create('meal_poll_responses', function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('poll_id');
-                $table->unsignedBigInteger('student_id');
+                $table->string('student_id');
                 $table->boolean('will_attend')->default(false);
                 $table->text('preference_notes')->nullable();
                 $table->timestamps();
 
                 $table->foreign('poll_id')->references('id')->on('meal_polls')->onDelete('cascade');
-                $table->foreign('student_id')->references('id')->on('users')->onDelete('cascade');
+                $table->foreign('student_id')->references('user_id')->on('pnph_users')->onDelete('cascade');
                 $table->unique(['poll_id', 'student_id']);
             });
         }
@@ -120,10 +120,10 @@ return new class extends Migration
                 $table->date('poll_date');
                 $table->string('meal_type');
                 $table->text('instructions')->nullable();
-                $table->unsignedBigInteger('created_by');
+                $table->string('created_by');
                 $table->timestamps();
 
-                $table->foreign('created_by')->references('id')->on('users');
+                $table->foreign('created_by')->references('user_id')->on('pnph_users');
             });
         }
 
@@ -132,13 +132,13 @@ return new class extends Migration
             Schema::create('poll_responses', function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('poll_id');
-                $table->unsignedBigInteger('user_id');
+                $table->string('user_id');
                 $table->json('selected_items')->nullable();
                 $table->text('notes')->nullable();
                 $table->timestamps();
 
                 $table->foreign('poll_id')->references('id')->on('polls')->onDelete('cascade');
-                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $table->foreign('user_id')->references('user_id')->on('pnph_users')->onDelete('cascade');
                 $table->unique(['poll_id', 'user_id']);
             });
         }
@@ -153,11 +153,11 @@ return new class extends Migration
                 $table->text('instructions')->nullable();
                 $table->datetime('deadline');
                 $table->boolean('is_active')->default(true);
-                $table->unsignedBigInteger('created_by');
+                $table->string('created_by');
                 $table->unsignedBigInteger('meal_id')->nullable();
                 $table->timestamps();
 
-                $table->foreign('created_by')->references('id')->on('users');
+                $table->foreign('created_by')->references('user_id')->on('pnph_users');
                 $table->foreign('meal_id')->references('id')->on('meals')->onDelete('set null');
             });
         }
@@ -166,7 +166,7 @@ return new class extends Migration
         if (!Schema::hasTable('pre_orders')) {
             Schema::create('pre_orders', function (Blueprint $table) {
                 $table->id();
-                $table->unsignedBigInteger('user_id');
+                $table->string('user_id');
                 $table->unsignedBigInteger('menu_id')->nullable();
                 $table->date('date');
                 $table->string('meal_type');
@@ -176,7 +176,7 @@ return new class extends Migration
                 $table->text('special_requests')->nullable();
                 $table->timestamps();
 
-                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $table->foreign('user_id')->references('user_id')->on('pnph_users')->onDelete('cascade');
                 $table->foreign('menu_id')->references('id')->on('menus')->onDelete('set null');
 
                 // Add unique constraint to prevent duplicate pre-orders
@@ -188,7 +188,7 @@ return new class extends Migration
         if (!Schema::hasTable('feedback')) {
             Schema::create('feedback', function (Blueprint $table) {
                 $table->id();
-                $table->unsignedBigInteger('student_id');
+                $table->string('student_id');
                 $table->unsignedBigInteger('meal_id')->nullable();
                 $table->string('meal_name')->nullable();
                 $table->string('meal_type');
@@ -201,7 +201,7 @@ return new class extends Migration
                 $table->boolean('is_anonymous')->default(false);
                 $table->timestamps();
 
-                $table->foreign('student_id')->references('id')->on('users')->onDelete('cascade');
+                $table->foreign('student_id')->references('user_id')->on('pnph_users')->onDelete('cascade');
                 $table->foreign('meal_id')->references('id')->on('meals')->onDelete('set null');
             });
         }
@@ -219,11 +219,11 @@ return new class extends Migration
                 $table->string('supplier')->nullable();
                 $table->string('location')->nullable();
                 $table->decimal('unit_price', 10, 2)->default(0);
-                $table->unsignedBigInteger('last_updated_by')->nullable();
+                $table->string('last_updated_by')->nullable();
                 $table->enum('status', ['available', 'low_stock', 'out_of_stock', 'expired'])->default('available');
                 $table->timestamps();
 
-                $table->foreign('last_updated_by')->references('id')->on('users')->onDelete('set null');
+                $table->foreign('last_updated_by')->references('user_id')->on('pnph_users')->onDelete('set null');
                 $table->index(['name', 'category']);
             });
         }
@@ -234,14 +234,14 @@ return new class extends Migration
                 $table->id();
                 $table->string('title');
                 $table->text('content');
-                $table->unsignedBigInteger('user_id');
+                $table->string('user_id');
                 $table->date('expiry_date')->nullable();
                 $table->boolean('is_active')->default(true);
                 $table->boolean('is_poll')->default(false);
                 $table->json('poll_options')->nullable();
                 $table->timestamps();
 
-                $table->foreign('user_id')->references('id')->on('users');
+                $table->foreign('user_id')->references('user_id')->on('pnph_users');
             });
         }
     }

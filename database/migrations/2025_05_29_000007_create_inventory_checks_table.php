@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('inventory_checks', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('user_id');
+            $table->foreign('user_id')->references('user_id')->on('pnph_users')->onDelete('cascade');
             $table->date('check_date');
             $table->text('notes')->nullable();
             $table->decimal('total_value', 10, 2)->nullable()->comment('Total value of inventory at time of check');

@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('kitchen_poll_responses', function (Blueprint $table) {
+        if (!Schema::hasTable('kitchen_poll_responses')) {
+            Schema::create('kitchen_poll_responses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('poll_id')->constrained('kitchen_menu_polls')->onDelete('cascade');
-            $table->foreignId('student_id')->constrained('users')->onDelete('cascade');
+            $table->string('student_id');
+            $table->foreign('student_id')->references('user_id')->on('pnph_users')->onDelete('cascade');
             $table->boolean('will_eat')->default(false);
             $table->text('notes')->nullable();
             $table->timestamp('responded_at')->useCurrent();
@@ -23,6 +25,7 @@ return new class extends Migration
             // Ensure one response per student per poll
             $table->unique(['poll_id', 'student_id']);
         });
+        }
     }
 
     /**

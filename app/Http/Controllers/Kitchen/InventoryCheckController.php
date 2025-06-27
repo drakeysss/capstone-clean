@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Kitchen;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Ingredient;
 use App\Models\Inventory;
 use App\Models\InventoryCheck;
 use App\Models\InventoryCheckItem;
@@ -31,25 +30,25 @@ class InventoryCheckController extends Controller
 
         // Get recent inventory checks for history (user's own reports only)
         $recentChecks = InventoryCheck::with(['user', 'items'])
-            ->where('user_id', Auth::id())
+            ->where('user_id', Auth::user()->user_id)
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
 
         // Get all inventory checks for history section (paginated)
         $allChecks = InventoryCheck::with(['user', 'items'])
-            ->where('user_id', Auth::id())
+            ->where('user_id', Auth::user()->user_id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
         // Get statistics for the current user
         $stats = [
-            'total_reports' => InventoryCheck::where('user_id', Auth::id())->count(),
-            'total_items_reported' => InventoryCheck::where('user_id', Auth::id())
+            'total_reports' => InventoryCheck::where('user_id', Auth::user()->user_id)->count(),
+            'total_items_reported' => InventoryCheck::where('user_id', Auth::user()->user_id)
                 ->withCount('items')
                 ->get()
                 ->sum('items_count'),
-            'last_report_date' => InventoryCheck::where('user_id', Auth::id())
+            'last_report_date' => InventoryCheck::where('user_id', Auth::user()->user_id)
                 ->latest()
                 ->value('created_at'),
         ];
@@ -67,7 +66,7 @@ class InventoryCheckController extends Controller
     public function store(Request $request)
     {
         // Prevent duplicate submissions within 30 seconds
-        $recentCheck = InventoryCheck::where('user_id', Auth::id())
+        $recentCheck = InventoryCheck::where('user_id', Auth::user()->user_id)
             ->where('created_at', '>=', now()->subSeconds(30))
             ->first();
 
@@ -96,7 +95,7 @@ class InventoryCheckController extends Controller
 
         // Create inventory check record submitted by kitchen staff
         $check = new InventoryCheck();
-        $check->user_id = Auth::id();
+        $check->user_id = Auth::user()->user_id; // Use the actual user_id primary key
         $check->check_date = now();
         $check->notes = $request->notes;
         $check->save();
@@ -106,11 +105,11 @@ class InventoryCheckController extends Controller
             // Only create notification if the Notification model exists
             if (class_exists('\App\Models\Notification')) {
                 // Find cook/admin users to notify
-                $cookUsers = \App\Models\User::where('role', 'cook')->get();
+                $cookUsers = \App\Models\User::where('user_role', 'cook')->get();
 
                 foreach ($cookUsers as $user) {
                     \App\Models\Notification::create([
-                        'user_id' => $user->id,
+                        'user_id' => $user->user_id, // Use the actual user_id primary key
                         'title' => 'New Inventory Check',
                         'message' => 'Kitchen staff has submitted a new inventory count.',
                         'type' => 'inventory_check',
@@ -130,19 +129,6 @@ class InventoryCheckController extends Controller
         // Kitchen staff reports actual physical counts - this creates the baseline data
         if ($request->has('manual_items')) {
             foreach ($request->manual_items as $item) {
-                // Find or create ingredient first (for the foreign key relationship)
-                $ingredient = \App\Models\Ingredient::firstOrCreate(
-                    ['name' => $item['name']],
-                    [
-                        'name' => $item['name'],
-                        'unit' => $item['unit'],
-                        'category' => 'general',
-                        'description' => 'Added from kitchen inventory check',
-                        'current_stock' => $item['quantity'],
-                        'minimum_stock' => 10
-                    ]
-                );
-
                 // Find or create inventory item based on kitchen's actual count
                 // This is the ONLY way inventory items are created - from kitchen reports
                 $inventoryItem = Inventory::firstOrCreate(
@@ -154,7 +140,7 @@ class InventoryCheckController extends Controller
                         'unit' => $item['unit'],
                         'category' => 'general', // Default category, cook can adjust later
                         'reorder_point' => 10, // Default reorder point, cook can adjust later
-                        'last_updated_by' => Auth::id(),
+                        'last_updated_by' => Auth::user()->user_id,
                         'status' => 'available'
                     ]
                 );
@@ -164,20 +150,14 @@ class InventoryCheckController extends Controller
                 $inventoryItem->update([
                     'quantity' => $item['quantity'],
                     'unit' => $item['unit'],
-                    'last_updated_by' => Auth::id(),
+                    'last_updated_by' => Auth::user()->user_id,
                     'status' => $this->determineStatus($item['quantity'], $inventoryItem->reorder_point)
                 ]);
 
-                // Update ingredient stock as well
-                $ingredient->update([
-                    'current_stock' => $item['quantity'],
-                    'unit' => $item['unit']
-                ]);
-
-                // Create check item for each manually entered item (using ingredient_id)
+                // Create check item for each manually entered item (using inventory_id)
                 $checkItem = new InventoryCheckItem();
                 $checkItem->inventory_check_id = $check->id;
-                $checkItem->ingredient_id = $ingredient->id; // Use ingredient ID, not inventory ID
+                $checkItem->ingredient_id = $inventoryItem->id; // Use inventory ID since ingredients table doesn't exist
                 $checkItem->current_stock = $item['quantity'];
                 $checkItem->needs_restock = isset($item['needs_restock']) ? true : false;
                 $checkItem->notes = $item['notes'] ?? null;
@@ -188,7 +168,7 @@ class InventoryCheckController extends Controller
                     try {
                         \App\Models\InventoryHistory::create([
                             'inventory_item_id' => $inventoryItem->id,
-                            'user_id' => Auth::id(),
+                            'user_id' => Auth::user()->user_id,
                             'action_type' => 'report',
                             'quantity_change' => $item['quantity'] - $previousQuantity,
                             'previous_quantity' => $previousQuantity,
@@ -207,7 +187,7 @@ class InventoryCheckController extends Controller
         $notificationService = new NotificationService();
         $notificationService->inventoryReportSubmitted([
             'id' => $check->id,
-            'submitted_by' => Auth::id(),
+            'submitted_by' => Auth::user()->user_id,
             'items_count' => count($request->manual_items),
             'restock_needed' => collect($request->manual_items)->where('needs_restock', true)->count()
         ]);
@@ -235,7 +215,7 @@ class InventoryCheckController extends Controller
     private function notifyCookAboutInventoryUpdate($inventoryCheck)
     {
         // Get all cook users
-        $cooks = User::where('role', 'cook')->get();
+        $cooks = User::where('user_role', 'cook')->get();
 
         foreach ($cooks as $cook) {
             // Create notification for each cook
@@ -293,7 +273,7 @@ class InventoryCheckController extends Controller
             $check = InventoryCheck::findOrFail($id);
 
             // Only allow deletion by the user who created it or admin
-            if ($check->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
+            if ($check->user_id !== Auth::user()->user_id && !Auth::user()->hasRole('admin')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You can only delete your own reports.'
@@ -325,7 +305,7 @@ class InventoryCheckController extends Controller
     public function destroyAll()
     {
         try {
-            $userId = Auth::id();
+            $userId = Auth::user()->user_id;
 
             // Get all checks for the current user
             $checks = InventoryCheck::where('user_id', $userId)->get();

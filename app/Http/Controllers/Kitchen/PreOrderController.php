@@ -521,9 +521,8 @@ class PreOrderController extends Controller
             $deadlineDate = clone $pollDate;
             $deadlineDateTime = $deadlineDate->setTime($hour, $minute);
 
-            // Check if a poll with the same meal name, type, and date already exists
-            $existingPoll = KitchenMenuPoll::where('meal_name', $request->manual_meal_name)
-                ->where('meal_type', $request->meal_type)
+            // Check if a poll with the same meal type and date already exists
+            $existingPoll = KitchenMenuPoll::where('meal_type', $request->meal_type)
                 ->whereDate('poll_date', $pollDate)
                 ->first();
 
@@ -536,17 +535,21 @@ class PreOrderController extends Controller
 
             // Create the poll
             $poll = KitchenMenuPoll::create([
-                'meal_name' => $request->manual_meal_name,
                 'poll_date' => $pollDate,
                 'meal_type' => $request->meal_type,
-                'deadline' => $deadlineDateTime, // Use the combined datetime
-                'status' => 'draft',
-                'created_by' => auth()->id(),
+                'menu_options' => [
+                    'meal_name' => $request->manual_meal_name,
+                    'ingredients' => null
+                ],
+                'instructions' => 'Please respond if you will be eating this meal.',
+                'deadline' => $deadlineDateTime,
+                'is_active' => false, // Start as draft
+                'created_by' => auth()->user()->user_id, // Use the actual user_id primary key
             ]);
 
             \Log::info('✅ Poll created successfully', [
                 'poll_id' => $poll->id,
-                'meal_name' => $poll->meal_name,
+                'meal_name' => $poll->meal_name, // This will use the accessor
                 'poll_date' => $poll->poll_date->format('Y-m-d'),
                 'deadline' => $poll->deadline->format('Y-m-d H:i:s')
             ]);
@@ -622,7 +625,7 @@ class PreOrderController extends Controller
             }
 
             $polls = $query->get();
-            $totalStudents = User::where('role', 'student')->count();
+            $totalStudents = User::where('user_role', 'student')->count();
 
             // Apply urgency filtering if specified
             if ($urgency) {
@@ -717,7 +720,7 @@ class PreOrderController extends Controller
             }
 
             // Get all students
-            $students = User::where('role', 'student')->get();
+            $students = User::where('user_role', 'student')->get();
             $studentCount = $students->count();
 
             // Update poll status to active and set sent_at timestamp
@@ -727,8 +730,7 @@ class PreOrderController extends Controller
                 now();
 
             $poll->update([
-                'status' => 'active',
-                'sent_at' => $sentTimestamp
+                'is_active' => true
             ]);
 
             // Send notifications to students and cook
@@ -790,7 +792,7 @@ class PreOrderController extends Controller
                 ], 400);
             }
 
-            $students = User::where('role', 'student')->get();
+            $students = User::where('user_role', 'student')->get();
             $studentCount = $students->count();
 
             // Use a single timestamp for all polls to ensure consistency
@@ -799,8 +801,7 @@ class PreOrderController extends Controller
             // Update all draft polls to active status with the same timestamp
             foreach ($draftPolls as $poll) {
                 $poll->update([
-                    'status' => 'active',
-                    'sent_at' => $sentTimestamp
+                    'is_active' => true
                 ]);
             }
 
@@ -1372,7 +1373,7 @@ class PreOrderController extends Controller
     {
         try {
             $poll = KitchenMenuPoll::with(['responses'])->findOrFail($pollId);
-            $totalStudents = User::where('role', 'student')->count();
+            $totalStudents = User::where('user_role', 'student')->count();
 
             $yesCount = $poll->responses()->where('will_eat', true)->count();
             $noCount = $poll->responses()->where('will_eat', false)->count();
@@ -1426,7 +1427,7 @@ class PreOrderController extends Controller
                 'timestamp' => now()
             ]);
 
-            $activePolls = KitchenMenuPoll::where('status', 'active')
+            $activePolls = KitchenMenuPoll::where('is_active', true)
                 ->where('poll_date', '>=', now()->toDateString())
                 ->orderBy('poll_date', 'asc')
                 ->orderBy('deadline', 'asc')
@@ -1543,10 +1544,10 @@ class PreOrderController extends Controller
 
             \Log::info('✅ Validation passed', ['validated' => $validated]);
             $poll = KitchenMenuPoll::findOrFail($pollId);
-            $studentId = auth()->id();
+            $studentId = auth()->user()->user_id;
 
             // Check if poll is still active
-            if ($poll->status !== 'active') {
+            if (!$poll->is_active) {
                 return response()->json([
                     'success' => false,
                     'message' => 'This poll is no longer active'
@@ -1708,7 +1709,7 @@ class PreOrderController extends Controller
     {
         try {
             // Get all active polls that should be expired
-            $expiredPolls = KitchenMenuPoll::whereIn('status', ['active', 'sent'])
+            $expiredPolls = KitchenMenuPoll::where('is_active', true)
                 ->get()
                 ->filter(function ($poll) {
                     return $poll->isExpired();

@@ -40,7 +40,7 @@ class Inventory extends Model
 
     public function lastUpdatedBy()
     {
-        return $this->belongsTo(User::class, 'last_updated_by');
+        return $this->belongsTo(User::class, 'last_updated_by', 'user_id');
     }
 
     public function checkItems()

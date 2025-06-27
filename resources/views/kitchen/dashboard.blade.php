@@ -1,155 +1,238 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="col-12 mb-4">
-            <div class="card border-0 bg-primary text-white overflow-hidden">
-                <div class="card-body p-4 position-relative" style="background-color: var(--secondary-color);">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <h4 class="fw-bold mb-1">Kitchen Dashboard</h4>
-                            <p class="mb-0">Execute meal plans created by Cook</p>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-cup-hot display-4 opacity-25"></i>
-                        </div>
+<div class="container-fluid p-4">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="welcome-card">
+                <div class="welcome-content">
+                    <h2>Welcome, {{ Auth::user()->name }}!</h2>
+                    <p class="text-muted" style="color: white;">Execute meal plans created by Cook</p>
+                </div>
+                <div class="current-time">
+                    <i class="bi bi-clock"></i>
+                    <span id="currentDateTime"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Key Features Overview Section -->
+    <div class="row mb-4">
+        <!-- Today's Menu -->
+        <div class="col-md-6 mb-4">
+            <div class="card main-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-1">Today's Menu</h5>
+                        <small class="text-muted">
+                            {{ now()->format('l, F j, Y') }}
+                        </small>
                     </div>
+                    <a href="{{ route('kitchen.daily-menu') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Meal Type</th>
+                                <th>Menu Item</th>
+                                <th>Ingredients</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($todaysMenu ?? [] as $menu)
+                            <tr>
+                                <td>
+                                    <strong>{{ ucfirst($menu->meal_type ?? 'N/A') }}</strong>
+                                </td>
+                                <td>
+                                    <strong>{{ $menu->meal_name ?? 'No meal planned' }}</strong>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        @if(is_array($menu->ingredients))
+                                            {{ implode(', ', $menu->ingredients) }}
+                                        @else
+                                            {{ $menu->ingredients ?? 'No ingredients listed' }}
+                                        @endif
+                                    </small>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">
+                                    <i class="bi bi-calendar-x"></i><br>
+                                    No menu planned for today<br>
+                                    <small>Waiting for cook to create today's menu</small>
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-
-
-    <!-- Quick Access Feature Cards -->
-    <div class="row">
-        <div class="col-12 mb-3">
-            <h5 class="text-dark">Quick Access</h5>
-        </div>
-
-        <!-- Inventory Check Feature -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <a href="{{ route('kitchen.inventory') }}" class="text-decoration-none">
-                <div class="card border-left-primary shadow h-100">
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col-auto me-3">
-                                <div class="rounded-circle bg-primary p-3 text-white">
-                                    <i class="bi bi-clipboard-check"></i>
-                                </div>
-                            </div>
-                            <div class="col">
-                                <h6 class="font-weight-bold text-primary mb-1">Inventory Check</h6>
-                                <p class="text-muted small mb-0">Report counted items to cook</p>
-                            </div>
-                        </div>
-                        <div class="mt-3 pt-3 border-top">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-light rounded p-2 me-2">
-                                    <i class="bi bi-plus-circle text-primary"></i>
-                                </div>
-                                <span class="small">Add items you've counted</span>
-                            </div>
-                        </div>
-                    </div>
+        <!-- Recent Student Feedback -->
+        <div class="col-md-6 mb-4">
+            <div class="card main-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title">Recent Student Feedback</h5>
+                    <a href="{{ route('kitchen.feedback') }}" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
-            </a>
-        </div>
-        
-        <!-- Leftover Report Feature -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <a href="{{ route('kitchen.post-assessment') }}" class="text-decoration-none">
-                <div class="card border-left-success shadow h-100">
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col-auto me-3">
-                                <div class="rounded-circle bg-success p-3 text-white">
-                                    <i class="bi bi-trash"></i>
-                                </div>
-                            </div>
-                            <div class="col">
-                                <h6 class="font-weight-bold text-success mb-1">Leftover Report</h6>
-                                <p class="text-muted small mb-0">Report leftover food to cook</p>
-                            </div>
-                        </div>
-                        <div class="mt-3 pt-3 border-top">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-light rounded p-2 me-2">
-                                    <i class="bi bi-plus-circle text-success"></i>
-                                </div>
-                                <span class="small">Add food items and quantities</span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Student</th>
+                                <th>Rating</th>
+                                <th>Comment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recentFeedback ?? [] as $fb)
+                                <tr>
+                                    <td>{{ $fb->created_at->format('M d, Y') }}</td>
+                                    <td>{{ $fb->is_anonymous ? 'Anonymous' : ($fb->student->name ?? 'N/A') }}</td>
+                                    <td>{{ $fb->rating }}★</td>
+                                    <td>{{ Str::limit($fb->comments ?? 'No comment', 30) }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="4" class="text-center">No recent feedback</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
-            </a>
-        </div>
-
-        <!-- Feedback Feature -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <a href="/kitchen/feedback" class="text-decoration-none">
-                <div class="card border-left-danger shadow h-100">
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col-auto me-3">
-                                <div class="rounded-circle bg-danger p-3 text-white">
-                                    <i class="bi bi-chat-dots"></i>
-                                </div>
-                            </div>
-                            <div class="col">
-                                <h6 class="font-weight-bold text-danger mb-1">Feedback</h6>
-                                <p class="text-muted small mb-0">View student meal feedback</p>
-                            </div>
-                        </div>
-                        <div class="mt-3 pt-3 border-top">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-light rounded p-2 me-2">
-                                    <i class="bi bi-eye text-danger"></i>
-                                </div>
-                                <span class="small">See student comments and ratings</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <!-- Daily Menu Feature -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <a href="/kitchen/daily-menu" class="text-decoration-none">
-                <div class="card border-left-info shadow h-100">
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col-auto me-3">
-                                <div class="rounded-circle bg-info p-3 text-white">
-                                    <i class="bi bi-calendar-check"></i>
-                                </div>
-                            </div>
-                            <div class="col">
-                                <h6 class="font-weight-bold text-info mb-1">Today's Menu</h6>
-                                <p class="text-muted small mb-0">View cook's meal plan</p>
-                            </div>
-                        </div>
-                        <div class="mt-3 pt-3 border-top">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-light rounded p-2 me-2">
-                                    <i class="bi bi-eye text-info"></i>
-                                </div>
-                                <span class="small">See meals to prepare today</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </a>
+            </div>
         </div>
     </div>
 
-    <!-- Dashboard Stats -->
+    <div class="row mb-4">
+        <!-- Recent Post Meal Reports -->
+        <div class="col-md-6 mb-4">
+            <div class="card main-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title">Recent Post Meal Reports</h5>
+                    <a href="{{ route('kitchen.post-assessment') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Meal Type</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recentPostMealReports ?? [] as $report)
+                                <tr>
+                                    <td>{{ $report->date->format('M d, Y') }}</td>
+                                    <td>{{ ucfirst($report->meal_type) }}</td>
+                                    <td>
+                                        <span class="status-badge {{ $report->is_completed ? 'completed' : 'pending' }}">
+                                            {{ $report->is_completed ? 'Completed' : 'Pending' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="3" class="text-center">No recent reports</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Inventory Reports -->
+        <div class="col-md-6 mb-4">
+            <div class="card main-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title">Recent Inventory Reports</h5>
+                    <a href="{{ route('kitchen.inventory') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Item Name</th>
+                                <th>Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recentInventoryReports ?? [] as $inv)
+                                <tr>
+                                    <td>{{ $inv->created_at->format('M d, Y') }}</td>
+                                    <td>{{ $inv->item->name ?? 'N/A' }}</td>
+                                    <td>{{ $inv->new_quantity ?? 'N/A' }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="3" class="text-center">No recent inventory reports</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 @endsection
 
+@push('scripts')
+<script>
+    console.log('🚀 Kitchen Dashboard script starting...');
+
+    {!! \App\Services\WeekCycleService::getJavaScriptFunction() !!}
+
+    console.log('📅 Week cycle function loaded');
+
+    // UNIFIED: Real-time date and time display
+    function updateDateTime() {
+        const weekInfo = getCurrentWeekCycle();
+        document.getElementById('currentDateTime').innerHTML = `${weekInfo.displayDate}<br><small>${weekInfo.timeString}</small>`;
+    }
+
+    updateDateTime();
+    setInterval(updateDateTime, 1000); // Update every second for real-time display
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('✅ Kitchen Dashboard loaded successfully');
+    });
+</script>
+@endpush
+
 @push('styles')
 <style>
+    /* General Styles */
+    .container-fluid {
+        background-color: #f8f9fc;
+    }
+
+    /* Welcome Card */
+    .welcome-card {
+        background: #22bbea;
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .current-time {
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
     /* Main Cards */
     .main-card {
         background: white;
@@ -232,6 +315,72 @@
         transform: scale(1.1);
     }
 
+    .card-header {
+        background: none;
+        border-bottom: 1px solid #e3e6f0;
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-title {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #ff9933;
+    }
+
+    /* Table Styles */
+    .table {
+        margin: 0;
+    }
+
+    .table th {
+        font-weight: 600;
+        color: #6c757d;
+        border-top: none;
+        font-size: 0.875rem;
+    }
+
+    .table td {
+        vertical-align: middle;
+        font-size: 0.875rem;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        padding: 0.35rem 0.65rem;
+        border-radius: 0.35rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-badge.pending {
+        background-color: #f6c23e;
+        color: white;
+    }
+
+    .status-badge.completed {
+        background-color: #1cc88a;
+        color: white;
+    }
+
+    .status-badge.cancelled {
+        background-color: #e74a3b;
+        color: white;
+    }
+
+    .status-badge.warning {
+        background-color: #f6c23e;
+        color: white;
+    }
+
+    .status-badge.active {
+        background-color: #1cc88a;
+        color: white;
+    }
+
     /* Quick Access Cards */
     .border-left-primary {
         border-left: 0.25rem solid var(--primary-color, #ff9933) !important;
@@ -294,62 +443,66 @@
         padding: 0.25rem 0.5rem;
     }
 
+    /* Today's Menu Table Styles */
+    .table th:first-child {
+        width: 25%;
+    }
+
+    .table th:nth-child(2) {
+        width: 35%;
+    }
+
+    .table th:nth-child(3) {
+        width: 40%;
+    }
+
+    .table td small {
+        color: #6c757d;
+        font-size: 0.8rem;
+        line-height: 1.2;
+    }
+
+    .table td strong {
+        color: #495057;
+        font-weight: 600;
+    }
+
     /* Responsive Styles */
     @media (max-width: 768px) {
-        .container-fluid {
-            padding: 0.5rem !important;
+        .welcome-card {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+            padding: 15px;
         }
 
-        .card-body {
-            padding: 1rem 0.75rem !important;
+        .current-time {
+            font-size: 1rem;
+            justify-content: center;
         }
 
-        .rounded-circle {
-            width: 2.5rem !important;
-            height: 2.5rem !important;
-            margin-bottom: 0.5rem;
+        .card-header {
+            padding: 0.75rem 1rem;
         }
 
-        .row.no-gutters {
-            margin: 0 !important;
+        .card-title {
+            font-size: 1rem;
         }
 
-        .row.no-gutters > * {
-            padding: 0 !important;
-        }
-
-        .border-top {
-            margin-top: 1rem !important;
-            padding-top: 1rem !important;
-        }
-
-        .d-flex {
-            flex-wrap: wrap !important;
-            justify-content: center !important;
-        }
-
-        .small {
-            font-size: 0.8rem !important;
-            text-align: center !important;
+        .table th,
+        .table td {
+            padding: 0.5rem 0.25rem;
+            font-size: 0.8rem;
         }
     }
 
     @media (max-width: 576px) {
-        .card-body {
-            padding: 0.75rem 0.5rem !important;
+        .container-fluid {
+            padding: 0.5rem !important;
         }
 
-        .rounded-circle {
-            width: 2rem !important;
-            height: 2rem !important;
-        }
-
-        .font-weight-bold {
-            font-size: 0.9rem !important;
-        }
-
-        .small {
-            font-size: 0.75rem !important;
+        .welcome-card {
+            padding: 10px;
         }
     }
 </style>

@@ -36,7 +36,7 @@ class PreOrderController extends Controller
             ->groupBy('date');
         
         // Get student's pre-orders (meal attendance responses)
-        $studentPreOrders = PreOrder::where('user_id', $user->id)
+        $studentPreOrders = PreOrder::where('user_id', $user->user_id)
             ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
             ->get()
             ->keyBy(function ($item) {
@@ -61,7 +61,7 @@ class PreOrderController extends Controller
         // Get student's responses to meal polls
         $pollResponses = [];
         foreach ($activeMealPolls as $poll) {
-            $response = $poll->pollResponses()->where('user_id', $user->id)->first();
+            $response = $poll->pollResponses()->where('user_id', $user->user_id)->first();
             if ($response) {
                 $pollResponses[$poll->id] = $response->response;
             }
@@ -125,7 +125,7 @@ class PreOrderController extends Controller
         }
         
         // Check if user already has a pre-order for this date and meal type
-        $existingPreOrder = PreOrder::where('user_id', $user->id)
+        $existingPreOrder = PreOrder::where('user_id', $user->user_id)
             ->where('date', $request->date)
             ->where('meal_type', $request->meal_type)
             ->first();
@@ -147,7 +147,7 @@ class PreOrderController extends Controller
         
         // Create new pre-order
         $preOrder = PreOrder::create([
-            'user_id' => Auth::id(),
+            'user_id' => Auth::user()->user_id,
             'date' => $request->date,
             'meal_type' => $request->meal_type,
             'menu_id' => $request->menu_id,
@@ -178,7 +178,7 @@ class PreOrderController extends Controller
         $preOrder = PreOrder::findOrFail($id);
         
         // Ensure the pre-order belongs to the authenticated user
-        if ($preOrder->user_id !== Auth::id()) {
+        if ($preOrder->user_id !== Auth::user()->user_id) {
             return redirect()->route('student.pre-order.index')
                 ->with('error', 'You are not authorized to update this pre-order.');
         }
@@ -240,38 +240,38 @@ class PreOrderController extends Controller
         $endOfPrevMonth = Carbon::now()->subMonth()->endOfMonth();
         
         // Calculate meal totals for current month
-        $currentBreakfastTotal = PreOrder::where('user_id', $user->id)
+        $currentBreakfastTotal = PreOrder::where('user_id', $user->user_id)
             ->whereBetween('date', [$startOfMonth->format('Y-m-d'), $endOfMonth->format('Y-m-d')])
             ->where('meal_type', 'breakfast')
             ->where('is_attending', true)
             ->count();
-            
-        $currentLunchTotal = PreOrder::where('user_id', $user->id)
+
+        $currentLunchTotal = PreOrder::where('user_id', $user->user_id)
             ->whereBetween('date', [$startOfMonth->format('Y-m-d'), $endOfMonth->format('Y-m-d')])
             ->where('meal_type', 'lunch')
             ->where('is_attending', true)
             ->count();
-            
-        $currentDinnerTotal = PreOrder::where('user_id', $user->id)
+
+        $currentDinnerTotal = PreOrder::where('user_id', $user->user_id)
             ->whereBetween('date', [$startOfMonth->format('Y-m-d'), $endOfMonth->format('Y-m-d')])
             ->where('meal_type', 'dinner')
             ->where('is_attending', true)
             ->count();
         
         // Calculate meal totals for previous month
-        $prevBreakfastTotal = PreOrder::where('user_id', $user->id)
+        $prevBreakfastTotal = PreOrder::where('user_id', $user->user_id)
             ->whereBetween('date', [$startOfPrevMonth->format('Y-m-d'), $endOfPrevMonth->format('Y-m-d')])
             ->where('meal_type', 'breakfast')
             ->where('is_attending', true)
             ->count();
-            
-        $prevLunchTotal = PreOrder::where('user_id', $user->id)
+
+        $prevLunchTotal = PreOrder::where('user_id', $user->user_id)
             ->whereBetween('date', [$startOfPrevMonth->format('Y-m-d'), $endOfPrevMonth->format('Y-m-d')])
             ->where('meal_type', 'lunch')
             ->where('is_attending', true)
             ->count();
-            
-        $prevDinnerTotal = PreOrder::where('user_id', $user->id)
+
+        $prevDinnerTotal = PreOrder::where('user_id', $user->user_id)
             ->whereBetween('date', [$startOfPrevMonth->format('Y-m-d'), $endOfPrevMonth->format('Y-m-d')])
             ->where('meal_type', 'dinner')
             ->where('is_attending', true)
@@ -332,8 +332,7 @@ class PreOrderController extends Controller
             ]);
 
             // Get active polls that students can respond to
-            $activePolls = KitchenMenuPoll::where('status', 'active')
-                ->orWhere('status', 'sent')
+            $activePolls = KitchenMenuPoll::where('is_active', true)
                 ->where('poll_date', '>=', now()->format('Y-m-d'))
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -344,7 +343,7 @@ class PreOrderController extends Controller
             ]);
 
             // Get student's existing responses
-            $studentResponses = KitchenPollResponse::where('student_id', $user->id)
+            $studentResponses = KitchenPollResponse::where('student_id', $user->user_id)
                 ->whereIn('poll_id', $activePolls->pluck('id'))
                 ->get()
                 ->keyBy('poll_id');
@@ -442,7 +441,7 @@ class PreOrderController extends Controller
             $response = KitchenPollResponse::updateOrCreate(
                 [
                     'poll_id' => $pollId,
-                    'student_id' => $user->id
+                    'student_id' => $user->user_id // Use the actual user_id primary key
                 ],
                 [
                     'will_eat' => $request->will_eat,

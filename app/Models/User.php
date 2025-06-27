@@ -6,10 +6,46 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\Hash;
 
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'pnph_users';
+
+    /**
+     * The primary key associated with the table.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'user_id';
+
+    /**
+     * Indicates if the model's ID is auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
+
+    /**
+     * The data type of the auto-incrementing ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
+
+    /**
+     * The column name of the "remember me" token.
+     *
+     * @var string
+     */
+    protected $rememberTokenName = 'token';
 
     /**
      * The attributes that are mass assignable.
@@ -17,11 +53,18 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'role',
-        'is_active',
+        'user_id',
+        'user_fname',
+        'user_lname',
+        'user_mInitial',
+        'user_suffix',
+        'gender',
+        'user_email',
+        'user_role',
+        'user_password',
+        'status',
+        'is_temp_password',
+        'token',
     ];
 
     /**
@@ -30,8 +73,9 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $hidden = [
-        'password',
+        'user_password',
         'remember_token',
+        'token',
     ];
 
     /**
@@ -41,7 +85,108 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'is_temp_password' => 'boolean',
     ];
+
+    /**
+     * Get the email for authentication.
+     */
+    public function getEmailForPasswordReset()
+    {
+        return $this->user_email;
+    }
+
+    /**
+     * Get the name of the unique identifier for the user.
+     */
+    public function getAuthIdentifierName()
+    {
+        return 'user_email';
+    }
+
+    /**
+     * Get the unique identifier for the user.
+     */
+    public function getAuthIdentifier()
+    {
+        return $this->user_email;
+    }
+
+    /**
+     * Get the password for the user.
+     */
+    public function getAuthPassword()
+    {
+        return $this->user_password;
+    }
+
+    /**
+     * Get the password attribute name for authentication.
+     */
+    public function getAuthPasswordName()
+    {
+        return 'user_password';
+    }
+
+
+
+    /**
+     * Get the user's full name.
+     */
+    public function getNameAttribute()
+    {
+        $name = $this->user_fname . ' ';
+        if ($this->user_mInitial) {
+            $name .= $this->user_mInitial . '. ';
+        }
+        $name .= $this->user_lname;
+        if ($this->user_suffix) {
+            $name .= ' ' . $this->user_suffix;
+        }
+        return $name;
+    }
+
+    /**
+     * Get the user's email.
+     */
+    public function getEmailAttribute()
+    {
+        return $this->user_email;
+    }
+
+    /**
+     * Get the user's role.
+     */
+    public function getRoleAttribute()
+    {
+        return $this->user_role;
+    }
+
+    /**
+     * Get the user's password.
+     */
+    public function getPasswordAttribute()
+    {
+        return $this->user_password;
+    }
+
+
+
+    /**
+     * Get the name of the column used for authentication.
+     */
+    public function username()
+    {
+        return 'user_email';
+    }
+
+    /**
+     * Find the user instance for the given username.
+     */
+    public function findForPassport($username)
+    {
+        return $this->where('user_email', $username)->first();
+    }
 
     /**
      * Get the dashboard route based on user role.
@@ -50,7 +195,7 @@ class User extends Authenticatable
      */
     public function getDashboardRoute()
     {
-        return match($this->role) {
+        return match($this->user_role) {
             'admin' => 'cook.dashboard',
             'student' => 'student.dashboard',
             'cook' => 'cook.dashboard',
@@ -67,7 +212,7 @@ class User extends Authenticatable
      */
     public function hasRole(string $role): bool
     {
-        return $this->role === $role;
+        return $this->user_role === $role;
     }
 
     /**
@@ -77,7 +222,7 @@ class User extends Authenticatable
      */
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->user_role === 'admin';
     }
 
     /**
@@ -110,36 +255,27 @@ class User extends Authenticatable
         return $this->isAdmin();
     }
 
-    public function studentMeals()
-    {
-        return $this->hasMany(StudentMeal::class);
-    }
-
-    public function studentReports()
-    {
-        return $this->hasMany(StudentReport::class);
-    }
-
-    public function studentAnalytics()
-    {
-        return $this->hasMany(StudentAnalytic::class);
-    }
-
-    public function cookTasks()
-    {
-        return $this->hasMany(CookDashboard::class);
-    }
-    
     /**
-     * Set the user's password - ensures it's always hashed
-     *
-     * @param string $value
-     * @return void
+     * Get student details relationship
      */
-    public function setPasswordAttribute($value)
+    public function studentDetails()
     {
-        if ($value) {
-            $this->attributes['password'] = \Illuminate\Support\Facades\Hash::make($value);
-        }
+        return $this->hasOne(StudentDetails::class, 'user_id', 'user_id');
+    }
+
+    /**
+     * Get feedback submitted by this user (if student)
+     */
+    public function feedback()
+    {
+        return $this->hasMany(Feedback::class, 'student_id', 'user_id');
+    }
+
+    /**
+     * Get pre-orders made by this user (if student)
+     */
+    public function preOrders()
+    {
+        return $this->hasMany(PreOrder::class, 'user_id', 'user_id');
     }
 }

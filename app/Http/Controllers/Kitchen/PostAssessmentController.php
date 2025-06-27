@@ -70,7 +70,7 @@ class PostAssessmentController extends Controller
     public function store(Request $request)
     {
         \Log::info('🍽️ Kitchen Post-Assessment Store Request', [
-            'user_id' => Auth::id(),
+            'user_id' => Auth::user()->user_id,
             'date' => $request->input('date'),
             'meal_type' => $request->input('meal_type'),
             'items_count' => $request->has('items') ? count($request->input('items', [])) : 0,
@@ -87,7 +87,7 @@ class PostAssessmentController extends Controller
                 \Log::warning('❌ Invalid image file detected, proceeding without image', [
                     'error' => $file->getError(),
                     'size' => $file->getSize(),
-                    'user_id' => Auth::id()
+                    'user_id' => Auth::user()->user_id
                 ]);
                 // Remove the invalid file from request to avoid validation error
                 $request->request->remove('report_image');
@@ -112,7 +112,7 @@ class PostAssessmentController extends Controller
         if ($validator->fails()) {
             \Log::warning('❌ Kitchen Post-Assessment Validation Failed', [
                 'errors' => $validator->errors()->toArray(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::user()->user_id
             ]);
 
             if ($request->expectsJson()) {
@@ -146,7 +146,7 @@ class PostAssessmentController extends Controller
                     'meal_type' => $request->meal_type,
                     'existing_assessment_id' => $existingAssessment->id,
                     'existing_assessed_by' => $existingAssessment->assessed_by,
-                    'current_user' => Auth::id()
+                    'current_user' => Auth::user()->user_id
                 ]);
 
                 if ($request->expectsJson()) {
@@ -223,7 +223,7 @@ class PostAssessmentController extends Controller
                 'notes' => $request->notes,
                 'image_path' => $imagePath,
                 'items' => $itemsData,
-                'assessed_by' => Auth::id(),
+                'assessed_by' => Auth::user()->user_id, // Use the actual user_id primary key
                 'is_completed' => true,
                 'completed_at' => now(),
             ]);

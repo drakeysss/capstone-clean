@@ -24,7 +24,7 @@ class FeedbackController extends Controller
         $user = Auth::user();
 
         // Get student's previous feedback
-        $studentFeedback = Feedback::where('student_id', $user->id)
+        $studentFeedback = Feedback::where('student_id', $user->user_id)
             ->orderBy('created_at', 'desc')
             ->take(10)
             ->get();
@@ -57,7 +57,7 @@ class FeedbackController extends Controller
         // Allow multiple feedback submissions - students can provide feedback as many times as they want
         // Create new feedback entry each time
         $feedback = Feedback::create([
-            'student_id' => $user->id,
+            'student_id' => $user->user_id, // Use the actual user_id primary key
             'meal_id' => null, // No longer required since we're allowing manual input
             'meal_date' => $request->meal_date,
             'meal_type' => $request->meal_type,
@@ -66,7 +66,7 @@ class FeedbackController extends Controller
             'comments' => $request->comment,
             'suggestions' => $request->suggestions,
             'food_quality' => [],
-            'dietary_concerns' => [],
+            // Removed dietary_concerns field
             'is_anonymous' => $request->has('is_anonymous') && $request->is_anonymous,
         ]);
 
@@ -92,7 +92,7 @@ class FeedbackController extends Controller
             $user = Auth::user();
 
             // Only allow students to delete their own feedback
-            $feedback = Feedback::where('student_id', $user->id)->findOrFail($id);
+            $feedback = Feedback::where('student_id', $user->user_id)->findOrFail($id);
 
             $feedback->delete();
 

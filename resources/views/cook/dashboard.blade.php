@@ -103,7 +103,6 @@
                             <tr>
                                 <th>Date</th>
                                 <th>Submitted By</th>
-                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -111,7 +110,7 @@
                                 <tr>
                                     <td>{{ $inv->created_at->format('M d, Y') }}</td>
                                     <td>{{ $inv->user->name ?? 'N/A' }}</td>
-                                    <td>{{ ucfirst($inv->status ?? 'N/A') }}</td>
+                                  
                                 </tr>
                             @empty
                                 <tr><td colspan="3" class="text-center">No recent inventory reports</td></tr>
@@ -130,49 +129,27 @@
                     <a href="{{ route('cook.inventory') }}" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body">
-                    <div class="row h-100">
-                        <div class="col-md-4">
-                            <div class="overview-stats">
-                                <div class="stat">
-                                    <span class="stat-value">{{ $lowStockItems ?? 0 }}</span>
-                                    <span class="stat-label">Low Stock</span>
-                                </div>
-                                <div class="stat">
-                                    <span class="stat-value">{{ $totalItems ?? 0 }}</span>
-                                    <span class="stat-label">Total Items</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Item Name</th>
-                                            <th>Quantity</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($lowStockItemsList->take(3) ?? [] as $item)
-                                        <tr>
-                                            <td data-label="Item Name">{{ $item->name }}</td>
-                                            <td data-label="Quantity">{{ $item->quantity }}</td>
-                                            <td data-label="Status">
-                                                <span class="status-badge warning">
-                                                    Low Stock
-                                                </span>
-                                            </td>
-                                        </tr>
-                                        @empty
-                                        <tr>
-                                            <td colspan="3" class="text-center">No low stock items</td>
-                                        </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($lowStockItemsList->take(3) ?? [] as $item)
+                                <tr>
+                                    <td data-label="Item Name">{{ $item->name }}</td>
+                                    <td data-label="Quantity">{{ $item->quantity }}</td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="2" class="text-center">No low stock items</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

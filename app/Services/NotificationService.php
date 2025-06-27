@@ -23,9 +23,9 @@ class NotificationService
      */
     public function sendToRole(string $role, string $title, string $message, string $type = 'info', array $data = [])
     {
-        $users = User::where('role', $role)->get();
+        $users = User::where('user_role', $role)->get();
         foreach ($users as $user) {
-            $this->createNotification($user->id, $title, $message, $type, $data);
+            $this->createNotification($user->user_id, $title, $message, $type, $data);
         }
     }
 
@@ -34,16 +34,16 @@ class NotificationService
      */
     public function sendToAll(string $title, string $message, string $type = 'info', array $data = [])
     {
-        $users = User::where('id', '!=', Auth::id())->get();
+        $users = User::where('user_id', '!=', Auth::id())->get();
         foreach ($users as $user) {
-            $this->createNotification($user->id, $title, $message, $type, $data);
+            $this->createNotification($user->user_id, $title, $message, $type, $data);
         }
     }
 
     /**
      * Create individual notification
      */
-    public function createNotification(int $userId, string $title, string $message, string $type, array $data)
+    public function createNotification(string $userId, string $title, string $message, string $type, array $data)
     {
         try {
             Notification::create([

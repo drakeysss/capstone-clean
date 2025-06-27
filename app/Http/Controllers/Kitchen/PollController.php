@@ -52,7 +52,7 @@ class PollController extends Controller
         $poll->poll_date = $request->poll_date;
         $poll->meal_type = $request->meal_type;
         $poll->instructions = $request->instructions;
-        $poll->created_by = auth()->id();
+        $poll->created_by = auth()->user()->user_id;
         $poll->save();
         
         // Attach menu items to the poll

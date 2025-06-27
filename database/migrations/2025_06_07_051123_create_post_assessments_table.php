@@ -29,12 +29,12 @@ return new class extends Migration
                 $table->text('notes')->nullable();
                 $table->text('improvements')->nullable();
                 $table->boolean('is_completed')->default(false);
-                $table->unsignedBigInteger('assessed_by');
+                $table->string('assessed_by');
                 $table->timestamp('completed_at')->nullable();
                 $table->timestamps();
 
                 $table->foreign('menu_id')->references('id')->on('menus')->onDelete('set null');
-                $table->foreign('assessed_by')->references('id')->on('users');
+                $table->foreign('assessed_by')->references('user_id')->on('pnph_users');
                 $table->index(['date', 'meal_type']);
                 $table->unique(['date', 'meal_type']); // One assessment per meal per day
             });

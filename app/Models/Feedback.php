@@ -22,13 +22,11 @@ class Feedback extends Model
         'food_quality',
         'comments',
         'suggestions',
-        'dietary_concerns',
         'is_anonymous'
     ];
 
     protected $casts = [
         'food_quality' => 'array',
-        'dietary_concerns' => 'array',
         'meal_date' => 'date',
         'is_anonymous' => 'boolean'
     ];
