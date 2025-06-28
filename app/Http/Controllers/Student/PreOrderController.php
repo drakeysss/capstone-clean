@@ -365,7 +365,7 @@ class PreOrderController extends Controller
                     'ingredients' => $poll->ingredients,
                     'poll_date' => $poll->poll_date->format('Y-m-d'),
                     'meal_type' => $poll->meal_type,
-                    'deadline' => $poll->deadline->format('H:i:s'), // Time format (HH:MM:SS)
+                    'deadline' => $poll->deadline->format('g:i A'), // 12-hour format
                     'deadline_formatted' => $poll->deadline->format('g:i A'), // 12-hour format
                     'status' => $poll->status,
                     'has_responded' => $response !== null,

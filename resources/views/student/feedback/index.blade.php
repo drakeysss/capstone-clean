@@ -147,9 +147,11 @@
                 <h5 class="mb-0 fw-semibold">
                     <i class="bi bi-clock-history me-2"></i>Your Feedback History
                 </h5>
+                @if($studentFeedback->count() > 0)
                 <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" id="deleteAllHistoryBtn">
                     <i class="bi bi-trash me-1"></i>Delete All History
                 </button>
+                @endif
             </div>
             <div class="card-body">
                 <div class="list-group list-group-flush">
@@ -205,8 +207,16 @@
                             </button>
                         </div>
                     @empty
-                        <div class="list-group-item">
-                            <p class="mb-0 text-center text-muted">You haven't provided any feedback yet.</p>
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="bi bi-chat-square-text" style="font-size: 4rem; color: #dee2e6;"></i>
+                            </div>
+                            <h5 class="text-muted mb-3">No Feedback History Yet</h5>
+                            <p class="text-muted mb-4">
+                                You haven't provided any meal feedback yet.<br>
+                                Start sharing your thoughts about the meals to help improve our service!
+                            </p>
+                          
                         </div>
                     @endforelse
                 </div>

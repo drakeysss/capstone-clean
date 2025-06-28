@@ -135,10 +135,17 @@ class StudentDashboardController extends BaseDashboardController
         $weekCycle = $weekInfo['week_cycle'];
 
         // Get today's menu from cook's meal planning (using Meal model)
-        $todayMenu = Meal::forWeekCycle($weekCycle)
+        $todayMenuQuery = Meal::forWeekCycle($weekCycle)
             ->forDay($currentDay)
-            ->get()
-            ->groupBy('meal_type');
+            ->get();
+
+        // Apply highlighting for new menu items
+        $todayMenuWithHighlighting = DashboardViewService::processMenuDataWithHighlighting(
+            $todayMenuQuery,
+            'new_menu_items_student'
+        );
+
+        $todayMenu = $todayMenuWithHighlighting->groupBy('meal_type');
 
         // Debug log to verify menu retrieval
         \Log::info('Student Dashboard - Today\'s Menu Retrieved', [

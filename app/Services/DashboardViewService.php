@@ -71,6 +71,50 @@ class DashboardViewService
     }
 
     /**
+     * Process menu data with "show once" highlighting for new items
+     */
+    public static function processMenuDataWithHighlighting($menuData, string $dataType)
+    {
+        if (!$menuData || $menuData->isEmpty()) {
+            return $menuData;
+        }
+
+        $user = Auth::user();
+        if (!$user) {
+            return $menuData;
+        }
+
+        // Get viewed menu items for this user
+        $viewedItems = UserDashboardView::where('user_id', $user->user_id)
+            ->where('data_type', $dataType)
+            ->pluck('data_identifier')
+            ->toArray();
+
+        // Add highlighting flag to menu items
+        $menuData->each(function ($menu) use ($viewedItems, $dataType, $user) {
+            $menuId = $menu->id ?? $menu->meal_id ?? null;
+            if ($menuId) {
+                // Check if this menu item is new (within 24 hours) and not yet viewed
+                $isNew = $menu->created_at && $menu->created_at->diffInHours(now()) <= 24;
+                $isUnviewed = !in_array($menuId, $viewedItems);
+
+                $menu->is_highlighted = $isNew && $isUnviewed;
+
+                // Mark as viewed if it's being displayed
+                if ($menu->is_highlighted) {
+                    UserDashboardView::firstOrCreate([
+                        'user_id' => $user->user_id,
+                        'data_type' => $dataType,
+                        'data_identifier' => $menuId
+                    ]);
+                }
+            }
+        });
+
+        return $menuData;
+    }
+
+    /**
      * Process dashboard data with "show once" logic
      */
     public static function processDashboardData($query, string $dataType, string $identifierColumn = 'id')

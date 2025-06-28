@@ -40,8 +40,16 @@
                         </thead>
                         <tbody>
                             @forelse($recentPostMealReports as $report)
-                                <tr>
-                                    <td>{{ $report->date->format('M d, Y') }}</td>
+                                @php
+                                    $isRecent = $report->created_at->diffInHours(now()) <= 24;
+                                @endphp
+                                <tr class="{{ $isRecent ? 'table-warning' : '' }}">
+                                    <td>
+                                        {{ $report->date->format('M d, Y') }}
+                                        @if($isRecent)
+                                            <span class="badge bg-warning text-dark ms-1">NEW</span>
+                                        @endif
+                                    </td>
                                     <td>{{ ucfirst($report->meal_type) }}</td>
                                     <td>{{ $report->assessedBy->name ?? 'N/A' }}</td>
                                 </tr>
@@ -73,8 +81,16 @@
                         </thead>
                         <tbody>
                             @forelse($recentFeedback as $fb)
-                                <tr>
-                                    <td>{{ $fb->created_at->format('M d, Y') }}</td>
+                                @php
+                                    $isRecent = $fb->created_at->diffInHours(now()) <= 24;
+                                @endphp
+                                <tr class="{{ $isRecent ? 'table-warning' : '' }}">
+                                    <td>
+                                        {{ $fb->created_at->format('M d, Y') }}
+                                        @if($isRecent)
+                                            <span class="badge bg-warning text-dark ms-1">NEW</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $fb->student->name ?? 'Anonymous' }}</td>
                                     <td>{{ $fb->rating }}★</td>
                                     <td>{{ Str::limit($fb->comment, 30) }}</td>
@@ -107,10 +123,18 @@
                         </thead>
                         <tbody>
                             @forelse($recentInventoryReports as $inv)
-                                <tr>
-                                    <td>{{ $inv->created_at->format('M d, Y') }}</td>
+                                @php
+                                    $isRecent = $inv->created_at->diffInHours(now()) <= 24;
+                                @endphp
+                                <tr class="{{ $isRecent ? 'table-warning' : '' }}">
+                                    <td>
+                                        {{ $inv->created_at->format('M d, Y') }}
+                                        @if($isRecent)
+                                            <span class="badge bg-warning text-dark ms-1">NEW</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $inv->user->name ?? 'N/A' }}</td>
-                                  
+
                                 </tr>
                             @empty
                                 <tr><td colspan="3" class="text-center">No recent inventory reports</td></tr>

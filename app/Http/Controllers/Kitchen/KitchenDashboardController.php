@@ -31,10 +31,17 @@ class KitchenDashboardController extends BaseDashboardController
         $weekCycle = $weekInfo['week_cycle'];
         
         // Get today's menu items from cook's planning (using Meal model)
-        $todayMenus = \App\Models\Meal::forWeekCycle($weekCycle)
+        $todayMenusQuery = \App\Models\Meal::forWeekCycle($weekCycle)
             ->forDay($currentDay)
-            ->get()
-            ->groupBy('meal_type');
+            ->get();
+
+        // Apply highlighting for new menu items
+        $todayMenusWithHighlighting = DashboardViewService::processMenuDataWithHighlighting(
+            $todayMenusQuery,
+            'new_menu_items_kitchen'
+        );
+
+        $todayMenus = $todayMenusWithHighlighting->groupBy('meal_type');
         
         // Get inventory items that need preparation
         $inventoryItems = \App\Models\Inventory::whereRaw('quantity <= reorder_point * 1.5')
@@ -91,7 +98,9 @@ class KitchenDashboardController extends BaseDashboardController
                 $data['todaysMenu']->push((object)[
                     'meal_type' => $mealType,
                     'meal_name' => $meal->name ?? 'No meal planned',
-                    'ingredients' => is_array($meal->ingredients) ? implode(', ', $meal->ingredients) : ($meal->ingredients ?? 'No ingredients listed')
+                    'ingredients' => is_array($meal->ingredients) ? implode(', ', $meal->ingredients) : ($meal->ingredients ?? 'No ingredients listed'),
+                    'created_at' => $meal->created_at,
+                    'is_highlighted' => $meal->is_highlighted ?? false
                 ]);
             }
         }

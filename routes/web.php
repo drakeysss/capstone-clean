@@ -67,8 +67,8 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     // Feedback
     Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback');
     Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
-    Route::delete('/feedback/{id}', [FeedbackController::class, 'destroy'])->name('feedback.destroy');
     Route::delete('/feedback/delete-all', [FeedbackController::class, 'destroyAll'])->name('feedback.destroyAll');
+    Route::delete('/feedback/{id}', [FeedbackController::class, 'destroy'])->name('feedback.destroy');
     
     // Poll Responses
     Route::post('/poll-response', [StudentDashboardController::class, 'storePollResponse'])->name('poll-response.store');

@@ -45,9 +45,15 @@
                         </thead>
                         <tbody>
                             @forelse($todaysMenu ?? [] as $menu)
-                            <tr>
+                            @php
+                                $isHighlighted = isset($menu->is_highlighted) && $menu->is_highlighted;
+                            @endphp
+                            <tr class="{{ $isHighlighted ? 'table-warning' : '' }}">
                                 <td>
                                     <strong>{{ ucfirst($menu->meal_type ?? 'N/A') }}</strong>
+                                    @if($isHighlighted)
+                                        <span class="badge bg-warning text-dark ms-1">NEW</span>
+                                    @endif
                                 </td>
                                 <td>
                                     <strong>{{ $menu->meal_name ?? 'No meal planned' }}</strong>
@@ -96,8 +102,16 @@
                         </thead>
                         <tbody>
                             @forelse($recentFeedback ?? [] as $fb)
-                                <tr>
-                                    <td>{{ $fb->created_at->format('M d, Y') }}</td>
+                                @php
+                                    $isRecent = $fb->created_at->diffInHours(now()) <= 24;
+                                @endphp
+                                <tr class="{{ $isRecent ? 'table-warning' : '' }}">
+                                    <td>
+                                        {{ $fb->created_at->format('M d, Y') }}
+                                        @if($isRecent)
+                                            <span class="badge bg-warning text-dark ms-1">NEW</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $fb->is_anonymous ? 'Anonymous' : ($fb->student->name ?? 'N/A') }}</td>
                                     <td>{{ $fb->rating }}★</td>
                                     <td>{{ Str::limit($fb->comments ?? 'No comment', 30) }}</td>
@@ -131,8 +145,16 @@
                         </thead>
                         <tbody>
                             @forelse($recentPostMealReports ?? [] as $report)
-                                <tr>
-                                    <td>{{ $report->date->format('M d, Y') }}</td>
+                                @php
+                                    $isRecent = $report->created_at->diffInHours(now()) <= 24;
+                                @endphp
+                                <tr class="{{ $isRecent ? 'table-warning' : '' }}">
+                                    <td>
+                                        {{ $report->date->format('M d, Y') }}
+                                        @if($isRecent)
+                                            <span class="badge bg-warning text-dark ms-1">NEW</span>
+                                        @endif
+                                    </td>
                                     <td>{{ ucfirst($report->meal_type) }}</td>
                                     <td>
                                         <span class="status-badge {{ $report->is_completed ? 'completed' : 'pending' }}">
@@ -167,8 +189,16 @@
                         </thead>
                         <tbody>
                             @forelse($recentInventoryReports ?? [] as $inv)
-                                <tr>
-                                    <td>{{ $inv->created_at->format('M d, Y') }}</td>
+                                @php
+                                    $isRecent = $inv->created_at->diffInHours(now()) <= 24;
+                                @endphp
+                                <tr class="{{ $isRecent ? 'table-warning' : '' }}">
+                                    <td>
+                                        {{ $inv->created_at->format('M d, Y') }}
+                                        @if($isRecent)
+                                            <span class="badge bg-warning text-dark ms-1">NEW</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $inv->item->name ?? 'N/A' }}</td>
                                     <td>{{ $inv->new_quantity ?? 'N/A' }}</td>
                                 </tr>

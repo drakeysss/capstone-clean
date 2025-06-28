@@ -503,21 +503,30 @@ function formatKitchenPollDate(dateString) {
 function formatKitchenPollDeadline(deadline) {
     if (!deadline) return 'Not set';
 
-    // Simple formatting for deadline
-    if (deadline.includes(' ')) {
-        const [datePart, timePart] = deadline.split(' ');
-        const time = timePart.substring(0, 5); // Get HH:MM
-
-        // Convert to 12-hour format
-        const [hour, minute] = time.split(':');
-        const h = parseInt(hour);
-        const period = h >= 12 ? 'PM' : 'AM';
-        const displayHour = h === 0 ? 12 : (h > 12 ? h - 12 : h);
-
-        return `${displayHour}:${minute} ${period}`;
+    // If already in 12-hour format, return as-is
+    if (deadline.includes('AM') || deadline.includes('PM')) {
+        return deadline;
     }
 
-    return deadline;
+    // Handle different deadline formats
+    let timeString = deadline;
+
+    if (deadline.includes(' ')) {
+        // Full datetime format: "2025-01-16 21:00:00"
+        const [datePart, timePart] = deadline.split(' ');
+        timeString = timePart.substring(0, 5); // Get HH:MM
+    } else if (deadline.includes(':')) {
+        // Time only format: "21:00" or "21:00:00"
+        timeString = deadline.substring(0, 5); // Get HH:MM
+    }
+
+    // Convert to 12-hour format
+    const [hour, minute] = timeString.split(':');
+    const h = parseInt(hour);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const displayHour = h === 0 ? 12 : (h > 12 ? h - 12 : h);
+
+    return `${displayHour}:${minute} ${period}`;
 }
 
 function showKitchenPollsError(message) {

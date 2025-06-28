@@ -75,7 +75,7 @@
                                             <small class="text-muted" id="breakfastIngredients">Loading ingredients...</small>
                                         </div>
                                         <div class="meal-time mt-2">
-                                            <span class="badge bg-secondary">6:00 AM - 8:00 AM</span>
+                                            <!-- <span class="badge bg-secondary">6:00 AM - 8:00 AM</span> -->
                                         </div>
                                     </div>
                                 </div>
@@ -93,7 +93,7 @@
                                         <small class="text-muted" id="lunchIngredients">Loading ingredients...</small>
                                     </div>
                                     <div class="meal-time mt-2">
-                                        <span class="badge bg-secondary">11:30 AM - 1:30 PM</span>
+                                        <!-- <span class="badge bg-secondary">11:30 AM - 1:30 PM</span> -->
                                     </div>
                                 </div>
                             </div>
@@ -111,7 +111,7 @@
                                         <small class="text-muted" id="dinnerIngredients">Loading ingredients...</small>
                                     </div>
                                     <div class="meal-time mt-2">
-                                        <span class="badge bg-secondary">5:30 PM - 7:30 PM</span>
+                                        <!-- <span class="badge bg-secondary">5:30 PM - 7:30 PM</span> -->
                                     </div>
                                 </div>
                             </div>

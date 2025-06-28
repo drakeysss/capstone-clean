@@ -46,8 +46,16 @@
                         <tbody>
                             @forelse($todayMenu ?? [] as $mealType => $menus)
                                 @foreach($menus as $menu)
-                                <tr>
-                                    <td>{{ ucfirst($mealType) }}</td>
+                                @php
+                                    $isHighlighted = isset($menu->is_highlighted) && $menu->is_highlighted;
+                                @endphp
+                                <tr class="{{ $isHighlighted ? 'table-warning' : '' }}">
+                                    <td>
+                                        {{ ucfirst($mealType) }}
+                                        @if($isHighlighted)
+                                            <span class="badge bg-warning text-dark ms-1">NEW</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $menu->name ?? 'No meal planned' }}</td>
                                     <td>
                                         <small class="text-muted">
@@ -95,8 +103,16 @@
                                     ->get();
                             @endphp
                             @forelse($recentFeedback as $feedback)
-                                <tr>
-                                    <td>{{ $feedback->created_at->format('M d, Y') }}</td>
+                                @php
+                                    $isRecent = $feedback->created_at->diffInHours(now()) <= 24;
+                                @endphp
+                                <tr class="{{ $isRecent ? 'table-warning' : '' }}">
+                                    <td>
+                                        {{ $feedback->created_at->format('M d, Y') }}
+                                        @if($isRecent)
+                                            <span class="badge bg-warning text-dark ms-1">NEW</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $feedback->meal_name ?? ucfirst($feedback->meal_type) }}</td>
                                     <td>
                                         @for($i = 1; $i <= 5; $i++)
@@ -133,8 +149,16 @@
                         </thead>
                         <tbody>
                             @forelse($studentPreOrders ?? [] as $preOrder)
-                                <tr>
-                                    <td>{{ $preOrder->date->format('M d, Y') }}</td>
+                                @php
+                                    $isRecent = $preOrder->created_at->diffInHours(now()) <= 24;
+                                @endphp
+                                <tr class="{{ $isRecent ? 'table-warning' : '' }}">
+                                    <td>
+                                        {{ $preOrder->date->format('M d, Y') }}
+                                        @if($isRecent)
+                                            <span class="badge bg-warning text-dark ms-1">NEW</span>
+                                        @endif
+                                    </td>
                                     <td>{{ ucfirst($preOrder->meal_type) }}</td>
                                     <td>
                                         <span class="status-badge {{ $preOrder->is_attending ? 'active' : 'cancelled' }}">

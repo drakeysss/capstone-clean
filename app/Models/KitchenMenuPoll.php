@@ -149,8 +149,8 @@ class KitchenMenuPoll extends Model
 
     public function canBeEdited()
     {
-        // Allow editing for active polls
-        return $this->is_active === true;
+        // Allow editing for draft polls (not sent yet) and active polls (sent but not expired)
+        return $this->is_active === false || ($this->is_active === true && !$this->isExpired());
     }
 
     public function canBeSent()

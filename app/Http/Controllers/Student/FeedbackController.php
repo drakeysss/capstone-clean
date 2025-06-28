@@ -124,12 +124,34 @@ class FeedbackController extends Controller
      */
     public function destroyAll()
     {
+        \Log::info('Student feedback destroyAll method called', [
+            'user_id' => Auth::user()->user_id ?? 'not_authenticated',
+            'request_method' => request()->method(),
+            'request_url' => request()->url()
+        ]);
+
         try {
             $user = Auth::user();
 
+            if (!$user) {
+                \Log::error('User not authenticated in destroyAll');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            \Log::info('About to query feedback', [
+                'user_id' => $user->user_id,
+                'student_id_field' => 'student_id'
+            ]);
+
             // Only delete the current student's feedback
-            $count = Feedback::where('student_id', $user->id)->count();
-            Feedback::where('student_id', $user->id)->delete();
+            $count = Feedback::where('student_id', $user->user_id)->count();
+
+            \Log::info('Feedback count found', ['count' => $count]);
+
+            Feedback::where('student_id', $user->user_id)->delete();
 
             if (request()->expectsJson()) {
                 return response()->json([
@@ -142,10 +164,16 @@ class FeedbackController extends Controller
                 ->with('success', "All {$count} feedback records deleted successfully");
 
         } catch (\Exception $e) {
+            \Log::error('Failed to delete all student feedback', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::user()->user_id ?? 'unknown',
+                'trace' => $e->getTraceAsString()
+            ]);
+
             if (request()->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to delete all feedback'
+                    'message' => 'Failed to delete all feedback: ' . $e->getMessage()
                 ], 500);
             }
 
