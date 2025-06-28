@@ -31,13 +31,9 @@
                     <h6 class="m-0 font-weight-bold text-primary"><i class="bi bi-pencil-square me-2"></i>Inventory Count Form</h6>
                 </div>
                 <div class="card-body">
-                   
-
                     <form id="inventoryCheckForm" action="{{ route('kitchen.inventory.check') }}" method="POST">
                         @csrf
-                      
 
-                        
                         <div id="inventory-items-container">
                             <div class="row inventory-item mb-3">
                                 <div class="col-md-3">
@@ -65,18 +61,18 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="mb-3">
                             <button type="button" id="add-item-btn" class="btn btn-sm btn-secondary">
                                 <i class="bi bi-plus-circle"></i> Add Another Item
                             </button>
                         </div>
 
-                          <div class="mb-3">
+                        <div class="mb-3">
                             <label class="form-label">Notes for Cook</label>
                             <textarea class="form-control" name="notes" rows="2" placeholder="Any notes about this inventory count (e.g., items near expiry, damaged items, etc.)"></textarea>
                         </div>
-                        
+
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-send"></i> Submit Inventory Count
@@ -96,97 +92,254 @@
                     <h6 class="m-0 font-weight-bold text-primary d-flex align-items-center">
                         <i class="bi bi-clock-history me-2"></i>Your Inventory Reports History
                     </h6>
-                    <div>
-                        @if(isset($stats) && $stats['total_reports'] > 0)
-                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="confirmDeleteAll()">
-                                <i class="bi bi-trash me-1"></i>Delete All Reports
-                            </button>
-                        @endif
-                    </div>
                 </div>
                 <div class="card-body">
-                    @if(isset($stats))
-                        <!-- Statistics Row -->
-                        <div class="row mb-4 justify-content-center">
-                            <div class="col-12 col-md-6 col-lg-4 mb-3 mb-md-0">
-                                <div class="text-center p-3 border rounded bg-light h-100">
-                                    <div class="h4 mb-0 text-primary">{{ $stats['total_reports'] }}</div>
-                                    <small class="text-muted">Total Reports</small>
-                                </div>
-                            </div>
-                            <div class="col-12 col-md-6 col-lg-4 mb-3 mb-md-0">
-                                <div class="text-center p-3 border rounded bg-light h-100">
-                                    <div class="h4 mb-0 text-success">
-                                        {{ $stats['last_report_date'] ? $stats['last_report_date']->diffForHumans() : 'Never' }}
-                                    </div>
-                                    <small class="text-muted">Last Report</small>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
 
                     @if(isset($allChecks) && $allChecks->count() > 0)
-                        <!-- Reports Table -->
-                        <div class="table-responsive w-100">
-                            <table class="table table-hover align-middle text-wrap">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Items Count</th>
-                                        <th>Notes</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($allChecks as $check)
-                                    <tr id="report-row-{{ $check->id }}">
-                                        <td style="word-break: break-word; max-width: 120px;">
-                                            <strong>{{ $check->created_at->format('M d, Y') }}</strong><br>
-                                            <small class="text-muted">{{ $check->created_at->format('h:i A') }}</small>
-                                        </td>
-                                        <td style="word-break: break-word; max-width: 120px;">
-                                            <span class="badge bg-info">{{ $check->items->count() }} items</span>
-                                            @if($check->items->where('needs_restock', true)->count() > 0)
-                                                <br><small class="text-warning">
-                                                    <i class="bi bi-exclamation-triangle"></i>
-                                                    {{ $check->items->where('needs_restock', true)->count() }} need restock
-                                                </small>
-                                            @endif
-                                        </td>
-                                        <td style="word-break: break-word; max-width: 200px;">
-                                            @if($check->notes)
-                                                <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ $check->notes }}">
-                                                    {{ $check->notes }}
-                                                </span>
-                                            @else
-                                                <span class="text-muted">No notes</span>
-                                            @endif
-                                        </td>
-                                        <td style="word-break: break-word; max-width: 120px;">
+                        <!-- Pending Reports Section -->
+                        @php
+                            $pendingReports = $allChecks->whereNull('approved_at');
+                            $approvedReports = $allChecks->whereNotNull('approved_at');
+                        @endphp
+
+                        @if($pendingReports->count() > 0)
+                        <div class="mb-4">
+                            <h6 class="text-warning mb-3">
+                                <i class="bi bi-clock"></i> Pending Reports ({{ $pendingReports->count() }})
+                            </h6>
+                            <div class="row">
+                                @foreach($pendingReports as $check)
+                            <div class="col-lg-6 mb-4">
+                                <div class="card border receipt-card" id="report-card-{{ $check->id }}">
+                                    <!-- Receipt Header -->
+                                    <div class="card-header bg-primary text-white text-center py-3">
+                                        <h5 class="mb-1">INVENTORY RECEIPT</h5>
+                                        <small>{{ $check->created_at->format('M d, Y h:i A') }}</small>
+                                    </div>
+
+                                    <!-- Receipt Body -->
+                                    <div class="card-body p-3">
+                                        <!-- Receipt Info -->
+                                        <div class="row mb-3">
+                                            <div class="col-6">
+                                                <small class="text-muted">DATE:</small><br>
+                                                <strong>{{ $check->created_at->format('M d, Y') }}</strong>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted">TIME:</small><br>
+                                                <strong>{{ $check->created_at->format('h:i A') }}</strong>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <div class="col-12">
+                                                <small class="text-muted">SUBMITTED BY:</small><br>
+                                                <strong>{{ $check->user->name ?? 'You' }}</strong>
+                                            </div>
+                                        </div>
+
+                                        <!-- Items Table -->
+                                        <div class="table-responsive mb-3">
+                                            <table class="table table-sm table-borderless">
+                                                <thead>
+                                                    <tr class="border-bottom">
+                                                        <th class="text-start">ITEM</th>
+                                                        <th class="text-center">QTY</th>
+                                                        <th class="text-end">UNIT</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($check->items as $item)
+                                                    <tr>
+                                                        <td class="text-start">{{ $item->inventoryItem->name ?? 'Unknown Item' }}</td>
+                                                        <td class="text-center">{{ number_format($item->current_stock, 0) }}</td>
+                                                        <td class="text-end">{{ $item->inventoryItem->unit ?? 'units' }}</td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                                <tfoot>
+                                                    <tr class="border-top">
+                                                        <th class="text-start">TOTAL ITEMS:</th>
+                                                        <th class="text-center">{{ $check->items->count() }}</th>
+                                                        <th class="text-end">items</th>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+
+                                        <!-- Notes -->
+                                        @if($check->notes)
+                                        <div class="mb-3">
+                                            <small class="text-muted">NOTES:</small><br>
+                                            <div class="bg-light p-2 rounded small">
+                                                {{ $check->notes }}
+                                            </div>
+                                        </div>
+                                        @endif
+
+                                        <!-- Cook's Reply -->
+                                        @if($check->approval_notes)
+                                        <div class="mb-3">
+                                            <small class="text-muted">COOK'S REPLY:</small><br>
+                                            <div class="bg-success bg-opacity-10 p-2 rounded small border-start border-success border-3">
+                                                {{ $check->approval_notes }}
+                                            </div>
+                                        </div>
+                                        @endif
+
+                                        <!-- Status -->
+                                        <div class="text-center mb-3">
                                             @if($check->approved_at)
-                                                <span class="badge bg-success">
-                                                    <i class="bi bi-check-circle"></i> Approved
+                                                <span class="badge bg-success px-3 py-2">
+                                                    <i class="bi bi-check-circle"></i> APPROVED
                                                 </span>
-                                                <br><small class="text-muted">{{ $check->approved_at->diffForHumans() }}</small>
+                                                <br><small class="text-muted">{{ $check->approved_at->format('M d, Y h:i A') }}</small>
                                             @else
-                                                <span class="badge bg-warning">
-                                                    <i class="bi bi-clock"></i> Pending
+                                                <span class="badge bg-warning px-3 py-2">
+                                                    <i class="bi bi-clock"></i> PENDING APPROVAL
                                                 </span>
                                             @endif
-                                        </td>
-                                        <td style="word-break: break-word; max-width: 120px;">
-                                            <button type="button" class="btn btn-outline-danger btn-sm"
-                                                    onclick="confirmDelete({{ $check->id }}, '{{ $check->created_at->format('M d, Y') }}')"
-                                                    title="Delete Report">
-                                                <i class="bi bi-trash"></i> Delete
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                                        </div>
+
+                                        <!-- Action Button -->
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="confirmDelete({{ $check->id }}, '{{ $check->created_at->format('M d, Y') }}')">
+                                                    <i class="bi bi-trash"></i> Delete Report
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Receipt Footer -->
+                                    <div class="card-footer bg-light text-center py-2">
+                                        <small class="text-muted">
+                                            Kitchen Inventory System
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                                @endforeach
+                            </div>
                         </div>
+                        @endif
+
+                        <!-- Approved Reports Section -->
+                        @if($approvedReports->count() > 0)
+                        <div class="mb-4">
+                            <h6 class="text-success mb-3">
+                                <i class="bi bi-check-circle"></i> Approved Reports ({{ $approvedReports->count() }})
+                            </h6>
+                            <div class="row">
+                                @foreach($approvedReports as $check)
+                                <div class="col-lg-6 mb-4">
+                                    <div class="card border receipt-card" id="report-card-{{ $check->id }}">
+                                        <!-- Receipt Header -->
+                                        <div class="card-header bg-success text-white text-center py-3">
+                                            <h5 class="mb-1">INVENTORY RECEIPT</h5>
+                                            <small>{{ $check->created_at->format('M d, Y h:i A') }}</small>
+                                        </div>
+
+                                        <!-- Receipt Body -->
+                                        <div class="card-body p-3">
+                                            <!-- Receipt Info -->
+                                            <div class="row mb-3">
+                                                <div class="col-6">
+                                                    <small class="text-muted">DATE:</small><br>
+                                                    <strong>{{ $check->created_at->format('M d, Y') }}</strong>
+                                                </div>
+                                                <div class="col-6">
+                                                    <small class="text-muted">TIME:</small><br>
+                                                    <strong>{{ $check->created_at->format('h:i A') }}</strong>
+                                                </div>
+                                            </div>
+
+                                            <div class="row mb-3">
+                                                <div class="col-12">
+                                                    <small class="text-muted">SUBMITTED BY:</small><br>
+                                                    <strong>{{ $check->user->name ?? 'You' }}</strong>
+                                                </div>
+                                            </div>
+
+                                            <!-- Items Table -->
+                                            <div class="table-responsive mb-3">
+                                                <table class="table table-sm table-borderless">
+                                                    <thead>
+                                                        <tr class="border-bottom">
+                                                            <th class="text-start">ITEM</th>
+                                                            <th class="text-center">QTY</th>
+                                                            <th class="text-end">UNIT</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach($check->items as $item)
+                                                        <tr>
+                                                            <td class="text-start">{{ $item->inventoryItem->name ?? 'Unknown Item' }}</td>
+                                                            <td class="text-center">{{ number_format($item->current_stock, 0) }}</td>
+                                                            <td class="text-end">{{ $item->inventoryItem->unit ?? 'units' }}</td>
+                                                        </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                    <tfoot>
+                                                        <tr class="border-top">
+                                                            <th class="text-start">TOTAL ITEMS:</th>
+                                                            <th class="text-center">{{ $check->items->count() }}</th>
+                                                            <th class="text-end">items</th>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
+
+                                            <!-- Notes -->
+                                            @if($check->notes)
+                                            <div class="mb-3">
+                                                <small class="text-muted">NOTES:</small><br>
+                                                <div class="bg-light p-2 rounded small">
+                                                    {{ $check->notes }}
+                                                </div>
+                                            </div>
+                                            @endif
+
+                                            <!-- Cook's Reply -->
+                                            @if($check->approval_notes)
+                                            <div class="mb-3">
+                                                <small class="text-muted">COOK'S REPLY:</small><br>
+                                                <div class="bg-success bg-opacity-10 p-2 rounded small border-start border-success border-3">
+                                                    {{ $check->approval_notes }}
+                                                </div>
+                                            </div>
+                                            @endif
+
+                                            <!-- Status -->
+                                            <div class="text-center mb-3">
+                                                <span class="badge bg-success px-3 py-2">
+                                                    <i class="bi bi-check-circle"></i> APPROVED
+                                                </span>
+                                                <br><small class="text-muted">{{ $check->approved_at->format('M d, Y h:i A') }}</small>
+                                            </div>
+
+                                            <!-- Action Button -->
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="confirmDelete({{ $check->id }}, '{{ $check->created_at->format('M d, Y') }}')">
+                                                        <i class="bi bi-trash"></i> Delete Report
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Receipt Footer -->
+                                        <div class="card-footer bg-light text-center py-2">
+                                            <small class="text-muted">
+                                                Kitchen Inventory System
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
 
                         <!-- Pagination -->
                         @if($allChecks->hasPages())
@@ -236,7 +389,7 @@
                 }
             });
         }
-        
+
         addButton.addEventListener('click', function() {
             const newItem = document.createElement('div');
             newItem.className = 'row inventory-item mb-3';
@@ -267,12 +420,6 @@
             `;
             container.appendChild(newItem);
             itemCount++;
-            
-            // Add event listener to the remove button
-            const removeButton = newItem.querySelector('.remove-item');
-            removeButton.addEventListener('click', function() {
-                container.removeChild(newItem);
-            });
         });
 
         // Delete confirmation and AJAX functions
@@ -282,18 +429,12 @@
             }
         };
 
-        window.confirmDeleteAll = function() {
-            if (confirm('Are you sure you want to delete ALL your inventory reports?\n\nThis will permanently remove all your submitted reports and cannot be undone.')) {
-                deleteAllReports();
-            }
-        };
-
         function deleteReport(reportId) {
             // Show loading state
-            const row = document.getElementById(`report-row-${reportId}`);
-            if (row) {
-                row.style.opacity = '0.5';
-                row.style.pointerEvents = 'none';
+            const card = document.getElementById(`report-card-${reportId}`);
+            if (card) {
+                card.style.opacity = '0.5';
+                card.style.pointerEvents = 'none';
             }
 
             fetch(`/kitchen/inventory/${reportId}`, {
@@ -307,18 +448,18 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Remove the row with animation
-                    if (row) {
-                        row.style.transition = 'all 0.3s ease';
-                        row.style.transform = 'translateX(-100%)';
-                        row.style.opacity = '0';
+                    // Remove the card with animation
+                    if (card) {
+                        card.style.transition = 'all 0.3s ease';
+                        card.style.transform = 'scale(0.8)';
+                        card.style.opacity = '0';
 
                         setTimeout(() => {
-                            row.remove();
+                            card.remove();
 
-                            // Check if table is empty and reload page if needed
-                            const tbody = document.querySelector('tbody');
-                            if (tbody && tbody.children.length === 0) {
+                            // Check if no more cards and reload page if needed
+                            const remainingCards = document.querySelectorAll('[id^="report-card-"]');
+                            if (remainingCards.length === 0) {
                                 location.reload();
                             }
                         }, 300);
@@ -327,68 +468,26 @@
                     // Show success message
                     showAlert('success', data.message);
                 } else {
-                    // Restore row state
-                    if (row) {
-                        row.style.opacity = '1';
-                        row.style.pointerEvents = 'auto';
+                    // Restore card state
+                    if (card) {
+                        card.style.opacity = '1';
+                        card.style.pointerEvents = 'auto';
                     }
                     showAlert('danger', data.message || 'Failed to delete report');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                // Restore row state
-                if (row) {
-                    row.style.opacity = '1';
-                    row.style.pointerEvents = 'auto';
+                // Restore card state
+                if (card) {
+                    card.style.opacity = '1';
+                    card.style.pointerEvents = 'auto';
                 }
                 showAlert('danger', 'An error occurred while deleting the report');
             });
         }
 
-        function deleteAllReports() {
-            // Show loading state
-            const deleteAllBtn = document.querySelector('button[onclick="confirmDeleteAll()"]');
-            if (deleteAllBtn) {
-                deleteAllBtn.disabled = true;
-                deleteAllBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Deleting...';
-            }
 
-            fetch('/kitchen/inventory/delete-all/reports', {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showAlert('success', data.message);
-                    // Reload page after a short delay
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1500);
-                } else {
-                    showAlert('danger', data.message || 'Failed to delete reports');
-                    // Restore button state
-                    if (deleteAllBtn) {
-                        deleteAllBtn.disabled = false;
-                        deleteAllBtn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete All Reports';
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showAlert('danger', 'An error occurred while deleting reports');
-                // Restore button state
-                if (deleteAllBtn) {
-                    deleteAllBtn.disabled = false;
-                    deleteAllBtn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete All Reports';
-                }
-            });
-        }
 
         function showAlert(type, message) {
             // Create alert element
@@ -461,6 +560,49 @@
     background: #22bbea !important;
     color: #fff !important;
     border-color: #22bbea !important;
+}
+
+.receipt-card {
+    border: 2px solid #dee2e6 !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+    background: #fff !important;
+}
+.receipt-card .card-header {
+    background: linear-gradient(135deg, #22bbea, #1a9bd1) !important;
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+    color: #fff !important;
+}
+.receipt-card .card-body {
+    background: #fff !important;
+    color: #333 !important;
+}
+.receipt-card .text-muted {
+    color: #666 !important;
+}
+.receipt-card strong {
+    color: #000 !important;
+    font-weight: 600 !important;
+}
+.table-borderless td, .table-borderless th {
+    border: none !important;
+    padding: 0.25rem 0.5rem !important;
+    color: #333 !important;
+}
+.table-borderless .border-bottom {
+    border-bottom: 1px solid #dee2e6 !important;
+}
+.table-borderless .border-top {
+    border-top: 1px solid #dee2e6 !important;
+}
+.receipt-card .bg-light {
+    background-color: #f8f9fa !important;
+    color: #333 !important;
+}
+.receipt-card .bg-success {
+    background-color: rgba(25, 135, 84, 0.1) !important;
+    color: #333 !important;
+    border-left: 3px solid #198754 !important;
 }
 .rounded-pill {
     border-radius: 50rem !important;

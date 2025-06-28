@@ -86,117 +86,157 @@
                     </div>
                 </div>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Date</th>
-                                <th>Meal Type</th>
-                                <th>Food Items</th>
-                                <th>Submitted By</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($assessments as $assessment)
-                            <tr class="assessment-item"
-                                data-assessment-created="{{ $assessment->completed_at ? $assessment->completed_at->toISOString() : $assessment->created_at->toISOString() }}"
-                                data-assessment-id="{{ $assessment->id }}"
-                                data-meal-type="{{ $assessment->meal_type }}">
-                                <td>
-                                    <strong>{{ $assessment->date->format('M d, Y') }}</strong>
-                                    <br>
-                                    <span class="text-muted">{{ $assessment->completed_at ? $assessment->completed_at->format('g:i A') : $assessment->created_at->format('g:i A') }}</span>
-                                </td>
-                                <td>
-                                    <span class="badge
-                                        @if($assessment->meal_type === 'breakfast') bg-warning
-                                        @elseif($assessment->meal_type === 'lunch') bg-primary
-                                        @else bg-info
-                                        @endif">
-                                        {{ ucfirst($assessment->meal_type) }}
-                                    </span>
-                                </td>
-                                <td>
-                                    @if($assessment->items && count($assessment->items) > 0)
-                                        <div class="d-flex flex-wrap gap-1">
-                                            @foreach(array_slice($assessment->items, 0, 3) as $item)
-                                                <span class="badge bg-light text-dark border">{{ $item['name'] ?? 'Unnamed' }}</span>
-                                            @endforeach
-                                            @if(count($assessment->items) > 3)
-                                                <span class="badge bg-secondary">+{{ count($assessment->items) - 3 }} more</span>
-                                            @endif
-                                        </div>
-                                    @else
-                                        <span class="text-muted">No items specified</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-person-circle me-2 text-muted"></i>
-                                        <div>
-                                            <strong>{{ $assessment->assessedBy->name ?? 'Kitchen Team' }}</strong>
+            <div class="card-body p-3">
+                @forelse($assessments as $assessment)
+                <div class="card mb-3 assessment-item border"
+                     data-assessment-created="{{ $assessment->completed_at ? $assessment->completed_at->toISOString() : $assessment->created_at->toISOString() }}"
+                     data-assessment-id="{{ $assessment->id }}"
+                     data-meal-type="{{ $assessment->meal_type }}">
+
+                    <!-- Report Header -->
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <div class="mb-1">
+                                    <small class="text-muted">Date Reported:</small><br>
+                                    <h6 class="mb-0">{{ $assessment->date->format('M d, Y') }}</h6>
+                                </div>
+                                <div>
+                                    <small class="text-muted">Time Reported:</small><br>
+                                    <small class="fw-medium">{{ $assessment->completed_at ? $assessment->completed_at->format('g:i A') : $assessment->created_at->format('g:i A') }}</small>
+                                </div>
+                            </div>
+                            <div class="me-3">
+                                <small class="text-muted">Meal Type:</small><br>
+                                <span class="badge
+                                    @if($assessment->meal_type === 'breakfast') bg-warning
+                                    @elseif($assessment->meal_type === 'lunch') bg-primary
+                                    @else bg-info
+                                    @endif">
+                                    {{ ucfirst($assessment->meal_type) }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="me-3 text-end">
+                                <small class="text-muted">Submitted by:</small><br>
+                                <strong>{{ $assessment->assessedBy->name ?? 'Kitchen Team' }}</strong>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-assessment-btn"
+                                data-id="{{ $assessment->id }}"
+                                data-date="{{ $assessment->date->format('Y-m-d') }}"
+                                data-meal-type="{{ $assessment->meal_type }}"
+                                data-submitted-by="{{ $assessment->assessedBy->name ?? 'Kitchen Team' }}">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Report Content -->
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Food Items Section -->
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-2">
+                                    <i class="bi bi-list-ul me-1"></i>Food Items
+                                </h6>
+                                @if($assessment->items && count($assessment->items) > 0)
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-borderless">
+                                            <thead>
+                                                <tr class="border-bottom">
+                                                    <th class="text-start">No.</th>
+                                                    <th class="text-center">Food Name</th>
+                                                    <th class="text-end">Unit</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($assessment->items as $index => $item)
+                                                <tr>
+                                                    <td class="text-start">{{ $index + 1 }}</td>
+                                                    <td class="text-center">{{ $item['name'] ?? 'Unnamed Item' }}</td>
+                                                    <td class="text-end">{{ $item['unit'] ?? 'units' }}</td>
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <p class="text-muted mb-0">No items specified</p>
+                                @endif
+                            </div>
+
+                            <!-- Notes and Image Section -->
+                            <div class="col-md-6">
+                                <!-- Notes -->
+                                @if($assessment->notes)
+                                <div class="mb-3">
+                                    <h6 class="text-muted mb-2">
+                                        <i class="bi bi-chat-text me-1"></i>Notes
+                                    </h6>
+                                    <div class="bg-light p-2 rounded small">
+                                        {{ $assessment->notes }}
+                                    </div>
+                                </div>
+                                @endif
+
+                                <!-- Image -->
+                                @if($assessment->image_path)
+                                <div>
+                                    <h6 class="text-muted mb-2">
+                                        <i class="bi bi-camera me-1"></i>Photo
+                                    </h6>
+                                    <div class="text-center">
+                                        <img src="{{ asset($assessment->image_path) }}"
+                                             alt="Report Photo"
+                                             class="img-fluid rounded shadow-sm"
+                                             style="max-height: 200px; cursor: pointer;"
+                                             onclick="openImageModal('{{ asset($assessment->image_path) }}')"
+                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                        <div class="text-muted" style="display: none;">
+                                            <i class="bi bi-image"></i> Image not available
                                         </div>
                                     </div>
-                                </td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-sm btn-outline-primary view-report-btn"
-                                            data-id="{{ $assessment->id }}"
-                                            data-date="{{ $assessment->date->format('Y-m-d') }}"
-                                            data-meal-type="{{ $assessment->meal_type }}"
-                                            data-notes="{{ $assessment->notes }}"
-                                            data-image-path="{{ $assessment->image_path }}"
-                                            data-items="{{ $assessment->items ? json_encode($assessment->items) : '[]' }}"
-                                            data-submitted-by="{{ $assessment->assessedBy->name ?? 'Kitchen Team' }}"
-                                            data-submitted-at="{{ $assessment->completed_at->format('M d, Y g:i A') }}">
-                                            <i class="bi bi-eye"></i> View
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger delete-assessment-btn"
-                                            data-id="{{ $assessment->id }}"
-                                            data-date="{{ $assessment->date->format('Y-m-d') }}"
-                                            data-meal-type="{{ $assessment->meal_type }}"
-                                            data-submitted-by="{{ $assessment->assessedBy->name ?? 'Kitchen Team' }}">
-                                            <i class="bi bi-trash"></i> Delete
-                                        </button>
+
+                                </div>
+                                @else
+                                <div>
+                                    <h6 class="text-muted mb-2">
+                                        <i class="bi bi-camera me-1"></i>Photo
+                                    </h6>
+                                    <div class="text-center text-muted">
+                                        <i class="bi bi-image"></i> No image attached
                                     </div>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="5" class="text-center py-5">
-                                    <div class="text-muted">
-                                        <div class="mb-4">
-                                            <i class="bi bi-hourglass-split fs-1 text-muted"></i>
-                                        </div>
-                                        <h4 class="text-muted">Waiting for Kitchen Reports</h4>
-                                        <p class="text-muted mb-4">
-                                            The kitchen team hasn't submitted any post-assessment reports yet.<br>
-                                            Reports will appear here once kitchen staff complete their assessments.
-                                        </p>
-                                        <div class="alert alert-info">
-                                            <i class="bi bi-info-circle me-2"></i>
-                                            <strong>How it works:</strong>
-                                            <ol class="text-start mt-2 mb-0">
-                                                <li>Kitchen staff prepares meals</li>
-                                                <li>Kitchen assesses leftover food after service</li>
-                                                <li>Kitchen submits post-assessment reports</li>
-                                                <li>Cook reviews reports to optimize portions</li>
-                                            </ol>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div id="bulk-actions" style="display: none; margin-bottom: 1rem;">
-                    <button id="bulk-delete-btn" class="btn btn-danger">
-                        <i class="bi bi-trash"></i> Delete Selected (<span id="selected-count">0</span>)
-                    </button>
+                @empty
+                <div class="text-center py-5">
+                    <div class="text-muted">
+                        <div class="mb-4">
+                            <i class="bi bi-hourglass-split fs-1 text-muted"></i>
+                        </div>
+                        <h4 class="text-muted">Waiting for Kitchen Reports</h4>
+                        <p class="text-muted mb-4">
+                            The kitchen team hasn't submitted any post-assessment reports yet.<br>
+                            Reports will appear here once kitchen staff complete their assessments.
+                        </p>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>How it works:</strong>
+                            <ol class="text-start mt-2 mb-0">
+                                <li>Kitchen staff prepares meals</li>
+                                <li>Kitchen assesses leftover food after service</li>
+                                <li>Kitchen submits post-assessment reports</li>
+                                <li>Cook reviews reports to optimize portions</li>
+                            </ol>
+                        </div>
+                    </div>
                 </div>
+                @endforelse
             </div>
         </div>
     </div>
@@ -221,90 +261,7 @@
     @endif
 </div>
 
-<!-- View Report Modal (For Cook) -->
-                <div class="modal fade" id="viewReportModal" tabindex="-1" aria-labelledby="viewReportModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg" style="margin-top: 100px;">
 
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="viewReportModalLabel">
-                    <i class="bi bi-clipboard-data me-2"></i>
-                    Kitchen Leftover Report Details
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            
-          
-            <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Date</label>
-                            <p id="view_report_date" class="form-control-static"></p>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Meal Type</label>
-                            <p id="view_report_meal_type" class="form-control-static"></p>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Submitted By</label>
-                            <p id="view_report_submitted_by" class="form-control-static"></p>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Submitted At</label>
-                            <p id="view_report_submitted_at" class="form-control-static"></p>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Kitchen Notes</label>
-                            <div id="view_report_notes" class="border rounded p-3 bg-light" style="min-height: 150px;"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Food Items Section -->
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">
-                                <i class="bi bi-list-ul me-2"></i>Food Items Reported
-                            </label>
-                            <div id="view_report_items" class="border rounded p-3 bg-light">
-                                <!-- Items will be populated by JavaScript -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Image Section -->
-                <div class="row mt-4" id="report_image_section">
-                    <div class="col-12">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">
-                                <i class="bi bi-camera me-2"></i>Attached Photo
-                            </label>
-                            <div class="border rounded p-3 text-center bg-light">
-                                <img id="view_report_image" src="" alt="Leftover Report Photo"
-                                     class="img-fluid rounded shadow" style="max-width: 100%; max-height: 400px; cursor: pointer;"
-                                     onclick="openImageModal(this.src)">
-                                <div class="mt-2">
-                                    <small class="text-muted">Click image to view full size</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-1"></i> Close
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Full Size Image Modal -->
 <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
@@ -433,16 +390,7 @@
         color: #555;
     }
 
-    /* Image display improvements */
-    #view_report_image {
-        border: 2px solid #dee2e6;
-        transition: transform 0.2s ease;
-    }
 
-    #view_report_image:hover {
-        transform: scale(1.02);
-        border-color: var(--primary-color, #ff9933);
-    }
 
     .new-badge {
         animation: pulse 2s infinite;
@@ -501,17 +449,17 @@
     }
 
     /* Ensure all modals are clickable */
-    #viewReportModal, #imageModal, #deleteConfirmModal, #bulkDeleteConfirmModal {
+    #imageModal, #deleteConfirmModal, #bulkDeleteConfirmModal {
         z-index: 999999 !important;
         pointer-events: auto !important;
     }
 
-    #viewReportModal .modal-dialog, #imageModal .modal-dialog,
+    #imageModal .modal-dialog,
     #deleteConfirmModal .modal-dialog, #bulkDeleteConfirmModal .modal-dialog {
         pointer-events: auto !important;
     }
 
-    #viewReportModal .modal-content, #imageModal .modal-content,
+    #imageModal .modal-content,
     #deleteConfirmModal .modal-content, #bulkDeleteConfirmModal .modal-content {
         pointer-events: auto !important;
     }
@@ -640,65 +588,21 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // View report modal (for cook)
-    document.querySelectorAll('.view-report-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const date = this.dataset.date;
-            const mealType = this.dataset.mealType;
-            const notes = this.dataset.notes || 'No notes provided';
-            const imagePath = this.dataset.imagePath;
-            const items = this.dataset.items ? JSON.parse(this.dataset.items) : [];
-            const submittedBy = this.dataset.submittedBy;
-            const submittedAt = this.dataset.submittedAt;
+document.addEventListener('DOMContentLoaded', function() {
+    // Real-time date and time display for header
+    function updateDateTimeBlock() {
+        const now = new Date();
+        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+        const dateEl = document.getElementById('currentDate');
+        const timeEl = document.getElementById('currentTime');
+        if(dateEl) dateEl.textContent = now.toLocaleDateString('en-US', dateOptions);
+        if(timeEl) timeEl.textContent = now.toLocaleTimeString('en-US', timeOptions);
+    }
+    updateDateTimeBlock();
+    setInterval(updateDateTimeBlock, 1000);
+});
 
-            // Populate modal fields
-            document.getElementById('view_report_date').textContent = new Date(date).toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            document.getElementById('view_report_meal_type').textContent = mealType.charAt(0).toUpperCase() + mealType.slice(1);
-            document.getElementById('view_report_submitted_by').textContent = submittedBy;
-            document.getElementById('view_report_submitted_at').textContent = submittedAt;
-            document.getElementById('view_report_notes').textContent = notes;
-
-            // Populate food items
-            const itemsContainer = document.getElementById('view_report_items');
-            if (items && items.length > 0) {
-                let itemsHtml = '<div class="row">';
-                items.forEach((item, index) => {
-                    itemsHtml += `
-                        <div class="col-md-6 mb-2">
-                            <div class="d-flex align-items-center p-2 bg-white rounded border">
-                                <i class="bi bi-circle-fill text-primary me-2" style="font-size: 8px;"></i>
-                                <span class="fw-medium">${item.name || 'Unnamed Item'}</span>
-                            </div>
-                        </div>
-                    `;
-                });
-                itemsHtml += '</div>';
-                itemsContainer.innerHTML = itemsHtml;
-            } else {
-                itemsContainer.innerHTML = '<p class="text-muted mb-0"><i class="bi bi-info-circle me-2"></i>No food items specified in this report.</p>';
-            }
-
-            // Handle image display
-            const imageSection = document.getElementById('report_image_section');
-            const reportImage = document.getElementById('view_report_image');
-            
-            if (imagePath && imagePath !== 'null' && imagePath !== '' && imagePath !== 'undefined') {
-                const imageSrc = imagePath.startsWith('http') ? imagePath :
-                               imagePath.startsWith('/') ? imagePath : '/' + imagePath;
-                reportImage.src = imageSrc;
-                imageSection.style.display = 'block';
-            } else {
-                imageSection.style.display = 'none';
-            }
-
-            showModalSimple('viewReportModal');
-        });
-    });
 
     // Function to open full-size image modal
     function openImageModal(imageSrc) {

@@ -63,7 +63,7 @@ class InventoryController extends Controller
             'recent_reports' => InventoryCheck::where('created_at', '>=', now()->subDays(7))->count(),
         ];
 
-        return view('cook.inventory.index', compact('recentChecks', 'stats'));
+        return view('cook.stock-management.index', compact('recentChecks', 'stats'));
     }
 
     /**
@@ -106,7 +106,7 @@ class InventoryController extends Controller
         // Mark notification as read if exists
         try {
             if (class_exists('\App\Models\Notification')) {
-                $notification = \App\Models\Notification::where('user_id', Auth::id())
+                $notification = \App\Models\Notification::where('user_id', Auth::user()->user_id)
                     ->where('type', 'inventory_update')
                     ->whereJsonContains('data', json_encode(['inventory_check_id' => (int)$id]))
                     ->whereNull('read_at')
@@ -137,22 +137,44 @@ class InventoryController extends Controller
         ]);
 
         // Mark report as approved
-        $report->update([
-            'approved_at' => now(),
-            'approved_by' => Auth::id(),
-            'approval_notes' => $request->approval_notes
-        ]);
+        // Check if this is just a reply (no approval) or approval with notes
+        if ($request->has('reply_only')) {
+            // Just update the notes without approving
+            $report->update([
+                'approval_notes' => $request->approval_notes
+            ]);
 
-        // Send notification to kitchen staff about approval
+            $message = 'Reply sent to kitchen team successfully!';
+        } else {
+            // Approve and add notes
+            $report->update([
+                'approved_at' => now(),
+                'approved_by' => Auth::user()->user_id,
+                'approval_notes' => $request->approval_notes
+            ]);
+
+            $message = 'Inventory report approved successfully!';
+        }
+
+        // Send notification to kitchen staff
         $notificationService = new NotificationService();
-        $notificationService->inventoryReportApproved([
-            'id' => $report->id,
-            'submitted_by' => $report->user_id,
-            'approved_by' => Auth::user()->name,
-            'approval_notes' => $request->approval_notes
-        ]);
+        if ($request->has('reply_only')) {
+            $notificationService->inventoryReportReply([
+                'id' => $report->id,
+                'submitted_by' => $report->user_id,
+                'replied_by' => Auth::user()->name,
+                'approval_notes' => $request->approval_notes
+            ]);
+        } else {
+            $notificationService->inventoryReportApproved([
+                'id' => $report->id,
+                'submitted_by' => $report->user_id,
+                'approved_by' => Auth::user()->name,
+                'approval_notes' => $request->approval_notes
+            ]);
+        }
 
-        return redirect()->back()->with('success', 'Inventory report approved successfully!');
+        return redirect()->back()->with('success', $message);
     }
 
     /**
@@ -178,14 +200,14 @@ class InventoryController extends Controller
                 'unit' => 'units',
                 'category' => 'general',
                 'reorder_point' => 10,
-                'last_updated_by' => Auth::id(),
+                'last_updated_by' => Auth::user()->user_id,
                 'status' => 'available'
             ]
         );
 
         // Update quantity
         $inventoryItem->quantity += $request->quantity_restocked;
-        $inventoryItem->last_updated_by = Auth::id();
+        $inventoryItem->last_updated_by = Auth::user()->user_id;
         $inventoryItem->save();
 
         return redirect()->back()->with('success', 'Restock recorded successfully!');
@@ -241,7 +263,7 @@ class InventoryController extends Controller
         $inventory = Inventory::findOrFail($validated['inventory_id']);
         $previousQuantity = $inventory->quantity;
         $inventory->quantity += $validated['quantity'];
-        $inventory->last_updated_by = Auth::id();
+        $inventory->last_updated_by = Auth::user()->user_id;
         $inventory->save();
 
         // Create delivery record if table exists

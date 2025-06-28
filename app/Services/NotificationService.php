@@ -140,11 +140,54 @@ class NotificationService
 
     public function inventoryReportApproved($reportData)
     {
+        $message = 'Your inventory report has been approved by the cook team.';
+        if (!empty($reportData['approval_notes'])) {
+            $message .= ' Cook\'s message: "' . $reportData['approval_notes'] . '"';
+        }
+
         $this->sendToUsers([$reportData['submitted_by']],
             'Inventory Report Approved',
-            'Your inventory report has been approved by the cook team.',
+            $message,
             'inventory_approved',
             ['action_url' => '/kitchen/inventory', 'report_data' => $reportData, 'feature' => 'kitchen.inventory']
+        );
+    }
+
+    public function inventoryReportReply($reportData)
+    {
+        $message = 'Cook team has replied to your inventory report: "' . $reportData['approval_notes'] . '"';
+
+        $this->sendToUsers([$reportData['submitted_by']],
+            'Cook Reply to Inventory Report',
+            $message,
+            'inventory_reply',
+            ['action_url' => '/kitchen/inventory', 'report_data' => $reportData, 'feature' => 'kitchen.inventory']
+        );
+    }
+
+    /**
+     * Notify cook about delivery receipt submission
+     */
+    public function deliveryReceiptSubmitted(array $data)
+    {
+        $this->sendToRole('cook',
+            'New Delivery Receipt',
+            "Kitchen has submitted delivery receipt {$data['receipt_number']} from {$data['supplier']} with {$data['total_items']} items (₱{$data['total_value']}).",
+            'delivery_receipt',
+            ['action_url' => '/cook/stock-management/receipts/' . $data['receipt_id'], 'receipt_data' => $data, 'feature' => 'cook.stock-management']
+        );
+    }
+
+    /**
+     * Notify kitchen about delivery receipt approval
+     */
+    public function deliveryReceiptApproved(array $data)
+    {
+        $this->sendToUsers([$data['received_by']],
+            'Delivery Receipt Approved',
+            "Your delivery receipt {$data['receipt_number']} has been approved by the cook team.",
+            'delivery_approved',
+            ['action_url' => '/kitchen/inventory', 'receipt_data' => $data, 'feature' => 'kitchen.inventory']
         );
     }
 

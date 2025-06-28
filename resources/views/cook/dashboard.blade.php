@@ -145,7 +145,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="2" class="text-center">No low stock items</td>
+                                    <td colspan="2" class="text-center">No recent reports yet
                                 </tr>
                                 @endforelse
                             </tbody>

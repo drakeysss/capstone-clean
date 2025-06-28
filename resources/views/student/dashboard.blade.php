@@ -105,7 +105,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="3" class="text-center">No feedback submitted yet</td></tr>
+                                <tr><td colspan="3" class="text-center">No recent feedback </td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -143,7 +143,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="3" class="text-center">No recent pre-orders</td></tr>
+                                <tr><td colspan="3" class="text-center">No recent polls yet</td></tr>
                             @endforelse
                         </tbody>
                     </table>

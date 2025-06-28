@@ -144,7 +144,7 @@ Route::middleware(['auth', 'role:cook'])->prefix('cook')->name('cook.')->group(f
     Route::put('/announcements/{id}', [AnnouncementController::class, 'update'])->name('announcements.update');
 
     // Stock Management (Cook reviews kitchen reports and approves restocking)
-    Route::get('/stock-management', [InventoryController::class, 'index'])->name('inventory');
+    Route::get('/stock-management', [InventoryController::class, 'index'])->name('stock-management');
     Route::get('/stock-management/reports', [InventoryController::class, 'reports'])->name('inventory.reports');
     Route::delete('/stock-management/clear-all', [InventoryController::class, 'clearAllReports'])->name('inventory.clear-all-reports');
     Route::get('/stock-management/reports/{id}', [InventoryController::class, 'showReport'])->name('inventory.show-report');

@@ -33,10 +33,14 @@ class CookDashboardController extends BaseDashboardController
         // Get inventory statistics
         $lowStockItems = Inventory::where('quantity', '<=', \DB::raw('reorder_point'))->count();
         $totalItems = Inventory::count();
-        $lowStockItemsList = Inventory::where('quantity', '<=', \DB::raw('reorder_point'))
-            ->orderBy('quantity')
-            ->take(3)
-            ->get();
+
+        // Get low stock items list - with "show once" logic
+        $lowStockItemsList = DashboardViewService::processDashboardData(
+            Inventory::where('quantity', '<=', \DB::raw('reorder_point'))
+                ->orderBy('quantity')
+                ->take(3),
+            'low_stock_items'
+        );
 
         // Get recent pre-orders (replacing old orders) - with "show once" logic
         $recentOrders = DashboardViewService::processDashboardData(
