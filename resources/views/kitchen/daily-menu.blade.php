@@ -14,10 +14,7 @@
                         <p class="mb-0 opacity-75">View today's menu and upcoming meals for the week</p>
                     </div>
                     <div class="text-end">
-                        <div id="currentDateTimeBlock" class="date-time-block">
-                            <div id="currentDate" class="date-line">Date</div>
-                            <div id="currentTime" class="time-line">Time</div>
-                        </div>
+                        <span id="currentDateTime" class="fs-6 text-white"></span>
                     </div>
                 </div>
             </div>
@@ -384,13 +381,9 @@
         const timeString = now.toLocaleTimeString('en-US', timeOptions);
 
         // Update main date/time display
-        const currentDateElement = document.getElementById('currentDate');
-        const currentTimeElement = document.getElementById('currentTime');
-        if (currentDateElement) {
-            currentDateElement.textContent = dateString;
-        }
-        if (currentTimeElement) {
-            currentTimeElement.textContent = timeString;
+        const currentDateTimeElement = document.getElementById('currentDateTime');
+        if (currentDateTimeElement) {
+            currentDateTimeElement.textContent = `${dateString} ${timeString}`;
         }
 
         // Update today's day badge in real-time

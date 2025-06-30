@@ -14,10 +14,7 @@
                         <p class="mb-0 opacity-75">Report leftover food to Cook</p>
                     </div>
                     <div class="text-end">
-                        <div id="currentDateTimeBlock" class="date-time-block">
-                            <div id="currentDate" class="date-line">Date</div>
-                            <div id="currentTime" class="time-line">Time</div>
-                        </div>
+                        <span id="currentDateTime" class="fs-6 text-white"></span>
                     </div>
                 </div>
             </div>
@@ -122,17 +119,19 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Real-time date and time display
-    function updateDateTimeBlock() {
+    function updateDateTime() {
         const now = new Date();
         const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-        const dateEl = document.getElementById('currentDate');
-        const timeEl = document.getElementById('currentTime');
-        if(dateEl) dateEl.textContent = now.toLocaleDateString('en-US', dateOptions);
-        if(timeEl) timeEl.textContent = now.toLocaleTimeString('en-US', timeOptions);
+        const dateString = now.toLocaleDateString('en-US', dateOptions);
+        const timeString = now.toLocaleTimeString('en-US', timeOptions);
+        const currentDateTimeElement = document.getElementById('currentDateTime');
+        if (currentDateTimeElement) {
+            currentDateTimeElement.textContent = `${dateString} ${timeString}`;
+        }
     }
-    updateDateTimeBlock();
-    setInterval(updateDateTimeBlock, 1000);
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
 
     // Image upload preview
     const imageInput = document.getElementById('reportImage');

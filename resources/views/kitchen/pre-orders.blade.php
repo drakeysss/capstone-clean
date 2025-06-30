@@ -25,10 +25,7 @@
                         </small>
                     </div>
                     <div class="text-end">
-                        <div id="currentDateTimeBlock" class="date-time-block">
-                            <div id="currentDate" class="date-line">Date</div>
-                            <div id="currentTime" class="time-line">Time</div>
-                        </div>
+                        <span id="currentDateTime" class="fs-6 text-white"></span>
                     </div>
                 </div>
             </div>
@@ -449,32 +446,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Utility function to clean up any stuck modal backdrops
     cleanupStuckBackdrops();
 
-    function updateDateTimeHeader() {
+    function updateDateTime() {
         const now = new Date();
         const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
         const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const timeString = now.toLocaleTimeString('en-US', timeOptions);
         const dateString = now.toLocaleDateString('en-US', dateOptions);
-        const dateEl = document.getElementById('currentDate');
-        const timeEl = document.getElementById('currentTime');
-        if (dateEl) {
-            dateEl.textContent = dateString;
+        const currentDateTimeElement = document.getElementById('currentDateTime');
+        if (currentDateTimeElement) {
+            currentDateTimeElement.textContent = `${dateString} ${timeString}`;
         }
-        if (timeEl) timeEl.textContent = timeString;
-        console.log('DateTime script running:', dateString, timeString);
     }
-    updateDateTimeHeader();
-    setInterval(updateDateTimeHeader, 1000);
-
-    function updateDateTimeBlock() {
-        const now = new Date();
-        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-        document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
-        document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
-    }
-    updateDateTimeBlock();
-    setInterval(updateDateTimeBlock, 1000);
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
 });
 
 function updateDateTime() {
@@ -2434,32 +2418,7 @@ function cleanupStuckBackdrops() {
 
 // Also call on DOMContentLoaded as a safety net
 
-function updateDateTimeHeader() {
-    const now = new Date();
-    const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const timeString = now.toLocaleTimeString('en-US', timeOptions);
-    const dateString = now.toLocaleDateString('en-US', dateOptions);
-    const dateEl = document.getElementById('currentDate');
-    const timeEl = document.getElementById('currentTime');
-    if (dateEl) {
-        dateEl.textContent = dateString;
-    }
-    if (timeEl) timeEl.textContent = timeString;
-}
-updateDateTimeHeader();
-setInterval(updateDateTimeHeader, 1000);
 
-document.addEventListener('DOMContentLoaded', function() {
-    function updateDateTime() {
-        const now = new Date();
-        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-        document.getElementById('currentDateTime').textContent = now.toLocaleDateString('en-US', dateOptions) + ' ' + now.toLocaleTimeString('en-US', timeOptions);
-    }
-    updateDateTime();
-    setInterval(updateDateTime, 1000);
-});
 </script>
 @endpush
 

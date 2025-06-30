@@ -3,7 +3,7 @@
 @section('content')
 <!-- Add CSRF token for AJAX requests -->
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<div class="container-fluid p-4">
+<div class="container-fluid p-1">
     <!-- Enhanced Header Section -->
     <div class="row mb-4">
         <div class="col-12">
@@ -16,10 +16,7 @@
                         <p class="mb-0 opacity-75">Manage weekly menus for students and kitchen staff</p>
                     </div>
                     <div class="text-end">
-                        <div id="currentDateTimeBlock" class="date-time-block">
-                            <div id="currentDate" class="date-line">Date</div>
-                            <div id="currentTime" class="time-line">Time</div>
-                        </div>
+                        <span id="currentDateTime" class="fs-6 text-white"></span>
                     </div>
                 </div>
             </div>
@@ -1506,13 +1503,9 @@
         const dateString = now.toLocaleDateString('en-US', dateOptions);
         const timeString = now.toLocaleTimeString('en-US', timeOptions);
 
-        const currentDateElement = document.getElementById('currentDate');
-        const currentTimeElement = document.getElementById('currentTime');
-        if (currentDateElement) {
-            currentDateElement.textContent = dateString;
-        }
-        if (currentTimeElement) {
-            currentTimeElement.textContent = timeString;
+        const currentDateTimeElement = document.getElementById('currentDateTime');
+        if (currentDateTimeElement) {
+            currentDateTimeElement.textContent = `${dateString} ${timeString}`;
         }
 
         // Update current week number using new calculation

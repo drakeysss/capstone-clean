@@ -14,9 +14,8 @@
                             <p class="mb-0" style="color: #e0f7fa;">Review kitchen delivery reports</p>
                         </div>
                     </div>
-                    <div id="currentDateTimeBlock" class="date-time-block">
-                        <div id="currentDate" class="date-line">Date</div>
-                        <div id="currentTime" class="time-line">Time</div>
+                    <div class="text-end">
+                        <span id="currentDateTime" class="fs-6 text-white"></span>
                     </div>
                 </div>
             </div>
@@ -283,15 +282,19 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Update date/time
-    function updateDateTimeBlock() {
+    function updateDateTime() {
         const now = new Date();
         const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-        document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
-        document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
+        const dateString = now.toLocaleDateString('en-US', dateOptions);
+        const timeString = now.toLocaleTimeString('en-US', timeOptions);
+        const currentDateTimeElement = document.getElementById('currentDateTime');
+        if (currentDateTimeElement) {
+            currentDateTimeElement.textContent = `${dateString} ${timeString}`;
+        }
     }
-    updateDateTimeBlock();
-    setInterval(updateDateTimeBlock, 1000);
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
 
     // Delete confirmation
     window.confirmDelete = function(reportId) {
