@@ -14,7 +14,10 @@
                         <p class="mb-0 opacity-75">View today's menu and upcoming meals for the week</p>
                     </div>
                     <div class="text-end">
-                        <span id="currentDateTime" class="fs-6"></span>
+                        <div id="currentDateTimeBlock" class="date-time-block">
+                            <div id="currentDate" class="date-line">Date</div>
+                            <div id="currentTime" class="time-line">Time</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -347,6 +350,11 @@
             overflow-x: auto;
         }
     }
+
+    /* Date Time Block Styles */
+    .date-time-block { text-align: center; color: #fff; }
+    .date-line { font-size: 1.15rem; font-weight: 500; }
+    .time-line { font-size: 1rem; font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace; }
 </style>
 @endpush
 
@@ -376,9 +384,13 @@
         const timeString = now.toLocaleTimeString('en-US', timeOptions);
 
         // Update main date/time display
-        const currentDateTimeElement = document.getElementById('currentDateTime');
-        if (currentDateTimeElement) {
-            currentDateTimeElement.innerHTML = `${dateString}<br><small>${timeString}</small>`;
+        const currentDateElement = document.getElementById('currentDate');
+        const currentTimeElement = document.getElementById('currentTime');
+        if (currentDateElement) {
+            currentDateElement.textContent = dateString;
+        }
+        if (currentTimeElement) {
+            currentTimeElement.textContent = timeString;
         }
 
         // Update today's day badge in real-time
@@ -990,16 +1002,6 @@
         }
     });
 
-    function updateDateTimeHeader() {
-        const now = new Date();
-        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const timeString = now.toLocaleTimeString('en-US', timeOptions);
-        const dateString = now.toLocaleDateString('en-US', dateOptions);
-        const el = document.getElementById('currentDateTime');
-        if (el) el.textContent = `${dateString} ${timeString}`;
-    }
-    updateDateTimeHeader();
-    setInterval(updateDateTimeHeader, 1000);
+
 </script>
 @endpush

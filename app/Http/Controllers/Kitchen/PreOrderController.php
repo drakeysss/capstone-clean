@@ -48,7 +48,8 @@ class PreOrderController extends Controller
                 'mealType' => 'lunch',
                 'upcomingDates' => collect(),
                 'currentDay' => $currentDay,
-                'currentWeekCycle' => $currentWeekCycle
+                'currentWeekCycle' => $currentWeekCycle,
+                'weekOfMonth' => $weekOfMonth
             ]);
         }
 
@@ -83,7 +84,8 @@ class PreOrderController extends Controller
                 'mealType' => $mealType,
                 'upcomingDates' => collect(),
                 'currentDay' => $currentDay,
-                'currentWeekCycle' => $currentWeekCycle
+                'currentWeekCycle' => $currentWeekCycle,
+                'weekOfMonth' => $weekOfMonth
             ]);
         }
 
@@ -133,6 +135,7 @@ class PreOrderController extends Controller
             'date' => now()->format('Y-m-d'),
             'currentDay' => $currentDay,
             'currentWeekCycle' => $currentWeekCycle,
+            'weekOfMonth' => $weekOfMonth,
             'cycleBasedSystem' => true
         ]);
     }

@@ -143,7 +143,7 @@
              <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('kitchen.inventory') ? 'active' : '' }}" href="{{ route('kitchen.inventory') }}" data-feature="kitchen.inventory">
                     <i class="bi bi-box-seam icon"></i>
-                    <span class="small">Inventory<span>
+                    <span class="small">Delivery<span>
                 </a>
             </li>
 

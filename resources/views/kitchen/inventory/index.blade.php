@@ -9,9 +9,9 @@
                 <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #22bbea, #1a9bd1);">
                     <div>
                         <h3 class="mb-1 fw-bold">
-                            <i class="bi bi-clipboard-check me-2"></i>Inventory
+                            <i class="bi bi-clipboard-check me-2"></i>Delivery
                         </h3>
-                        <p class="mb-0 opacity-75">Count inventory items and report to Cook</p>
+                        <p class="mb-0 opacity-75">Count what items has been delivered and report to Cook</p>
                     </div>
                     <div class="text-end">
                         <div id="currentDateTimeBlock" class="date-time-block">

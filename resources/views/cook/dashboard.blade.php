@@ -10,9 +10,11 @@
                     <h2>Welcome, {{ Auth::user()->name }}!</h2>
                     <p class="text-muted" style="color: white;">Here's an overview of your kitchen operations</p>
                 </div>
-                <div class="current-time">
-                    <i class="bi bi-clock"></i>
-                    <span id="currentDateTime"></span>
+                <div class="text-end">
+                    <div id="currentDateTimeBlock" class="date-time-block">
+                        <div id="currentDate" class="date-line">Date</div>
+                        <div id="currentTime" class="time-line">Time</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -503,6 +505,11 @@
             gap: 0.5rem;
         }
     }
+
+    /* Date Time Block Styles */
+    .date-time-block { text-align: center; color: #fff; }
+    .date-line { font-size: 1.15rem; font-weight: 500; }
+    .time-line { font-size: 1rem; font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace; }
 </style>
 @endpush
 
@@ -524,9 +531,31 @@
 
     // UNIFIED: Real-time date and time display
     function updateDateTime() {
-        const weekInfo = getCurrentWeekCycle();
+        const now = new Date();
+        const dateOptions = {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        };
+        const timeOptions = {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        };
 
-        document.getElementById('currentDateTime').innerHTML = `${weekInfo.displayDate}<br><small>${weekInfo.timeString}</small>`;
+        const dateString = now.toLocaleDateString('en-US', dateOptions);
+        const timeString = now.toLocaleTimeString('en-US', timeOptions);
+
+        const currentDateElement = document.getElementById('currentDate');
+        const currentTimeElement = document.getElementById('currentTime');
+        if (currentDateElement) {
+            currentDateElement.textContent = dateString;
+        }
+        if (currentTimeElement) {
+            currentTimeElement.textContent = timeString;
+        }
 
         // Note: Menu update is handled separately to avoid constant API calls
     }

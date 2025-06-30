@@ -185,13 +185,13 @@
                                     <div class="mb-4">
                                         <i class="bi bi-chef-hat display-1 text-muted"></i>
                                     </div>
-                                    <h4 class="text-muted">No Menu for Today's Cycle</h4>
+                                    <h4 class="text-muted">No Menu for This Week's Cycle</h4>
                                     <p class="text-muted">
-                                        No meals have been created for <strong>{{ ucfirst($currentDay ?? 'today') }}</strong> in <strong>Week {{ $currentWeekCycle ?? 'current' }}</strong> yet.
+                                        No meals have been created for <strong>{{ ucfirst($currentDay ?? 'today') }}</strong> in <strong>Week {{ $weekOfMonth ?? 'current' }}</strong> yet.
                                     </p>
                                     <div class="alert alert-info mt-3">
                                         <i class="bi bi-info-circle me-2"></i>
-                                        <strong>Next Steps:</strong> The cook needs to create meals for today's menu cycle first. Once meals are created, you can create polls for students.
+                                        <strong>Next Steps:</strong> The cook needs to create meals for this week's menu cycle first. Once meals are created, you can create polls for students.
                                     </div>
                                     <div class="alert alert-warning mt-3">
                                         <i class="bi bi-lightbulb me-2"></i>
@@ -508,7 +508,7 @@ function updateDateTime() {
         if (typeof getCurrentWeekCycle === 'function') {
             const weekInfo = getCurrentWeekCycle();
             const dayName = weekInfo.displayDate.split(',')[0]; // Get just the day name
-            todayDayAndWeek.textContent = `Today: ${dayName} - Week ${weekInfo.weekCycle} Cycle`;
+            todayDayAndWeek.textContent = `Today: ${dayName} - Week ${weekInfo.weekOfMonth}`;
         } else {
             // Fallback if function not available - use capped week calculation
             const dayName = now.toLocaleDateString('en-US', { weekday: 'long' });
@@ -516,8 +516,7 @@ function updateDateTime() {
             const firstDayWeekday = firstDayOfMonth.getDay();
             const standardWeek = Math.ceil((now.getDate() + firstDayWeekday) / 7);
             const weekOfMonth = Math.min(standardWeek, 4); // Cap at week 4
-            const weekCycle = (weekOfMonth % 2 === 1) ? 1 : 2;
-            todayDayAndWeek.textContent = `Today: ${dayName} - Week ${weekCycle} Cycle`;
+            todayDayAndWeek.textContent = `Today: ${dayName} - Week ${weekOfMonth}`;
         }
     }
 }

@@ -11,7 +11,7 @@
                         <i class="bi bi-receipt fs-1 me-3"></i>
                         <div>
                             <h3 class="mb-1" style="color: #fff;">Stock Management</h3>
-                            <p class="mb-0" style="color: #e0f7fa;">Review kitchen inventory reports in receipt format</p>
+                            <p class="mb-0" style="color: #e0f7fa;">Review kitchen delivery reports</p>
                         </div>
                     </div>
                     <div id="currentDateTimeBlock" class="date-time-block">
@@ -31,7 +31,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-list-ul me-2"></i>Kitchen Inventory Reports (Receipt Style)
+                        <i class="bi bi-list-ul me-2"></i>Kitchen Delivery Reports 
                     </h5>
                     <div>
                         @if($recentChecks->count() > 0)
@@ -189,8 +189,8 @@
                             </div>
                             <h5 class="text-muted">No Inventory Reports</h5>
                             <p class="text-muted">
-                                No inventory reports have been submitted by the kitchen team yet.<br>
-                                Reports will appear here once kitchen staff submit inventory counts.
+                                No Delivery reports have been submitted by the kitchen team yet.<br>
+                                Reports will appear here once kitchen coor submit inventory counts.
                             </p>
                         </div>
                     @endif

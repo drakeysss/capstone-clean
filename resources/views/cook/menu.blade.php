@@ -16,7 +16,10 @@
                         <p class="mb-0 opacity-75">Manage weekly menus for students and kitchen staff</p>
                     </div>
                     <div class="text-end">
-                        <span id="currentDateTime" class="fs-6 opacity-75"></span>
+                        <div id="currentDateTimeBlock" class="date-time-block">
+                            <div id="currentDate" class="date-line">Date</div>
+                            <div id="currentTime" class="time-line">Time</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -500,6 +503,11 @@
         background-color: #218838;
         border-color: #1e7e34;
     }
+</style>
+    /* Date Time Block Styles */
+    .date-time-block { text-align: center; color: #fff; }
+    .date-line { font-size: 1.15rem; font-weight: 500; }
+    .time-line { font-size: 1rem; font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace; }
 </style>
 @endpush
 
@@ -1482,15 +1490,30 @@
     // Update current date and time display
     function updateDateTime() {
         const now = new Date();
-        const options = {
+        const dateOptions = {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            day: 'numeric'
         };
-        document.getElementById('currentDateTime').textContent = now.toLocaleDateString('en-US', options);
+        const timeOptions = {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        };
+
+        const dateString = now.toLocaleDateString('en-US', dateOptions);
+        const timeString = now.toLocaleTimeString('en-US', timeOptions);
+
+        const currentDateElement = document.getElementById('currentDate');
+        const currentTimeElement = document.getElementById('currentTime');
+        if (currentDateElement) {
+            currentDateElement.textContent = dateString;
+        }
+        if (currentTimeElement) {
+            currentTimeElement.textContent = timeString;
+        }
 
         // Update current week number using new calculation
         const weekInfo = getCurrentWeekCycle();
