@@ -8,10 +8,7 @@ use App\Http\Controllers\Cook\CookDashboardController;
 use App\Http\Controllers\Cook\IngredientController;
 use App\Http\Controllers\Cook\InventoryController;
 use App\Http\Controllers\Cook\MenuController;
-use App\Http\Controllers\Cook\OrderController;
-
 use App\Http\Controllers\Cook\PostAssessmentController;
-use App\Http\Controllers\Cook\PurchaseOrderController;
 use App\Http\Controllers\Cook\StudentFeedbackController as CookStudentFeedbackController;
 use App\Http\Controllers\Cook\FeedbackController as CookFeedbackController;
 use App\Http\Controllers\Cook\SupplierController;
@@ -353,6 +350,7 @@ Route::middleware(['auth'])->group(function () {
         })->name('debug.week-cycle');
     }
 });
+
 
 // Error logging endpoint for JavaScript errors (available to all authenticated users)
 Route::middleware(['auth'])->post('/api/log-error', function (Request $request) {

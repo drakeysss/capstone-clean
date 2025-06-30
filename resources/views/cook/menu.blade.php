@@ -1492,9 +1492,9 @@
         };
         document.getElementById('currentDateTime').textContent = now.toLocaleDateString('en-US', options);
 
-        // Update current week number
-        const weekOfMonth = Math.ceil(now.getDate() / 7);
-        document.getElementById('currentWeekNumber').textContent = weekOfMonth;
+        // Update current week number using new calculation
+        const weekInfo = getCurrentWeekCycle();
+        document.getElementById('currentWeekNumber').textContent = weekInfo.weekOfMonth;
     }
 
     // Print Menu Function
@@ -1520,7 +1520,7 @@
             <!DOCTYPE html>
             <html>
             <head>
-                <title>June 23-30,2025</title>
+                <title>Week ${weekText}</title>
                 <style>
                     body {
                         font-family: Arial, sans-serif;
@@ -1536,7 +1536,7 @@
                     .header h1 {
                         margin: 0;
                         color: #2c3e50;
-                        font-size: 32px;
+                        font-size: 24px;
                         font-weight: bold;
                     }
                     table {
@@ -1580,13 +1580,14 @@
                     @media print {
                         body { margin: 0; }
                         .header { page-break-after: avoid; }
+                        @page { margin: 0; }
+                        @page :first { margin-top: 0; }
+                        @page :left { margin-left: 0; }
+                        @page :right { margin-right: 0; }
                     }
                 </style>
             </head>
             <body>
-                <div class="header">
-                    <h1>${weekText}</h1>
-                </div>
                 ${table.outerHTML}
             </body>
             </html>

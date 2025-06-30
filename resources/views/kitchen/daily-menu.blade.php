@@ -137,7 +137,7 @@
                             <option value="2">Week 2 & 4</option>
                         </select>
                         <small class="text-info ms-2" id="currentWeekIndicator">
-                            <i class="bi bi-calendar-check"></i> Current: Week {{ $weekOfMonth ?? now()->weekOfMonth }}
+                            <i class="bi bi-calendar-check"></i> Current: Week {{ $weekOfMonth ?? 4 }}
                         </small>
                     </div>
                     @endif

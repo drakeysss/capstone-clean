@@ -613,10 +613,6 @@
                 @include('Component.kitchen-sidebar')
                 <!-- Header -->
                 @include('Component.kitchen-header')
-            @else
-                @include('Component.admin-sidebar')
-                <!-- Header -->
-                @include('Component.admin-header')
             @endif
 
             <!-- Enhanced Mobile Header -->

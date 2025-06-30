@@ -248,8 +248,9 @@ class BaseController extends Controller
                 return $weekInfo['week_cycle'];
             }
             
-            // Fallback calculation
-            return (now()->weekOfMonth % 2 === 1) ? 1 : 2;
+            // Fallback calculation with week 4 cap
+            $weekOfMonth = min(now()->weekOfMonth, 4);
+            return ($weekOfMonth % 2 === 1) ? 1 : 2;
             
         } catch (\Exception $e) {
             Log::error('Week Cycle Calculation Error', [

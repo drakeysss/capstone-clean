@@ -510,9 +510,12 @@ function updateDateTime() {
             const dayName = weekInfo.displayDate.split(',')[0]; // Get just the day name
             todayDayAndWeek.textContent = `Today: ${dayName} - Week ${weekInfo.weekCycle} Cycle`;
         } else {
-            // Fallback if function not available
+            // Fallback if function not available - use capped week calculation
             const dayName = now.toLocaleDateString('en-US', { weekday: 'long' });
-            const weekOfMonth = Math.ceil(now.getDate() / 7);
+            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const firstDayWeekday = firstDayOfMonth.getDay();
+            const standardWeek = Math.ceil((now.getDate() + firstDayWeekday) / 7);
+            const weekOfMonth = Math.min(standardWeek, 4); // Cap at week 4
             const weekCycle = (weekOfMonth % 2 === 1) ? 1 : 2;
             todayDayAndWeek.textContent = `Today: ${dayName} - Week ${weekCycle} Cycle`;
         }

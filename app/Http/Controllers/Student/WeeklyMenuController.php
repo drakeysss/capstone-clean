@@ -14,13 +14,10 @@ class WeeklyMenuController extends Controller
      */
     public function index()
     {
-        // FIXED: Use consistent week of month calculation
-        // Use Laravel's built-in weekOfMonth method for consistency
-        $weekOfMonth = Carbon::now()->weekOfMonth;
-
-        // For weeks 1 & 3, use week_cycle = 1
-        // For weeks 2 & 4, use week_cycle = 2
-        $weekCycle = ($weekOfMonth % 2 === 1) ? 1 : 2;
+        // FIXED: Use WeekCycleService for consistent calculation
+        $weekInfo = \App\Services\WeekCycleService::getWeekInfo();
+        $weekOfMonth = $weekInfo['week_of_month'];
+        $weekCycle = $weekInfo['week_cycle'];
         
         // Get menus for the current week cycle
         $weeklyMenus = $this->getMenusByWeekCycle($weekCycle);
