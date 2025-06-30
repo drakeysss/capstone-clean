@@ -14,13 +14,7 @@
                         <p class="mb-0 opacity-75">View this week's meal plan</p>
                     </div>
                     <div class="text-end">
-                        <div class="current-time" id="currentTime">
-                            <i class="bi bi-clock me-2"></i>
-                            <span id="timeDisplay">Loading...</span>
-                        </div>
-                        <div class="current-date" id="currentDate">
-                            <span id="dateDisplay">Loading...</span>
-                        </div>
+                        <span id="currentDateTime" class="fs-6 text-white">Loading...</span>
                     </div>
                 </div>
             </div>
@@ -218,13 +212,27 @@ function updateMenuTable(menuData) {
 
 // UNIFIED: Update current time and date display
 function updateTimeDisplay() {
-    const weekInfo = getCurrentWeekCycle();
+    const now = new Date();
+    const dateOptions = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    };
+    const timeOptions = {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    };
 
-    // Update time
-    document.getElementById('timeDisplay').textContent = weekInfo.timeString;
+    const dateString = now.toLocaleDateString('en-US', dateOptions);
+    const timeString = now.toLocaleTimeString('en-US', timeOptions);
 
-    // Update date
-    document.getElementById('dateDisplay').textContent = weekInfo.displayDate;
+    const currentDateTimeElement = document.getElementById('currentDateTime');
+    if (currentDateTimeElement) {
+        currentDateTimeElement.textContent = `${dateString} ${timeString}`;
+    }
 
     // Update current week info
     updateCurrentWeekInfo();
@@ -307,19 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
     opacity: 0.85;
 }
 
-/* Time Display Styles */
-.current-time {
-    font-size: 1rem;
-    font-weight: 500;
-    margin-bottom: 0.25rem;
-    color: white;
-}
 
-.current-date {
-    font-size: 0.8rem;
-    opacity: 0.85;
-    color: white;
-}
 
 /* Main Card Styles - Match Cook Menu */
 .main-card {
@@ -470,9 +466,7 @@ document.addEventListener('DOMContentLoaded', function() {
         font-size: 1.25rem;
     }
 
-    .current-time {
-        font-size: 0.875rem;
-    }
+
 
     .week-table thead th {
         padding: 0.5rem 0.25rem;
@@ -510,9 +504,7 @@ document.addEventListener('DOMContentLoaded', function() {
         font-size: 1.125rem;
     }
 
-    .current-time {
-        font-size: 0.75rem;
-    }
+
 
     .week-table thead th {
         padding: 0.375rem 0.125rem;

@@ -488,7 +488,7 @@ class PreOrderController extends Controller
         $validator = Validator::make($request->all(), [
             'meal_type' => 'required|string|in:breakfast,lunch,dinner',
             'poll_date' => 'required|string|in:today,tomorrow,custom',
-            'custom_poll_date' => 'nullable|required_if:poll_date,custom|date_format:Y-m-d',
+            'custom_poll_date' => 'nullable|required_if:poll_date,custom|date_format:Y-m-d|after_or_equal:today',
             'deadline_time' => 'required|string',
             'custom_deadline' => 'nullable|required_if:deadline_time,custom|date_format:H:i',
             'manual_meal_name' => 'required|string|max:255',
@@ -511,7 +511,15 @@ class PreOrderController extends Controller
                 $pollDate = Carbon::parse($request->custom_poll_date)->startOfDay();
             }
 
-            // 2. Determine the deadline date and time
+            // 2. Validate that poll date is not in the past
+            if ($pollDate->lt(now()->startOfDay())) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot create polls for past dates. Please select today or a future date.'
+                ], 422);
+            }
+
+            // 3. Determine the deadline date and time
             $deadlineTimeStr = $request->deadline_time;
             if ($deadlineTimeStr === 'custom') {
                 $deadlineTimeStr = $request->custom_deadline; // 'HH:mm'
@@ -524,7 +532,26 @@ class PreOrderController extends Controller
             $deadlineDate = clone $pollDate;
             $deadlineDateTime = $deadlineDate->setTime($hour, $minute);
 
-            // Check if a poll with the same meal type and date already exists
+            // 4. Validate meal time logic - prevent creating polls for meals that have already passed
+            $now = now();
+            $mealTimes = [
+                'breakfast' => ['start' => '07:00', 'end' => '08:30'],
+                'lunch' => ['start' => '11:30', 'end' => '13:00'],
+                'dinner' => ['start' => '17:30', 'end' => '19:00']
+            ];
+
+            if ($pollDate->isSameDay($now)) {
+                $mealEndTime = Carbon::parse($mealTimes[$request->meal_type]['end']);
+                if ($now->gt($mealEndTime)) {
+                    $mealDisplayName = ucfirst($request->meal_type);
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Cannot create poll for {$mealDisplayName} as the meal time has already passed. {$mealDisplayName} is served until {$mealTimes[$request->meal_type]['end']}."
+                    ], 422);
+                }
+            }
+
+            // 5. Check if a poll with the same meal type and date already exists
             $existingPoll = KitchenMenuPoll::where('meal_type', $request->meal_type)
                 ->whereDate('poll_date', $pollDate)
                 ->first();

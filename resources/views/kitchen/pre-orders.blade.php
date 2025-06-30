@@ -16,7 +16,7 @@
                 <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #22bbea, #1a9bd1);">
                     <div>
                         <h3 class="mb-1 fw-bold">
-                            <i class="bi bi-people me-2"></i>Student Menu Polling
+                            <i class="bi bi-people me-2"></i>Menu Polling
                         </h3>
                         <p class="mb-0 opacity-75">Send polls to students so they can pre-select their meal choices from today's menu</p>
                         <small style="color: rgba(255,255,255,0.8);" id="todayInfo">
@@ -222,16 +222,27 @@
                                 <div class="card-body">
                                    
                                     <form id="createPollForm">
-                                       
+                                        <!-- Poll Information Display -->
+                                        <div class="alert alert-info mb-3" id="pollInfoDisplay" style="display: none;">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-info-circle me-2"></i>
+                                                <div>
+                                                    <strong>Poll Details:</strong>
+                                                    <span id="pollInfoText">Select meal type and date to see details</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div class="row">
                                             <div class="col-md-3">
                                                 <label for="pollMealType" class="form-label">Meal Type</label>
                                                 <select class="form-select" id="pollMealType" name="meal_type" required>
                                                     <option value="">Select Meal Type</option>
-                                                    <option value="breakfast">Breakfast</option>
-                                                    <option value="lunch">Lunch</option>
-                                                    <option value="dinner">Dinner</option>
+                                                    <option value="breakfast" data-time="7:00 AM - 8:30 AM">Breakfast</option>
+                                                    <option value="lunch" data-time="11:30 AM - 1:00 PM">Lunch</option>
+                                                    <option value="dinner" data-time="5:30 PM - 7:00 PM">Dinner</option>
                                                 </select>
+                                                <small class="text-muted" id="mealTimeInfo"></small>
                                             </div>
                                             <div class="col-md-3">
                                                 <label for="pollDate" class="form-label">Poll Date</label>
@@ -241,6 +252,7 @@
                                                     <option value="custom">Custom Date...</option>
                                                 </select>
                                                 <input type="date" class="form-control mt-2" id="customPollDate" name="custom_poll_date" style="display: none;">
+                                                <small class="text-muted" id="pollDateInfo"></small>
                                             </div>
                                             <div class="col-md-6">
                                                 <!-- Manual Meal Input (Always visible) -->
@@ -850,6 +862,19 @@ function initializePollForm() {
 
     console.log('🔧 Initializing simplified manual poll form...');
 
+    // Meal time information
+    const mealTimes = {
+        'breakfast': { time: '7:00 AM - 8:30 AM', end: '08:30' },
+        'lunch': { time: '11:30 AM - 1:00 PM', end: '13:00' },
+        'dinner': { time: '5:30 PM - 7:00 PM', end: '19:00' }
+    };
+
+    // Set minimum date for custom date input to today
+    if (customPollDateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        customPollDateInput.min = today;
+    }
+
     // Handle custom deadline time selection
     if (pollDeadlineTime && customDeadlineContainer) {
         pollDeadlineTime.addEventListener('change', function() {
@@ -871,6 +896,8 @@ function initializePollForm() {
                 customPollDateInput.style.display = 'none';
                 customPollDateInput.required = false;
             }
+            updatePollInfo();
+            checkFormValidity();
         });
     }
 
@@ -884,14 +911,127 @@ function initializePollForm() {
     // Handle meal type selection
     if (pollMealType) {
         pollMealType.addEventListener('change', function() {
+            updatePollInfo();
             checkFormValidity();
         });
+    }
+
+    // Handle custom poll date input
+    if (customPollDateInput) {
+        customPollDateInput.addEventListener('change', function() {
+            updatePollInfo();
+            checkFormValidity();
+        });
+    }
+
+    // Function to validate poll timing
+    function validatePollTiming() {
+        const selectedMealType = pollMealType.value;
+        const selectedDate = pollDate.value;
+        const customDate = customPollDateInput.value;
+
+        if (!selectedMealType) return { valid: true, message: '' };
+
+        const now = new Date();
+        let pollDateObj = new Date();
+
+        if (selectedDate === 'tomorrow') {
+            pollDateObj.setDate(pollDateObj.getDate() + 1);
+        } else if (selectedDate === 'custom' && customDate) {
+            pollDateObj = new Date(customDate);
+        }
+
+        // Check if poll date is in the past
+        if (pollDateObj.toDateString() < now.toDateString()) {
+            return {
+                valid: false,
+                message: 'Cannot create polls for past dates. Please select today or a future date.'
+            };
+        }
+
+        // Check if meal time has passed for today
+        if (pollDateObj.toDateString() === now.toDateString()) {
+            const mealEndTime = mealTimes[selectedMealType].end;
+            const [endHour, endMinute] = mealEndTime.split(':');
+            const mealEndDateTime = new Date();
+            mealEndDateTime.setHours(parseInt(endHour), parseInt(endMinute), 0, 0);
+
+            if (now > mealEndDateTime) {
+                const mealDisplayName = selectedMealType.charAt(0).toUpperCase() + selectedMealType.slice(1);
+                return {
+                    valid: false,
+                    message: `Cannot create poll for ${mealDisplayName} as the meal time has already passed. ${mealDisplayName} is served until ${mealTimes[selectedMealType].time.split(' - ')[1]}.`
+                };
+            }
+        }
+
+        return { valid: true, message: '' };
+    }
+
+    // Function to update poll information display
+    function updatePollInfo() {
+        const selectedMealType = pollMealType.value;
+        const selectedDate = pollDate.value;
+        const customDate = customPollDateInput.value;
+        const pollInfoDisplay = document.getElementById('pollInfoDisplay');
+        const pollInfoText = document.getElementById('pollInfoText');
+        const mealTimeInfo = document.getElementById('mealTimeInfo');
+        const pollDateInfo = document.getElementById('pollDateInfo');
+
+        // Update meal time info
+        if (selectedMealType && mealTimes[selectedMealType]) {
+            mealTimeInfo.textContent = `Served: ${mealTimes[selectedMealType].time}`;
+        } else {
+            mealTimeInfo.textContent = '';
+        }
+
+        // Update poll date info
+        let dateText = '';
+        if (selectedDate === 'today') {
+            dateText = `Today (${new Date().toLocaleDateString()})`;
+        } else if (selectedDate === 'tomorrow') {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            dateText = `Tomorrow (${tomorrow.toLocaleDateString()})`;
+        } else if (selectedDate === 'custom' && customDate) {
+            dateText = `Custom (${new Date(customDate).toLocaleDateString()})`;
+        }
+        pollDateInfo.textContent = dateText;
+
+        // Update main poll info display
+        if (selectedMealType && (selectedDate !== 'custom' || customDate)) {
+            const mealDisplayName = selectedMealType.charAt(0).toUpperCase() + selectedMealType.slice(1);
+            pollInfoText.innerHTML = `Creating poll for <strong>${mealDisplayName}</strong> on <strong>${dateText}</strong> (${mealTimes[selectedMealType]?.time || ''})`;
+            pollInfoDisplay.style.display = 'block';
+        } else {
+            pollInfoDisplay.style.display = 'none';
+        }
     }
 
     // Function to check if form is valid and enable/disable create button
     function checkFormValidity() {
         const mealName = mealNameInput ? mealNameInput.value.trim() : '';
         const mealType = pollMealType ? pollMealType.value : '';
+        const validation = validatePollTiming();
+
+        // Clear previous validation messages
+        const existingAlert = document.querySelector('.poll-validation-alert');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
+
+        if (!validation.valid) {
+            // Show validation error
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-warning poll-validation-alert mt-2';
+            alertDiv.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>${validation.message}`;
+            createPollForm.insertBefore(alertDiv, createPollForm.firstChild);
+
+            if (createPollBtn) {
+                createPollBtn.disabled = true;
+            }
+            return;
+        }
 
         if (mealName && mealType && createPollBtn) {
             createPollBtn.disabled = false;
@@ -908,7 +1048,8 @@ function initializePollForm() {
         });
     }
 
-    // Initial form validation check
+    // Initial form validation check and poll info update
+    updatePollInfo();
     checkFormValidity();
 }
 
@@ -994,6 +1135,51 @@ function createNewPoll() {
 
     const form = document.getElementById('createPollForm');
     const formData = new FormData(form);
+
+    // Client-side validation before sending
+    const pollMealType = document.getElementById('pollMealType');
+    const pollDate = document.getElementById('pollDate');
+    const customPollDate = document.getElementById('customPollDate');
+
+    // Validate timing
+    const mealTimes = {
+        'breakfast': { end: '08:30' },
+        'lunch': { end: '13:00' },
+        'dinner': { end: '19:00' }
+    };
+
+    const selectedMealType = formData.get('meal_type');
+    const selectedDate = formData.get('poll_date');
+    const customDate = formData.get('custom_poll_date');
+
+    const now = new Date();
+    let pollDateObj = new Date();
+
+    if (selectedDate === 'tomorrow') {
+        pollDateObj.setDate(pollDateObj.getDate() + 1);
+    } else if (selectedDate === 'custom' && customDate) {
+        pollDateObj = new Date(customDate);
+    }
+
+    // Check if poll date is in the past
+    if (pollDateObj.toDateString() < now.toDateString()) {
+        showToast('Cannot create polls for past dates. Please select today or a future date.', 'error');
+        return;
+    }
+
+    // Check if meal time has passed for today
+    if (pollDateObj.toDateString() === now.toDateString() && selectedMealType) {
+        const mealEndTime = mealTimes[selectedMealType].end;
+        const [endHour, endMinute] = mealEndTime.split(':');
+        const mealEndDateTime = new Date();
+        mealEndDateTime.setHours(parseInt(endHour), parseInt(endMinute), 0, 0);
+
+        if (now > mealEndDateTime) {
+            const mealDisplayName = selectedMealType.charAt(0).toUpperCase() + selectedMealType.slice(1);
+            showToast(`Cannot create poll for ${mealDisplayName} as the meal time has already passed.`, 'error');
+            return;
+        }
+    }
 
     const pollData = {
         meal_type: formData.get('meal_type'),
@@ -1187,6 +1373,15 @@ function updatePreOrdersTable(polls) {
     container.innerHTML = html;
 }
 
+function getMealTimeDisplay(mealType) {
+    const mealTimes = {
+        'breakfast': '7:00 AM - 8:30 AM',
+        'lunch': '11:30 AM - 1:00 PM',
+        'dinner': '5:30 PM - 7:00 PM'
+    };
+    return mealTimes[mealType] || 'Unknown time';
+}
+
 function renderPollSection(polls, emptyMsg) {
     if (!polls || polls.length === 0) {
         return `<div class='text-center text-muted mb-4'><i class='bi bi-inbox'></i> ${emptyMsg}</div>`;
@@ -1210,6 +1405,9 @@ function renderPollSection(polls, emptyMsg) {
                         <p class="text-muted small mb-2">
                             <i class="bi bi-calendar"></i> ${formatPollDate(poll.poll_date)}
                             <span class="badge bg-secondary ms-1">${poll.meal_type || 'Unknown'}</span>
+                        </p>
+                        <p class="text-info small mb-2">
+                            <i class="bi bi-clock-history"></i> Meal Time: ${getMealTimeDisplay(poll.meal_type)}
                         </p>
                         <p class="text-warning small mb-2">
                             <i class="bi bi-clock"></i> Deadline: ${formattedDeadline}

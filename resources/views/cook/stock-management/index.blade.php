@@ -48,7 +48,7 @@
                                 <div class="card border receipt-card">
                                     <!-- Receipt Header -->
                                     <div class="card-header bg-primary text-white text-center py-3">
-                                        <h5 class="mb-1">INVENTORY RECEIPT</h5>
+                                        <h5 class="mb-1">DELIVERED ITEMS</h5>
                                         <small>{{ $check->created_at->format('M d, Y h:i A') }}</small>
                                     </div>
 

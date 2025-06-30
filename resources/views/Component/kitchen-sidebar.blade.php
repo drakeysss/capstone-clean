@@ -130,7 +130,7 @@
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('kitchen.pre-orders') ? 'active' : '' }}" href="{{ route('kitchen.pre-orders') }}" data-feature="kitchen.pre-orders">
                     <i class="bi bi-calendar-check icon"></i>
-                    <span class="small">Students Menu Polling</span>
+                    <span class="small">Menu Polling</span>
                 </a>
             </li>
             <li class="nav-item">

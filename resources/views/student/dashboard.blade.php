@@ -12,9 +12,8 @@
                     <h2>Welcome, {{ Auth::user()->name }}!</h2>
                     <p class="text-muted" style="color: white;">Your meal planning and feedback dashboard</p>
                 </div>
-                <div class="current-time">
-                    <i class="bi bi-clock"></i>
-                    <span id="currentDateTime"></span>
+                <div class="text-end">
+                    <span id="currentDateTime" class="fs-6 text-white"></span>
                 </div>
             </div>
         </div>
@@ -28,7 +27,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="card-title mb-1">Today's Menu</h5>
-                        <small class="text-muted">
+                        <small class="text-muted" id="todayMenuDate">
                             {{ now()->format('l, F j, Y') }}
                         </small>
                     </div>
@@ -194,7 +193,7 @@
                                     <div>
                                         <h5 class="mb-1">{{ $poll->title }}</h5>
                                         <p class="mb-1">{{ $poll->content }}</p>
-                                        <small class="text-muted">Expires on {{ date('M d, Y', strtotime($poll->expiry_date)) }}</small>
+                                        <small class="text-muted">Expires on {{ \Carbon\Carbon::parse($poll->expiry_date)->format('M d, Y') }}</small>
                                     </div>
                                     @if(isset($pollResponses[$poll->id]))
                                         <span class="badge bg-success">Response Submitted: {{ $pollResponses[$poll->id] }}</span>
@@ -253,7 +252,7 @@
                                 <div class="card h-100">
                                     <div class="card-header d-flex justify-content-between align-items-center">
                                         <h6 class="mb-0">{{ $poll->title }}</h6>
-                                        <span class="badge bg-primary">{{ date('M d, Y', strtotime($poll->expiry_date)) }}</span>
+                                        <span class="badge bg-primary">{{ \Carbon\Carbon::parse($poll->expiry_date)->format('M d, Y') }}</span>
                                     </div>
                                     <div class="card-body">
                                         <p>{{ $poll->content }}</p>
@@ -322,12 +321,7 @@
         align-items: center;
     }
 
-    .current-time {
-        font-size: 1.1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
+
 
     /* Main Cards */
     .main-card {
@@ -433,10 +427,7 @@
             padding: 15px;
         }
 
-        .current-time {
-            font-size: 1rem;
-            justify-content: center;
-        }
+
 
         .card-header {
             padding: 0.75rem 1rem;
@@ -487,8 +478,33 @@
 
     // UNIFIED: Real-time date and time display
     function updateDateTime() {
-        const weekInfo = getCurrentWeekCycle();
-        document.getElementById('currentDateTime').innerHTML = `${weekInfo.displayDate}<br><small>${weekInfo.timeString}</small>`;
+        const now = new Date();
+        const dateOptions = {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        };
+        const timeOptions = {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        };
+
+        const dateString = now.toLocaleDateString('en-US', dateOptions);
+        const timeString = now.toLocaleTimeString('en-US', timeOptions);
+
+        const currentDateTimeElement = document.getElementById('currentDateTime');
+        if (currentDateTimeElement) {
+            currentDateTimeElement.textContent = `${dateString} ${timeString}`;
+        }
+
+        // Update Today's Menu date to match header format for consistency
+        const todayMenuDateElement = document.getElementById('todayMenuDate');
+        if (todayMenuDateElement) {
+            todayMenuDateElement.textContent = dateString;
+        }
     }
 
     updateDateTime();
