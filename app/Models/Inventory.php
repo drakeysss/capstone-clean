@@ -53,6 +53,16 @@ class Inventory extends Model
         return $this->hasMany(InventoryHistory::class, 'inventory_item_id');
     }
 
+    public function purchaseOrderItems()
+    {
+        return $this->hasMany(PurchaseOrderItem::class, 'inventory_id');
+    }
+
+    public function mealIngredients()
+    {
+        return $this->hasMany(MealIngredient::class, 'inventory_id');
+    }
+
     // Scopes
     public function scopeLowStock($query)
     {

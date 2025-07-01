@@ -10,7 +10,7 @@
                     <div class="d-flex align-items-center mb-3 mb-md-0">
                         <i class="bi bi-receipt fs-1 me-3"></i>
                         <div>
-                            <h3 class="mb-1" style="color: #fff;">Stock Management</h3>
+                            <h3 class="mb-1" style="color: #fff;">Delivery</h3>
                             <p class="mb-0" style="color: #e0f7fa;">Review kitchen delivery reports</p>
                         </div>
                     </div>

@@ -114,6 +114,21 @@ Route::middleware(['auth', 'role:cook'])->prefix('cook')->name('cook.')->group(f
     Route::delete('/inventory/{item}', [InventoryController::class, 'destroy'])->name('inventory.delete');
     Route::post('/inventory/notify-delivery', [InventoryController::class, 'notifyDelivery'])->name('inventory.notify-delivery');
 
+    // Purchase Order Management
+    Route::get('/purchase-orders', [\App\Http\Controllers\Cook\PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
+    Route::get('/purchase-orders/create', [\App\Http\Controllers\Cook\PurchaseOrderController::class, 'create'])->name('purchase-orders.create');
+    Route::post('/purchase-orders', [\App\Http\Controllers\Cook\PurchaseOrderController::class, 'store'])->name('purchase-orders.store');
+    Route::get('/purchase-orders/{purchaseOrder}', [\App\Http\Controllers\Cook\PurchaseOrderController::class, 'show'])->name('purchase-orders.show');
+    Route::post('/purchase-orders/{purchaseOrder}/approve', [\App\Http\Controllers\Cook\PurchaseOrderController::class, 'approve'])->name('purchase-orders.approve');
+    Route::post('/purchase-orders/{purchaseOrder}/cancel', [\App\Http\Controllers\Cook\PurchaseOrderController::class, 'cancel'])->name('purchase-orders.cancel');
+    Route::get('/api/low-stock-items', [\App\Http\Controllers\Cook\PurchaseOrderController::class, 'getLowStockItems'])->name('api.low-stock-items');
+    Route::get('/api/purchase-order-suggestions', [\App\Http\Controllers\Cook\PurchaseOrderController::class, 'generateSuggestions'])->name('api.purchase-order-suggestions');
+
+    // Menu Inventory Management
+    Route::post('/menu/check-ingredients', [MenuController::class, 'checkIngredientAvailability'])->name('menu.check-ingredients');
+    Route::get('/menu/available-ingredients', [MenuController::class, 'getAvailableIngredients'])->name('menu.available-ingredients');
+    Route::post('/menu/deduct-ingredients', [MenuController::class, 'deductIngredients'])->name('menu.deduct-ingredients');
+
     // Supplier Management
     Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
     Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
@@ -150,7 +165,6 @@ Route::middleware(['auth', 'role:cook'])->prefix('cook')->name('cook.')->group(f
     Route::post('/stock-management/restock', [InventoryController::class, 'recordRestock'])->name('inventory.record-restock');
     Route::get('/stock-management/alerts', [InventoryController::class, 'alerts'])->name('inventory.alerts');
     Route::post('/menu/inventory-requirements', [MenuController::class, 'calculateInventoryRequirements'])->name('menu.inventory-requirements');
-
 
 
     // Cross-System Integration
@@ -200,6 +214,14 @@ Route::middleware(['auth', 'role:kitchen'])->prefix('kitchen')->name('kitchen.')
     Route::get('/inventory/{id}', [InventoryCheckController::class, 'show'])->name('inventory.show');
     Route::delete('/inventory/{id}', [InventoryCheckController::class, 'destroy'])->name('inventory.delete');
     Route::delete('/inventory/delete-all/reports', [InventoryCheckController::class, 'destroyAll'])->name('inventory.delete-all');
+
+    // Purchase Order Management (Kitchen View)
+    Route::get('/purchase-orders', [\App\Http\Controllers\Kitchen\PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
+    Route::get('/purchase-orders/{purchaseOrder}', [\App\Http\Controllers\Kitchen\PurchaseOrderController::class, 'show'])->name('purchase-orders.show');
+    Route::get('/purchase-orders/{purchaseOrder}/confirm-delivery', [\App\Http\Controllers\Kitchen\PurchaseOrderController::class, 'confirmDelivery'])->name('purchase-orders.confirm-delivery');
+    Route::post('/purchase-orders/{purchaseOrder}/process-delivery', [\App\Http\Controllers\Kitchen\PurchaseOrderController::class, 'processDelivery'])->name('purchase-orders.process-delivery');
+    Route::post('/purchase-orders/{purchaseOrder}/quick-confirm', [\App\Http\Controllers\Kitchen\PurchaseOrderController::class, 'quickConfirmDelivery'])->name('purchase-orders.quick-confirm');
+    Route::get('/api/pending-deliveries', [\App\Http\Controllers\Kitchen\PurchaseOrderController::class, 'getPendingDeliveries'])->name('api.pending-deliveries');
     
     // Recipe & Meal Execution
     Route::get('/recipes', [KitchenDashboardController::class, 'recipes'])->name('recipes');

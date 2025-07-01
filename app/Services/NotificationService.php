@@ -274,4 +274,101 @@ class NotificationService
         $data = $actionUrl ? ['action_url' => $actionUrl] : [];
         $this->sendToRole($userRole, $title, $message, 'deadline_reminder', $data);
     }
+
+    /**
+     * Send notification when purchase order is created
+     */
+    public function purchaseOrderCreated($purchaseOrder)
+    {
+        try {
+            // Notify kitchen staff about new purchase order
+            $kitchenUsers = User::where('user_role', 'kitchen')->get();
+
+            foreach ($kitchenUsers as $user) {
+                Notification::create([
+                    'user_id' => $user->user_id,
+                    'type' => 'purchase_order_created',
+                    'title' => 'New Purchase Order Created',
+                    'message' => "Purchase order {$purchaseOrder->order_number} has been created by {$purchaseOrder->creator->user_fname} {$purchaseOrder->creator->user_lname}",
+                    'data' => json_encode([
+                        'purchase_order_id' => $purchaseOrder->id,
+                        'order_number' => $purchaseOrder->order_number,
+                        'total_amount' => $purchaseOrder->total_amount,
+                        'items_count' => $purchaseOrder->items->count()
+                    ])
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send purchase order created notification: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send notification when purchase order is approved
+     */
+    public function purchaseOrderApproved($purchaseOrder)
+    {
+        try {
+            // Notify kitchen staff about approved purchase order
+            $kitchenUsers = User::where('user_role', 'kitchen')->get();
+
+            foreach ($kitchenUsers as $user) {
+                Notification::create([
+                    'user_id' => $user->user_id,
+                    'type' => 'purchase_order_approved',
+                    'title' => 'Purchase Order Approved',
+                    'message' => "Purchase order {$purchaseOrder->order_number} has been approved and is ready for delivery confirmation",
+                    'data' => json_encode([
+                        'purchase_order_id' => $purchaseOrder->id,
+                        'order_number' => $purchaseOrder->order_number,
+                        'approved_by' => $purchaseOrder->approver->user_fname . ' ' . $purchaseOrder->approver->user_lname
+                    ])
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send purchase order approved notification: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send notification when purchase order is delivered
+     */
+    public function purchaseOrderDelivered($purchaseOrder)
+    {
+        try {
+            // Notify cook who created the order
+            Notification::create([
+                'user_id' => $purchaseOrder->created_by,
+                'type' => 'purchase_order_delivered',
+                'title' => 'Purchase Order Delivered',
+                'message' => "Purchase order {$purchaseOrder->order_number} has been delivered and inventory has been updated",
+                'data' => json_encode([
+                    'purchase_order_id' => $purchaseOrder->id,
+                    'order_number' => $purchaseOrder->order_number,
+                    'delivered_by' => $purchaseOrder->deliveryConfirmer->user_fname . ' ' . $purchaseOrder->deliveryConfirmer->user_lname,
+                    'delivery_date' => $purchaseOrder->actual_delivery_date
+                ])
+            ]);
+
+            // Also notify other cooks
+            $cookUsers = User::where('user_role', 'cook')
+                           ->where('user_id', '!=', $purchaseOrder->created_by)
+                           ->get();
+
+            foreach ($cookUsers as $user) {
+                Notification::create([
+                    'user_id' => $user->user_id,
+                    'type' => 'purchase_order_delivered',
+                    'title' => 'Purchase Order Delivered',
+                    'message' => "Purchase order {$purchaseOrder->order_number} has been delivered - inventory updated",
+                    'data' => json_encode([
+                        'purchase_order_id' => $purchaseOrder->id,
+                        'order_number' => $purchaseOrder->order_number
+                    ])
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send purchase order delivered notification: ' . $e->getMessage());
+        }
+    }
 }

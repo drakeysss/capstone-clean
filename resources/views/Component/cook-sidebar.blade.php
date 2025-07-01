@@ -143,7 +143,13 @@
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('cook.inventory') ? 'active' : '' }}" href="{{ route('cook.inventory') }}" data-feature="cook.inventory">
                     <i class="bi bi-box icon"></i>
-                    <span class="small">Stock Management</span>
+                    <span class="small">Delivery</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('cook.purchase-orders*') ? 'active' : '' }}" href="{{ route('cook.purchase-orders.index') }}" data-feature="cook.purchase-orders">
+                    <i class="bi bi-cart-plus icon"></i>
+                    <span class="small">Purchase Orders</span>
                 </a>
             </li>
 

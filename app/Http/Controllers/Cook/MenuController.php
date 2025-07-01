@@ -76,7 +76,11 @@ class MenuController extends BaseController
             'meal_type' => 'required|string|in:breakfast,lunch,dinner',
             'week_cycle' => 'required|integer|in:1,2',
             'name' => 'required|string|max:255',
-            'ingredients' => 'required|string'
+            'ingredients' => 'required|string',
+            'serving_size' => 'required|integer|min:1',
+            'meal_ingredients' => 'nullable|array',
+            'meal_ingredients.*.inventory_id' => 'required_with:meal_ingredients|exists:inventory,id',
+            'meal_ingredients.*.quantity_per_serving' => 'required_with:meal_ingredients|numeric|min:0.001'
         ]);
 
         if ($validator->fails()) {
@@ -101,6 +105,37 @@ class MenuController extends BaseController
         }
 
         try {
+            // Check ingredient availability if meal ingredients are provided
+            if ($request->has('meal_ingredients') && !empty($request->meal_ingredients)) {
+                $missingIngredients = [];
+                $servingSize = $request->serving_size;
+
+                foreach ($request->meal_ingredients as $ingredientData) {
+                    $inventoryItem = \App\Models\Inventory::find($ingredientData['inventory_id']);
+                    if ($inventoryItem) {
+                        $requiredQuantity = $ingredientData['quantity_per_serving'] * $servingSize;
+                        if ($inventoryItem->quantity < $requiredQuantity) {
+                            $missingIngredients[] = [
+                                'name' => $inventoryItem->name,
+                                'required' => $requiredQuantity,
+                                'available' => $inventoryItem->quantity,
+                                'shortage' => $requiredQuantity - $inventoryItem->quantity,
+                                'unit' => $inventoryItem->unit
+                            ];
+                        }
+                    }
+                }
+
+                if (!empty($missingIngredients)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Insufficient ingredients to create this menu',
+                        'missing_ingredients' => $missingIngredients,
+                        'suggestion' => 'Please create a purchase order for the missing ingredients first.'
+                    ], 400);
+                }
+            }
+
             $meal = Meal::updateOrCreate(
                 [
                     'day_of_week' => strtolower($request->day),
@@ -116,10 +151,34 @@ class MenuController extends BaseController
                 ]
             );
 
+            // Update meal ingredients if provided
+            if ($request->has('meal_ingredients') && !empty($request->meal_ingredients)) {
+                // Delete existing meal ingredients
+                $meal->mealIngredients()->delete();
+
+                // Create new meal ingredients
+                foreach ($request->meal_ingredients as $ingredientData) {
+                    $inventoryItem = \App\Models\Inventory::find($ingredientData['inventory_id']);
+                    if ($inventoryItem) {
+                        \App\Models\MealIngredient::create([
+                            'meal_id' => $meal->id,
+                            'inventory_id' => $ingredientData['inventory_id'],
+                            'quantity_per_serving' => $ingredientData['quantity_per_serving'],
+                            'unit' => $inventoryItem->unit
+                        ]);
+                    }
+                }
+            }
+
             \Log::info('Menu updated successfully', [
                 'meal_id' => $meal->id,
                 'data' => $meal->toArray()
             ]);
+
+            // Automatically deduct ingredients from inventory when meal is added to plan
+            if ($request->has('deduct_ingredients') && $request->deduct_ingredients === true) {
+                $meal->deductIngredients($meal->serving_size);
+            }
 
             // Send notifications to kitchen and students about menu update
             $notificationService = new \App\Services\NotificationService();
@@ -132,7 +191,9 @@ class MenuController extends BaseController
 
             return response()->json([
                 'success' => true,
-                'message' => 'Meal updated successfully',
+                'message' => 'Meal updated successfully' .
+                           ($request->has('deduct_ingredients') && $request->deduct_ingredients ?
+                            ' and ingredients deducted from inventory' : ''),
                 'meal' => $meal
             ]);
         } catch (\Exception $e) {
@@ -162,6 +223,9 @@ class MenuController extends BaseController
             'meal_type' => 'required|in:breakfast,lunch,dinner',
             'day_of_week' => 'required|string',
             'week_cycle' => 'required|integer|in:1,2,3,4',
+            'meal_ingredients' => 'nullable|array',
+            'meal_ingredients.*.inventory_id' => 'required_with:meal_ingredients|exists:inventory,id',
+            'meal_ingredients.*.quantity_per_serving' => 'required_with:meal_ingredients|numeric|min:0.001'
         ]);
 
         if ($validator->fails()) {
@@ -169,6 +233,37 @@ class MenuController extends BaseController
                 'success' => false,
                 'errors' => $validator->errors()
             ], 422);
+        }
+
+        // Check ingredient availability if meal ingredients are provided
+        if ($request->has('meal_ingredients') && !empty($request->meal_ingredients)) {
+            $missingIngredients = [];
+            $servingSize = $request->serving_size;
+
+            foreach ($request->meal_ingredients as $ingredientData) {
+                $inventoryItem = \App\Models\Inventory::find($ingredientData['inventory_id']);
+                if ($inventoryItem) {
+                    $requiredQuantity = $ingredientData['quantity_per_serving'] * $servingSize;
+                    if ($inventoryItem->quantity < $requiredQuantity) {
+                        $missingIngredients[] = [
+                            'name' => $inventoryItem->name,
+                            'required' => $requiredQuantity,
+                            'available' => $inventoryItem->quantity,
+                            'shortage' => $requiredQuantity - $inventoryItem->quantity,
+                            'unit' => $inventoryItem->unit
+                        ];
+                    }
+                }
+            }
+
+            if (!empty($missingIngredients)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient ingredients to create this menu',
+                    'missing_ingredients' => $missingIngredients,
+                    'suggestion' => 'Please create a purchase order for the missing ingredients first.'
+                ], 400);
+            }
         }
 
         $meal = Meal::create([
@@ -182,6 +277,26 @@ class MenuController extends BaseController
             'week_cycle' => $request->week_cycle,
         ]);
 
+        // Create meal ingredients if provided
+        if ($request->has('meal_ingredients') && !empty($request->meal_ingredients)) {
+            foreach ($request->meal_ingredients as $ingredientData) {
+                $inventoryItem = \App\Models\Inventory::find($ingredientData['inventory_id']);
+                if ($inventoryItem) {
+                    \App\Models\MealIngredient::create([
+                        'meal_id' => $meal->id,
+                        'inventory_id' => $ingredientData['inventory_id'],
+                        'quantity_per_serving' => $ingredientData['quantity_per_serving'],
+                        'unit' => $inventoryItem->unit
+                    ]);
+                }
+            }
+        }
+
+        // Automatically deduct ingredients from inventory when meal is added to plan
+        if ($request->has('deduct_ingredients') && $request->deduct_ingredients === true) {
+            $meal->deductIngredients($meal->serving_size);
+        }
+
         // Send notifications to kitchen and students
         $notificationService = new \App\Services\NotificationService();
         $notificationService->menuCreated([
@@ -193,8 +308,110 @@ class MenuController extends BaseController
 
         return response()->json([
             'success' => true,
+            'message' => 'Meal created successfully' .
+                       ($request->has('deduct_ingredients') && $request->deduct_ingredients ?
+                        ' and ingredients deducted from inventory' : ''),
             'meal' => $meal
         ]);
+    }
+
+    /**
+     * Check ingredient availability for a meal
+     */
+    public function checkIngredientAvailability(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'meal_id' => 'required|exists:meals,id',
+            'serving_size' => 'nullable|integer|min:1'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $meal = Meal::with('mealIngredients.inventoryItem')->find($request->meal_id);
+        $servingSize = $request->serving_size ?? $meal->serving_size;
+
+        $canBePrepared = $meal->canBePrepared($servingSize);
+        $missingIngredients = $meal->getMissingIngredients($servingSize);
+
+        return response()->json([
+            'success' => true,
+            'can_be_prepared' => $canBePrepared,
+            'missing_ingredients' => $missingIngredients,
+            'serving_size' => $servingSize
+        ]);
+    }
+
+    /**
+     * Get available inventory items for meal creation
+     */
+    public function getAvailableIngredients()
+    {
+        $ingredients = \App\Models\Inventory::where('quantity', '>', 0)
+            ->orderBy('name')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'quantity' => $item->quantity,
+                    'unit' => $item->unit,
+                    'unit_price' => $item->unit_price,
+                    'is_low_stock' => $item->isLowStock()
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'ingredients' => $ingredients
+        ]);
+    }
+
+    /**
+     * Manually deduct ingredients for a meal
+     */
+    public function deductIngredients(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'meal_id' => 'required|exists:meals,id',
+            'serving_size' => 'nullable|integer|min:1'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $meal = Meal::with('mealIngredients.inventoryItem')->find($request->meal_id);
+        $servingSize = $request->serving_size ?? $meal->serving_size;
+
+        if (!$meal->canBePrepared($servingSize)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Insufficient ingredients to prepare this meal',
+                'missing_ingredients' => $meal->getMissingIngredients($servingSize)
+            ], 400);
+        }
+
+        try {
+            $meal->deductIngredients($servingSize);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Ingredients deducted for {$servingSize} servings of {$meal->name}"
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to deduct ingredients: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
