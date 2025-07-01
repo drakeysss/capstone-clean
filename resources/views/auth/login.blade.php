@@ -10,7 +10,7 @@
                          alt="Logo" class="mb-3" style="max-width:240px; height:auto;">
                 </div>
 
-                <h2 class="mb-3 text-center fw-bold" style ="color: white;">Welcome To <br><span style="color: #ff9933;">PN</span><span style="color: #22bbea;">-PORTION</span></h2>
+                <h2 class="mb-3 text-center fw-bold" style ="color: white;">Welcome To <br><span style="color: #ff9933;">PN</span><span style="color: #22bbea;">-Food Management</span></h2>
                 <p class="text-center text-white-50 mb-4">Please login to your account</p>
 
                 @if($errors->any())

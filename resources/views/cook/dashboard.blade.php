@@ -105,45 +105,7 @@
     </div>
 
     <div class="row mb-4">
-        <!-- Recent Inventory Reports -->
-        <div class="col-md-6 mb-4">
-            <div class="card main-card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title">Recent Inventory Reports</h5>
-                    <a href="{{ route('cook.inventory.reports') }}" class="btn btn-sm btn-outline-primary">View All</a>
-                </div>
-                <div class="card-body p-0">
-                    <table class="table mb-0">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Submitted By</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($recentInventoryReports as $inv)
-                                @php
-                                    $isRecent = $inv->created_at->diffInHours(now()) <= 24;
-                                @endphp
-                                <tr class="{{ $isRecent ? 'table-warning' : '' }}">
-                                    <td>
-                                        {{ $inv->created_at->format('M d, Y') }}
-                                        @if($isRecent)
-                                            <span class="badge bg-warning text-dark ms-1">NEW</span>
-                                        @endif
-                                    </td>
-                                    <td>{{ $inv->user->name ?? 'N/A' }}</td>
-
-                                </tr>
-                            @empty
-                                <tr><td colspan="3" class="text-center">No recent inventory reports</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
+     
         <!-- Inventory Overview -->
         <div class="col-md-6 mb-4">
             <div class="card main-card h-100">

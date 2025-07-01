@@ -11,9 +11,9 @@
                 <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #22bbea, #1a9bd1);">
                     <div>
                         <h3 class="mb-1 fw-bold">
-                            <i class="bi bi-calendar-week me-2"></i>Menu Management
+                            <i class="bi bi-calendar-week me-2"></i>Menu Planning
                         </h3>
-                        <p class="mb-0 opacity-75">Manage weekly menus for students and kitchen staff</p>
+                        <p class="mb-0 opacity-75">Plan weekly menus for students and kitchen staff</p>
                     </div>
                     <div class="text-end">
                         <span id="currentDateTime" class="fs-6 text-white"></span>

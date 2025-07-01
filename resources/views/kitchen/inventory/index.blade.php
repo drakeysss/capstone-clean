@@ -208,12 +208,7 @@
                                         </div>
                                     </div>
 
-                                    <!-- Receipt Footer -->
-                                    <div class="card-footer bg-light text-center py-2">
-                                        <small class="text-muted">
-                                            Kitchen Inventory System
-                                        </small>
-                                    </div>
+                                    
                                 </div>
                             </div>
                                 @endforeach
